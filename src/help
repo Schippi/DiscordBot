@@ -1,0 +1,64 @@
+
+
+
+PRAGMA table_info(table_name);
+
+
+
+SELECT * FROM sqlite_master WHERE type='table';
+
+
+
+type|name|tbl_name|rootpage|sql
+table|permissions|permissions|4|CREATE TABLE permissions(
+	ID integer,
+	ID_Server integer,
+	command text,
+	ID_Role integer)
+table|timeouts|timeouts|5|CREATE TABLE timeouts(
+	ID integer,
+	ID_Server integer,
+	ID_User integer,
+	Date_Until text)
+table|commands|commands|6|CREATE TABLE commands(
+	ID integer,
+	ID_Server integer,
+	command text,
+	response text)
+table|server|server|3|CREATE TABLE server(
+	id text, 
+	welcome text, 
+	schedule text, 
+	loglevel text)
+table|youtube|youtube|2|CREATE TABLE youtube(
+	ID_Server Integer, 
+	ID_Channel Integer, 
+	Username text, 
+	Picture Text, 
+	Message Text)
+table|twitch|twitch|7|CREATE TABLE twitch(
+	ID_Server Integer, 
+	ID_Channel Integer, 
+	Username text, 
+	Message Text,
+	FromH Integer,
+	fromM Integer, 
+	UntilH Integer, 
+	UntilM Integer, 
+	Days Text,
+	PRIMARY KEY (ID_Server, ID_Channel,Username))
+table|latesVideo|latesVideo|8|CREATE TABLE latesVideo(
+	Username text,
+	datum text)
+
+
+
+
+
+
+
+
+
+
+
+
