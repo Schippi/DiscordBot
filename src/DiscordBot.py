@@ -134,6 +134,8 @@ async def on_message(message):
 						await client.send_message(message.author,'you are currently timed out.\ntake a deep breath and come back in '+str(minu)+' minute');
 					else:
 						await client.send_message(message.author,'you are currently timed out.\ntake a deep breath and come back in '+str(minu)+' minutes');
+					print('timed out a message from '+message.author.mention()+':');
+					print(message.content);
 					return await client.delete_message(message);
 					ok = False;
 			if(ok):
