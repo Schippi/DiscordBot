@@ -134,7 +134,7 @@ async def on_message(message):
 						await client.send_message(message.author,'you are currently timed out.\ntake a deep breath and come back in '+str(minu)+' minute');
 					else:
 						await client.send_message(message.author,'you are currently timed out.\ntake a deep breath and come back in '+str(minu)+' minutes');
-					print('timed out a message from '+message.author.mention()+':');
+					print('timed out a message from '+message.author.username+'#'+message.author.discriminator+':');
 					print(message.content);
 					return await client.delete_message(message);
 					ok = False;
@@ -223,6 +223,7 @@ async def deny(context):
 async def on_member_join(member):
 	sett = getSetting(member.server.id);
 	if sett and (sett.getWelcomeMessage() != ''):
+		print('welcomed: '+member.user.username+'#'+member.user.discriminator);
 		return await client.send_message(member,sett.getWelcomeMessage());
 		
 @client.command(pass_context=True)
