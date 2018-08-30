@@ -1,6 +1,8 @@
 *.db
 *.token
 *.cfg
+*.pyc
+.settings/*
 src/cfg/*
 src/tokens/*
-*/__pycache__
+*/__pycache__/*
