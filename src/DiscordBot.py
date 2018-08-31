@@ -105,7 +105,6 @@ async def on_ready():
 	if not testing:	
 		sendMail('Bot Back Up','bot back online');
 	else:
-		sendMail('abc','bot back online');
 		pass;
 		#client.send_message()		
 	await client.change_presence(game=discord.Game(name='Feel Good (Gorillaz)', type=0));
@@ -324,10 +323,11 @@ async def xsetcom(context, message):
 		if len(msg) < 3:
 			return await sayWords(context, needArgs('!setcom <command> <response>'));
 		else:
-			if msg[1][:1] == '!':
-				cmd = msg[1];
+			sett = ServerSettings.getSetting(context = context);
+			if msg[1][:1] == sett.prefix:
+				cmd = msg[1][1:];
 			else:
-				cmd = '!'+msg[1];
+				cmd = msg[1];
 			cmd = cmd.lower();
 			if cmd[1:] in client.commands.keys():
 				return await sayWords(context, 'denied: command is predefined');
@@ -379,12 +379,13 @@ async def xeditcom(context, message):
 		if len(msg) < 3:
 			return await sayWords(context, needArgs('!editcom <command> <response>'));
 		else:
-			if msg[1][:1] == '!':
-				cmd = msg[1];
+			sett = ServerSettings.getSetting(context = context);
+			if msg[1][:1] == sett.prefix:
+				cmd = msg[1][1:];
 			else:
-				cmd = '!'+msg[1];
+				cmd = msg[1];
 			cmd = cmd.lower();
-			if cmd[1:] in client.commands.keys():
+			if cmd in client.commands.keys():
 				return await sayWords(context, 'denied: command is predefined');
 			else:
 				sett = getSetting(context=context);
@@ -450,10 +451,10 @@ async def xdelcom(context : discord.ext.commands.Context, msg : str):
 		if msg == '':
 			await sayWords(context, "need arguments");
 		sett = ServerSettings.getSetting(context = context);
-		if msg[:1] == '!':
-			cmd = msg;
+		if msg[:1] == sett.prefix:
+			cmd = msg[1:];
 		else:
-			cmd = '!'+msg;
+			cmd = msg;
 		cmd = cmd.lower();				
 		if sett.delCom(cmd):
 			await sayWords(context, "command deleted")
