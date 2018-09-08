@@ -23,7 +23,7 @@ class TwitchEntry:
 	
 	def __init__(self,dic):
 		self.id = dic['id']; 
-		self.server = int(dic['id_server']);
+		self.guild = int(dic['id_guild']);
 		self.channel = int(dic['id_channel']);
 		self.avatar = None;
 		self.text = dic['message'];
@@ -60,7 +60,7 @@ class TwitchEntry:
 	
 	def save(self):
 		dd = [str(i) for i in self.days];
-		dic = {'id_server':self.server,
+		dic = {'id_guild':self.guild,
 			'id_channel': self.channel,
 			'message': self.text,
 			'username': self.username,

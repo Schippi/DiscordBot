@@ -6,7 +6,7 @@ Created on 22.09.2017
 from discord.ext import commands;
 import discord;
 from util import sayWords;
-from ServerSettings import isAllowed;
+from GuildSettings import isAllowed;
 import asyncio;
 import random;
 
@@ -36,22 +36,22 @@ class TTSJack():
 						9:'nine',
 						10:'ten'}
 
-	@commands.group(pass_context=True)
+	@commands.group()
 	async def ttsjack(self, ctx):
 		"""TTSJack Control"""
 		if ctx.invoked_subcommand is None and isAllowed(ctx):
 			await self.bot.say('ttsjack help')
 			
-	@ttsjack.command(name='play', pass_context = True)
+	@ttsjack.command(name='play')
 	async def play(self, context):
 		"""join the game"""
 		if(not isAllowed(context)):
 			return;
-		if not context.message.server:
-			return await sayWords(context,'need server');
-		if context.message.server in self.gamesRunning:
+		if not context.message.guild:
+			return await sayWords(context,'need guild');
+		if context.message.guild in self.gamesRunning:
 			return await sayWords(context,'game in progress');
-		svr = context.message.server;
+		svr = context.message.guild;
 		usr = context.message.author;
 		role = discord.utils.find(lambda r: r.name == 'ttsjack', svr.roles);
 		if not role:
@@ -82,7 +82,7 @@ class TTSJack():
 		return await sayWords(context,'success so far');
 	
 	async def get_answer(self, m, question):
-		msg = await self.bot.send_message(m,question); 
+		msg = await m.send(question); 
 		# ^^ sollte m sein 
 		res = await self.bot.wait_for_message(author = m, timeout = 20);
 		return res;
@@ -100,7 +100,7 @@ class TTSJack():
 		if m.id == self.bot.user.id:
 			return m,0;
 		
-		msg = await self.bot.send_message(m,question);
+		msg = await m.send(question);
 		
 		for i in range(peoplePlaying):
 			if(i != yourNumber):
@@ -155,7 +155,7 @@ class TTSJack():
 	async def start(self, context):
 		if(not isAllowed(context)):
 			return;
-		role = discord.utils.find(lambda r: r.name == 'ttsjack', context.message.server.roles);
+		role = discord.utils.find(lambda r: r.name == 'ttsjack', context.message.guild.roles);
 		
 		msg = await sayWords(context, role.mention+ '\n game is about to start, you have 30 seconds to press ready');
 		await asyncio.sleep(0.1);
@@ -171,7 +171,7 @@ class TTSJack():
 				#if e.startswith(('\N{WHITE HEAVY CHECK MARK}', '\N{NEGATIVE SQUARED CROSS MARK}')):
 			return False;
 		
-		svr = context.message.server;
+		svr = context.message.guild;
 		relevantMembers = [];
 		for mem in svr.members:
 			if(role in mem.roles and self.bot.user.id != mem.id):
@@ -187,12 +187,12 @@ class TTSJack():
 		
 		for m in relevantMembers:
 			try:
-				#await self.bot.send_message(m,"lets play");
+				#await m.send("lets play");
 				None;
 			except discord.errors.Forbidden as e:
 				await sayWords(context, m.mention +': you have to allow me to send PM''s');
 				#def check(msg):
-				#	return msg.context.server is None;
+				#	return msg.context.guild is None;
 				#res = await self.bot.wait_for_message(author = m, timeout = 20, check=check);
 				#if not res:
 				#	return await sayWords(context, m.mention +': didn''t message me in time - aborting game..');
@@ -217,7 +217,7 @@ class TTSJack():
 
 		answerstring= answerstring+"";
 		
-		await self.bot.send_message(context.message.channel,answerstring,tts=True);
+		await context.send(answerstring,tts=True);
 		tasks = [self.get_number_answer(keys[i],answerstring,i,len(answers)) for i in range(len(answers))];
 		a = await asyncio.gather(*tasks);
 		print(a)

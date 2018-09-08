@@ -37,7 +37,7 @@ stuff_lock = asyncio.Lock();
 
 class SvrChan:
 	def __init__(self,s,c,m):
-		self.serverid = s;
+		self.guildid = s;
 		self.channelid = c;
 		self.messages = m;
 		self.time = datetime.utcnow();
@@ -106,11 +106,11 @@ async def startChecking(client):
 								l = None;
 								embed = entr.getEmbed(n,g,u,t,l);
 								if not testing:
-									await client.send_message(client.get_server(str(entr.server)).get_channel(str(entr.channel)),content = entr.getYString(entr.text,n,g,u,t,l),embed=embed);
+									await client.get_guild(str(entr.guild)).get_channel(str(entr.channel)).send(content = entr.getYString(entr.text,n,g,u,t,l),embed=embed);
 									print('timer {0} triggered entry: {1}:{2} - {3}'.format(entr.id, entr.fromtimeH, entr.fromtimeM, entr.days));
 								else:
 									try:
-										await client.send_message(client.get_server('196211645289201665').get_channel('196211645289201665'),content = entr.getYString(entr.text,n,g,u,t,l),embed=embed);
+										await client.get_guild('196211645289201665').get_channel('196211645289201665').send(content = entr.getYString(entr.text,n,g,u,t,l),embed=embed);
 									except Exception as e:
 										print(e);
 					if streamArray:
@@ -132,13 +132,13 @@ async def startChecking(client):
 												if (entr.shouldprint(g) and not streamprinted[entr]):
 													embed = entr.getEmbed(n,g,u,t,l);
 													if not testing:
-														await client.send_message(client.get_server(str(entr.server)).get_channel(str(entr.channel)),content = entr.getYString(entr.text,n,g,u,t,l),embed=embed);
+														await client.get_guild(str(entr.guild)).get_channel(str(entr.channel)).send(content = entr.getYString(entr.text,n,g,u,t,l),embed=embed);
 													else:
 														try:
-															await client.send_message(client.get_server('196211645289201665').get_channel('196211645289201665'),content = entr.getYString(entr.text,n,g,u,t,l),embed=embed);
+															await client.get_guild('196211645289201665').get_channel('196211645289201665').send(content = entr.getYString(entr.text,n,g,u,t,l),embed=embed);
 														except Exception as e:
 															print(e);
-													#sayWords(None, entr.getYString(n,g,u,l,t), entr.server, entr.channel);
+													#sayWords(None, entr.getYString(n,g,u,l,t), entr.guild, entr.channel);
 													streamprinted[entr] = True;
 													logEx('sent Twitch message for '+n);
 													#print(10);
@@ -249,10 +249,10 @@ async def startChecking(client):
 										embed = entr.getEmbed(ytUsrs[yt].displayname,u,t,thumb);
 										print(entr.getYString(entr.text,ytUsrs[yt].displayname,u,t,thumb))
 										if not testing:
-											await client.send_message(client.get_server(str(entr.server)).get_channel(str(entr.channel)),content = entr.getYString(entr.text,ytUsrs[yt].displayname,u,t,thumb),embed=embed);
+											await client.get_guild(str(entr.guild)).get_channel(str(entr.channel)).send(content = entr.getYString(entr.text,ytUsrs[yt].displayname,u,t,thumb),embed=embed);
 										else:
 											try:
-												await client.send_message(client.get_server('196211645289201665').get_channel('196211645289201665'),content = entr.getYString(entr.text,ytUsrs[yt].displayname,u,t,thumb),embed=embed);
+												await client.get_guild('196211645289201665').get_channel('196211645289201665').send(content = entr.getYString(entr.text,ytUsrs[yt].displayname,u,t,thumb),embed=embed);
 											except Exception as e:
 												print(e);
 										logEx('sent Youtube message for '+yt);
@@ -286,7 +286,7 @@ async def startChecking(client):
 			#yagmail.register('theschippi@gmail.com',base64.b64decode('dnp6bGxxeWtybnJwaXNsZg=='))
 			yag = yagmail.SMTP('theschippi@gmail.com',base64.b64decode('dnp6bGxxeWtybnJwaXNsZg=='));
 			contents = [time.strftime('%X %x %Z') + ': ' + 'Exception:\n\t '+err];
-			yag.send('theschippi@gmail.com', 'Server crashed', contents);
+			yag.send('theschippi@gmail.com', 'Guild crashed', contents);
 		else:
 			pass;
 	except CancelledError:

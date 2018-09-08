@@ -9,14 +9,14 @@ import util;
 
 class CommandPermission:
     
-    serverid = None;
+    guildid = None;
     command = None;
     role = None;
     id = None;
             
-    def __init__(self,idd, serverid,command,role):
+    def __init__(self,idd, guildid,command,role):
         self.id = idd;
-        self.serverid = serverid;
+        self.guildid = guildid;
         self.command = command;
         self.role = str(role);
         
@@ -25,7 +25,7 @@ class CommandPermission:
         
     def save(self, commit = True):
         qdkp = {'id':self.id};
-        qd = {'ID_Server':self.serverid,
+        qd = {'ID_Guild':self.guildid,
             'command': self.command,
             'ID_Role': self.role};
         self.id = updateOrInsert('permissions', qdkp, qd,False);
@@ -37,11 +37,11 @@ class CommandPermission:
         util.DB.commit();
 
 
-def load(serverid):
+def load(guildid):
     result = [];
-    t = (serverid,);
-    for row in util.DBcursor.execute('SELECT * FROM permissions where ID_Server = ?',t):
-        result.append(CommandPermission(row['id'],row['id_server'],row['command'],row['id_role']));
+    t = (guildid,);
+    for row in util.DBcursor.execute('SELECT * FROM permissions where ID_Guild = ?',t):
+        result.append(CommandPermission(row['id'],row['id_guild'],row['command'],row['id_role']));
     return result;
 
         

@@ -1,7 +1,7 @@
 from commands.JackCommands import TTSJack
 CSARversion = '0.3.0'
 
-import ServerSettings;
+import GuildSettings;
 import sys;
 import time;
 import pytz;
@@ -15,25 +15,24 @@ import asyncio;
 from asyncio import CancelledError;
 import signal;
 
-from ServerSettings import ServerSetting;
-from ServerSettings import isAllowed;
-from ServerSettings import getSetting;
+from GuildSettings import GuildSetting;
+from GuildSettings import isAllowed;
+from GuildSettings import getSetting;
 
 from commands.TwitchCommands import TwitchCommand;
 from commands.AdminCommands import AdminCommand;
 from commands.YoutubeCommands import YoutubeCommand;
 from commands.JackCommands import TTSJack;
 
-import discord.ext.commands;
+import discord;
+from discord.ext import commands;
 
-from discord.ext.commands import Bot;
 from TwitchChecker import startChecking
 
 from util import sayWords;
 from util import quote;
 from util import askYesNoReaction;
 from util import sendMail;
-from discord.ext.commands.errors import CommandNotFound;
 
 logging.basicConfig(level=logging.INFO);
 NOT_ALLOWED = 'You are not allowed to call this command!';
@@ -77,7 +76,7 @@ util.DBcursor = util.DB.cursor();
 
 def checkPrefix(bot, disMessage):
 	try:
-		sett = getSetting(disMessage.server.id);
+		sett = getSetting(disMessage.guild.id);
 	except:
 		sett = None;
 	if sett is None:
@@ -85,42 +84,41 @@ def checkPrefix(bot, disMessage):
 	else:
 		return sett.prefix;
 
-client = Bot(command_prefix=checkPrefix)
+client = commands.Bot(command_prefix=checkPrefix)
 
 def needArgs(msg):
 	return 'needs more arguments:\n'+quote(msg);
 
 def printRoles(client,context):
 	result = "The roles are:\n`"
-	for role in context.message.server.roles:
+	for role in context.message.guild.roles:
 		result += role.name + ": " + role.id + ", \n"
 	return client.say(result+'`')
 	
-@client.async_event
+@client.event
 async def on_ready():
 	
-	for svr in client.servers:
+	for svr in client.guilds:
 		print(svr.name);
-		ServerSetting(svr);
+		GuildSetting(svr);
 	if not testing:	
 		sendMail('Bot Back Up','bot back online');
 	else:
 		pass;
-		#client.send_message()		
-	await client.change_presence(game=discord.Game(name='Feel Good (Gorillaz)', type=0));
+	await client.change_presence(activity=discord.Activity(name='Feel Good (Gorillaz)', type=0));
 	#TwitchChecker.client = client;
 	
 	print("Client logged in");
 	
-@client.async_event
+@client.event
 async def on_message(message):
 	ok = True;
 	if message.author.id != client.user.id: # and not message.author.bot
-		if message.server:
-			sett = getSetting(message.server.id);
+		if message.guild:
+			sett = getSetting(message.guild.id);
 			if sett is None:
 				ok = False;
-			if ok and (message.author.id != ServerSettings.adminId) and (message.author.id in sett.timeouts.keys()):
+			if ok and (message.author.id != GuildSettings.adminId) and (message.author.id in sett.timeouts.keys()):
 				now = datetime.utcnow();
 				untilDate = sett.timeouts[message.author.id];
 				if untilDate < now:
@@ -128,19 +126,20 @@ async def on_message(message):
 				else:
 					d1_ts = time.mktime(now.timetuple())
 					d2_ts = time.mktime(untilDate.timetuple())
-					minu = int(round(d2_ts-d1_ts) / 60);
+					minu = int(round(d2_ts-d1_ts) / 60) + 1;
 					if minu == 1:
-						await client.send_message(message.author,'you are currently timed out.\ntake a deep breath and come back in '+str(minu)+' minute');
+						await message.author.send('you are currently timed out.\ntake a deep breath and come back in '+str(minu)+' minute');
 					else:
-						await client.send_message(message.author,'you are currently timed out.\ntake a deep breath and come back in '+str(minu)+' minutes');
+						await message.author.send('you are currently timed out.\ntake a deep breath and come back in '+str(minu)+' minutes');
 					print('timed out a message from '+message.author.username+'#'+message.author.discriminator+':');
 					print(message.content);
 					return await client.delete_message(message);
 					ok = False;
 			if(ok):
 				msg = message.content.split(' ',1);
-				if (len(msg) > 0) and (msg[0][:1] == checkPrefix(client,message)) and (not msg[0][1:] in client.commands.keys()):
-					if sett.isAllowed(userID = message.author.id,command = msg[0]):
+				if (len(msg) > 0) and (msg[0][:1] == checkPrefix(client,message)):
+					c = client.all_commands.get(msg[0][1:]);
+					if (c is None) and sett.isAllowed(userID = message.author.id,command = msg[0]):
 						for cmd in sett.customCommands:
 							if(cmd.command == msg[0][1:]):
 								ok = False;
@@ -151,22 +150,20 @@ async def on_message(message):
 			except CommandNotFound:
 				pass;
 	
-@client.async_event
-async def on_server_join(server):
-	ServerSetting(server);
+@client.event
+async def on_guild_join(guild):
+	GuildSetting(guild);
 	
-@client.command(pass_context=True)
+@client.command()
 async def shitgame(context):
-	if(context.message.server):
-		await client.send_message(context.message.channel, 'initializing...\n be in a voicechannel - deaf = down - mute = up')
+	if(context.message.guild):
+		m = await context.send('initializing...\n be in a voicechannel - deaf = down - mute = up')
 		await asyncio.sleep(2);
-		for m in client.messages:
-			if m.author.id == client.user.id:
-				await playgame(m,context.message.author.id,client);
+		await playgame(m,context.message.author.id,client);
 	else:
-		await client.send_message(context.message.author,'whisper-game not supported');
+		await context.send('whisper-game not supported');
 		
-@client.command(pass_context=True, hidden=True)
+@client.command(hidden=True)
 async def get(context):
 	"""!get <kind> <String> : display markup String"""
 	if isAllowed(context):
@@ -178,11 +175,11 @@ async def get(context):
 		else:
 			return await sayWords(context,needArgs('!get <kind> <String>'));
 		
-@client.command(pass_context=True)
+@client.command()
 async def allow(context):
 	"""!allow <command>:<role> : allows rights to use the command"""
-	for svr in client.servers:
-		ServerSetting(svr);
+	for svr in client.guilds:
+		GuildSetting(svr);
 	if isAllowed(context):
 		cnt = context.message.content.split(' ',1);
 		if(len(cnt) < 2):
@@ -200,7 +197,7 @@ async def allow(context):
 	else:
 		return await sayWords(context,NOT_ALLOWED);
 		
-@client.command(pass_context=True)
+@client.command()
 async def deny(context):
 	"""!deny <command> <role> : revokes rights to use the command"""
 	if isAllowed(context):
@@ -220,14 +217,14 @@ async def deny(context):
 			
 @client.event
 async def on_member_join(member):
-	sett = getSetting(member.server.id);
+	sett = getSetting(member.guild.id);
 	if sett and (sett.getWelcomeMessage() != ''):
 		print('welcomed: '+member.user.username+'#'+member.user.discriminator);
-		return await client.send_message(member,sett.getWelcomeMessage());
+		return await member.send(sett.getWelcomeMessage());
 		
-@client.command(pass_context=True)
+@client.command()
 async def setWelcome(context):
-	"""!setWelcome <message> : set messaged sent on joining the server"""
+	"""!setWelcome <message> : set messaged sent on joining the guild"""
 	if isAllowed(context):
 		cnt = context.message.content.split(' ',1);
 		if len(cnt) > 1:
@@ -239,7 +236,7 @@ async def setWelcome(context):
 	else:
 		return await sayWords(context,NOT_ALLOWED);			
 	
-@client.command(pass_context=True)
+@client.command()
 async def setLogLevel(context):
 	"""!setLogLevel whisper|mute|channel : how the bot responds"""
 	if isAllowed(context):
@@ -253,19 +250,19 @@ async def setLogLevel(context):
 	else:
 		return await sayWords(context,NOT_ALLOWED);	
 		
-@client.command(pass_context=True)
+@client.command()
 async def timeout(context):
-	"""!timeout [serverID if whispering] <person> <time in seconds>"""
+	"""!timeout [guildID if whispering] <person> <time in seconds>"""
 	allowed = False;
 	i = 0;
-	if not context.message.server:
+	if not context.message.guild:
 		cnt = context.message.content.split(' ',3);
 		if len(cnt) == 3:
 			cnt.append('600');
 		if len(cnt) > 3:
 			sett = getSetting(cnt[1]);
 			i = 1;
-			allowed = isAllowed(userid =context.message.author.id, serverid=cnt[1], command=cnt[0]);
+			allowed = isAllowed(userid =context.message.author.id, guildid=cnt[1], command=cnt[0]);
 	else:
 		allowed = isAllowed(context);
 		sett = getSetting(context = context);
@@ -278,15 +275,15 @@ async def timeout(context):
 			amount = int(cnt[2+i]);			
 			sett.timeoutPerson(usr,amount)
 			if(amount > 1):
-				return await client.send_message(context.message.author,usr + ' has been timed out for '+str(amount)+'seconds');	
+				return await context.send(usr + ' has been timed out for '+str(amount)+'seconds');	
 		else:
-			return await client.send_message(context.message.author,needArgs('!timeout [serverid] <user> [time in seconds = 600]'));
+			return await context.send(needArgs('!timeout [guildid] <user> [time in seconds = 600]'));
 		
-@client.command(pass_context=True)
+@client.command()
 async def setschedule(context):
 	"""!setschedule <message> : sets message for !schedule"""
-	if not context.message.server:
-		return await sayWords(context, 'you need to set the message in a channel of the server its for');
+	if not context.message.guild:
+		return await sayWords(context, 'you need to set the message in a channel of the guild its for');
 	else:
 		if isAllowed(context):
 			if(len(context.message.content.split(' ',1)) <= 1):
@@ -298,7 +295,7 @@ async def setschedule(context):
 			sett.saveSettings();
 			return await sayWords(context, 'schedule set');
 		
-@client.command(pass_context=True)
+@client.command()
 async def schedule(context):
 	"""!schedule : displays a message + current time"""
 	if isAllowed(context):
@@ -323,7 +320,7 @@ async def xsetcom(context, message):
 		if len(msg) < 3:
 			return await sayWords(context, needArgs('!setcom <command> <response>'));
 		else:
-			sett = ServerSettings.getSetting(context = context);
+			sett = GuildSettings.getSetting(context = context);
 			if msg[1][:1] == sett.prefix:
 				cmd = msg[1][1:];
 			else:
@@ -336,7 +333,7 @@ async def xsetcom(context, message):
 				sett.setCom(cmd,msg[2]);
 				return await sayWords(context, 'command set');
 		
-@client.command(pass_context=True)
+@client.command()
 async def addcom(context):
 	"""!addcom <command> <response> : add a custom command"""
 	await xaddcom(context, context.message.content);
@@ -350,13 +347,14 @@ async def xaddcom(context, message):
 		if len(msg) < 3:
 			return await sayWords(context, needArgs('!addcom <command> <response>'));
 		else:
-			sett = ServerSettings.getSetting(context = context);
+			sett = GuildSettings.getSetting(context = context);
 			if msg[1][:1] == sett.prefix:
 				cmd = msg[1][1:];
 			else:
 				cmd = msg[1];
 			cmd = cmd.lower();
-			if cmd[1:] in client.commands.keys():
+			
+			if not client.all_commands.get(cmd[1:]) is None:
 				return await sayWords(context, 'denied: command is predefined');
 			else:
 				sett = getSetting(context=context);
@@ -365,7 +363,7 @@ async def xaddcom(context, message):
 				else:
 					return await sayWords(context, 'command already exists');
 			
-@client.command(pass_context=True)
+@client.command()
 async def editcom(context):
 	"""!editcom <command> <response> : edits a custom command"""
 	await xeditcom(context, context.message.content);
@@ -379,7 +377,7 @@ async def xeditcom(context, message):
 		if len(msg) < 3:
 			return await sayWords(context, needArgs('!editcom <command> <response>'));
 		else:
-			sett = ServerSettings.getSetting(context = context);
+			sett = GuildSettings.getSetting(context = context);
 			if msg[1][:1] == sett.prefix:
 				cmd = msg[1][1:];
 			else:
@@ -394,24 +392,24 @@ async def xeditcom(context, message):
 				else:
 					return await sayWords(context, 'command doesn''t exist');
 				
-@client.command(pass_context=True)
+@client.command()
 async def delcom(context):
 	"""!delcom <command> : deletes a custom command"""
 	await xdelcom(context, context.message.content.split(' ',2)[1]);
 		
-@client.group(pass_context=True, aliases=['list'])
+@client.group(aliases=['list'])
 async def commands(context):
-	"""!commands : displays serverID & !help"""
+	"""!commands : displays guildID & !help"""
 	if context.invoked_subcommand is None and isAllowed(context): 
 		msg = '';
-		if context.message.server:
-			svr = context.message.server.id;
+		if context.message.guild:
+			svr = context.message.guild.id;
 			for mm in client.formatter.format_help_for(context, client):
 				msg = msg+mm;
-			sett = ServerSettings.getSetting(context = context);
+			sett = GuildSettings.getSetting(context = context);
 			
 			if len(sett.customCommands) > 0:
-				custommsg = '\n```Custom Server Commands:';
+				custommsg = '\n```Custom Guild Commands:';
 				for cmd in sett.customCommands:
 					custommsg = custommsg+'\n'+cmd.command+' : '+cmd.response;
 				msg = msg + custommsg + '```';
@@ -422,26 +420,26 @@ async def commands(context):
 		else:
 			svr = 'None'
 		
-		return await sayWords(context,'server ID is: '+str(svr)+'\n'+
+		return await sayWords(context,'guild ID is: '+str(svr)+'\n'+
 						msg);
 	
-@commands.command(pass_context=True)
+@commands.command()
 async def add(context : discord.ext.commands.Context, *msg):
 	"""adds a command, doesnt do anything if command already exists"""
 	x = context.message.content.split(' ',3)[2:];
 	await xaddcom(context, x);
 	
-@commands.command(pass_context=True)
+@commands.command()
 async def edit(context : discord.ext.commands.Context, *msg):
 	"""edits a command, doesnt do anything if command doesnt exist"""
 	await xeditcom(context, context.message.content.split(' ',3)[2:]);
 
-@commands.command(pass_context=True)
+@commands.command()
 async def set(context : discord.ext.commands.Context, *msg):
 	"""sets a command, overrides if already existing"""
 	await xsetcom(context, context.message.content.split(' ',3)[2:]);				
 	
-@commands.command(pass_context=True)
+@commands.command()
 async def delete(context : discord.ext.commands.Context, msg : str):
 	"""deltes a command"""
 	await xdelcom(context,msg);
@@ -450,7 +448,7 @@ async def xdelcom(context : discord.ext.commands.Context, msg : str):
 	if isAllowed(contxt = context):
 		if msg == '':
 			await sayWords(context, "need arguments");
-		sett = ServerSettings.getSetting(context = context);
+		sett = GuildSettings.getSetting(context = context);
 		if msg[:1] == sett.prefix:
 			cmd = msg[1:];
 		else:
@@ -461,25 +459,25 @@ async def xdelcom(context : discord.ext.commands.Context, msg : str):
 		else:
 			await sayWords(context, "no such command")
 			
-@client.command(pass_context=True, aliases=['setprefix'])			
+@client.command( aliases=['setprefix'])			
 async def setPrefix(context : discord.ext.commands.Context):
-	"""!setPrefix <prefix> sets the prefix for this server"""
+	"""!setPrefix <prefix> sets the prefix for this guild"""
 	if isAllowed(contxt = context):
 		msg = context.message.content;
 		ct = msg.split(' ');
 		if(len(ct) < 2):
 			return await sayWords(context,needArgs('!setPrefix <prefix>'))
 		if await askYesNoReaction(context, 'Change Prefix to "'+ct[1]+'" ?'):
-			sett = ServerSettings.getSetting(context = context);
+			sett = GuildSettings.getSetting(context = context);
 			sett.prefix = ct[1];
 			sett.saveSettings();
 			await sayWords(context, 'prefix changed!');
 		else:
 			await sayWords(context, 'Aborted change of prefix');
 		
-@client.command(pass_context=True, aliases = ['sayinchannel','sayInchannel','sayinChannel','sendtochannel','sendTochannel','sendToChannel',])
+@client.command(aliases = ['sayinchannel','sayInchannel','sayinChannel','sendtochannel','sendTochannel','sendToChannel',])
 async def sayInChannel(context : discord.ext.commands.Context):
-	"""!sayInChannel <id or name>:<msg> sends a message to a different channel on the server"""
+	"""!sayInChannel <id or name>:<msg> sends a message to a different channel on the guild"""
 	if isAllowed(contxt = context):
 		msg = context.message.content
 		ct = msg.split(' ',1);
@@ -488,16 +486,16 @@ async def sayInChannel(context : discord.ext.commands.Context):
 		ct = ct[1].split(':',1);
 		if msg == '' or len(ct) != 2:
 			return await sayWords(context, "need arguments, missing : " + str(len(ct)) + str(ct));
-		ch = context.message.server.get_channel(ct[0]);
+		ch = context.message.guild.get_channel(ct[0]);
 		if not ch:
-			for c in context.message.server.channels:
+			for c in context.message.guild.channels:
 				if(c.type == discord.ChannelType.text and c.name.lower() == ct[0].strip().lower()):
 					ch = c;
 					break;
 		if ch:
-			return await client.send_message(destination=ch,content= ct[1].strip());
+			return await ch.send(content= ct[1].strip());
 		else:
-			return await sayWords(context, "channel "+ct[0]+" not found on this server");
+			return await sayWords(context, "channel "+ct[0]+" not found on this guild");
 		
 @client.command()
 async def version(*msg):
@@ -507,7 +505,7 @@ async def version(*msg):
 # HELP FUNCTIONS		
 		
 def getRoleID(context,rolename):
-	for role in context.message.server.roles:
+	for role in context.message.guild.roles:
 		if role.name.lower() == rolename.lower():
 			return role.id;
 	return None;
@@ -555,7 +553,7 @@ except Exception as ex:
 	err = str(ex);
 	msg = msg + '\n'+ time.strftime('%X %x %Z') + ': ' + 'Exception: '+message+'\n'+err;
 	if not testing:
-		sendMail('Server Crash Report',msg);
+		sendMail('Guild Crash Report',msg);
 try:
 	checkingTask.cancel();
 	asyncio.ensure_future(exit())
@@ -565,7 +563,7 @@ print("Ende");
 
 
 
-#sendMail('!!!!!!Server crashed for good',time.strftime('%X %x %Z') + ': ' + 'please log back in');
+#sendMail('!!!!!!Guild crashed for good',time.strftime('%X %x %Z') + ': ' + 'please log back in');
 
 
 

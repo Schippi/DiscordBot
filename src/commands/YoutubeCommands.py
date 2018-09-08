@@ -10,8 +10,8 @@ from util import quote;
 from util import askYesNoReaction;
 import entities.YTEntry;
 import util;
-from ServerSettings import isAllowed;
-from ServerSettings import getSetting;
+from GuildSettings import isAllowed;
+from GuildSettings import getSetting;
 from util import fetch;
 import aiohttp;
 import json;
@@ -23,25 +23,25 @@ class YoutubeCommand():
 	def __init__(self, bot):
 		self.bot = bot
 
-	@commands.group(pass_context=True)
+	@commands.group()
 	async def youtube(self, ctx):
 		"""Youtube Control"""
 		if ctx.invoked_subcommand is None and isAllowed(ctx):
 			await self.bot.say('youtube commands are add, edit and delete')
 			
-	@youtube.command(name='add', pass_context = True)
+	@youtube.command(name='add')
 	async def add(self, context, name : str = None):
 		"""adds a new alert for channel <name>"""
 		if(not isAllowed(context)):
 			return;
 		if not name or name == '':
 			return await sayWords(context,'need arguments');
-		if not context.message.server:
-			return await sayWords(context,'need server');
+		if not context.message.guild:
+			return await sayWords(context,'need guild');
 		tname = name.split(' ',1)[0];
-		t = (context.message.server.id,tname);	
+		t = (context.message.guild.id,tname);	
 		entryDict = {'message':entities.YTEntry.defaultYTText};
-		entryDict['id_server'] = context.message.server.id;
+		entryDict['id_guild'] = context.message.guild.id;
 		entryDict['id_channel'] = context.message.channel.id;
 		entryDict['id'] = None;				  
 		entryDict['username'] = tname;
@@ -49,7 +49,7 @@ class YoutubeCommand():
 		entryDict['image'] = None;
 		entryDict['embedmessage'] = None;
 		entryDict['wasprinted'] = None;
-		for row in util.DBcursor.execute('SELECT * FROM youtube where ID_Server = ? and username = ?',t):
+		for row in util.DBcursor.execute('SELECT * FROM youtube where ID_Guild = ? and username = ?',t):
 			return await sayWords(context,'There already exists an Alert for '+tname);
 		
 		urlsafename = urllib.parse.quote(tname, safe='');
@@ -76,15 +76,15 @@ class YoutubeCommand():
 		
 		return await self.edit_youtube(context,entryDict);
 		
-	@commands.command(name = 'latest', pass_context=True)
+	@commands.command(name = 'latest')
 	async def latest(self, context, name : str = None):
 		"""post latest video of <name>"""
 		if(not isAllowed(context)):
 			return;
 		if not name or name == '':
 			return await sayWords(context,'need arguments');
-		if not context.message.server:
-			return await sayWords(context,'need server');
+		if not context.message.guild:
+			return await sayWords(context,'need guild');
 		tname = context.message.content.split(' ',1)[1];
 		t = (tname.lower(),tname.lower(),);
 		for row in util.DBcursor.execute('SELECT * FROM YTUser where lower(username) = ? or lower(displayname) = ?',t):
@@ -96,14 +96,14 @@ class YoutubeCommand():
 				return await sayWords(context, 'there has not been a video from `'+tname+'` since setup, or setup was very recently');
 		return await sayWords(context, tname+' is not being monitored.');	
 	
-	@youtube.command(name='list', pass_context = True)
+	@youtube.command(name='list')
 	async def list(self, context):
 		"""lists active monitors"""
 		if(not isAllowed(context)):
 			return;
-		t = (context.message.server.id,);
+		t = (context.message.guild.id,);
 		l = [];
-		for row in util.DBcursor.execute('SELECT * FROM youtube where ID_Server = ?',t):
+		for row in util.DBcursor.execute('SELECT * FROM youtube where ID_Guild = ?',t):
 			l.append("`"+row['username']+"`");
 		return await sayWords(context, 'here are the channels being monitored: '+", ".join(l));
 		
@@ -114,13 +114,13 @@ class YoutubeCommand():
 			return;
 		if not name or name == '':
 			return await sayWords(context,'need arguments');
-		if not context.message.server:
-			return await sayWords(context,'need server');
+		if not context.message.guild:
+			return await sayWords(context,'need guild');
 		tname = name.split(' ',1)[0];
 		entryDict = {};
 	
-		t = (context.message.server.id,tname);
-		for row in util.DBcursor.execute('SELECT * FROM youtube where ID_Server = ? and username = ?',t):
+		t = (context.message.guild.id,tname);
+		for row in util.DBcursor.execute('SELECT * FROM youtube where ID_Guild = ? and username = ?',t):
 			for k in row.keys():
 				entryDict[k.lower()] = row[k];
 		if len(entryDict.keys()) > 0:		
@@ -138,7 +138,7 @@ class YoutubeCommand():
 					'- Customizing Options:\n'
 					+prefix+'ymessage <message> : set custom message, use %%name%%, %%game%%, %%title%% and %%url%% as placeholder\n'
 					+prefix+'ycolor <color> : changes the color on the side for the embed. in HEX\n'
-					+prefix+'ychannel <id / name> : change the channel - must be on this server\n'
+					+prefix+'ychannel <id / name> : change the channel - must be on this guild\n'
 					+prefix+'yembed <message> : changes the Embed - , use %%name%%, %%game%%, %%title%% and %%url%% as placeholder\n'
 					+prefix+'yimage <url to image>: sets the imaeg for the embed\n'
 					+prefix+'yshow : show current options\n'
@@ -171,16 +171,16 @@ class YoutubeCommand():
 				if(reply.content.startswith(prefix+'yshow')):
 					rep = 'current options:'
 					for k in entryDict.keys():
-						if( not (k == 'id' or k == 'id_server' or k == 'username' or k == 'wasprinted') and (not entryDict[k] is None)):
+						if( not (k == 'id' or k == 'id_guild' or k == 'username' or k == 'wasprinted') and (not entryDict[k] is None)):
 							rep = rep+'\n'+k+'\t: '+str(entryDict[k]);
 					await sayWords(context,rep);
 					
 				if(reply.content.startswith(prefix+'ychannel')):
 					try:
 						ct = reply.content.split(' ',1);
-						chan = reply.server.get_channel(ct[1]);
+						chan = reply.guild.get_channel(ct[1]);
 						if not chan:
-							for c in reply.server.channels:
+							for c in reply.guild.channels:
 								if (c.type == discord.ChannelType.text and c.name.lower() == ct[1].strip().lower()):
 									chan = c;
 									break;
@@ -242,7 +242,7 @@ class YoutubeCommand():
 					testx = entities.YTEntry.YTEntry(entryDict);
 					embedx = testx.getEmbed('Super Channel','http://google.com','welcome to the internet','image');
 					st = testx.getYString(testx.text,'[Super Channel]','http://google.com','[welcome to the internet]','[image]');
-					await self.bot.send_message(context.message.channel,content = st,embed=embedx);
+					await context.message.channel.send(content = st,embed=embedx);
 			else:
 				break;
 		if reply:
@@ -258,13 +258,13 @@ class YoutubeCommand():
 			return;
 		if not name or name == '':
 			return await sayWords(context,'need arguments');
-		if not context.message.server:
-			return await sayWords(context,'need server');
+		if not context.message.guild:
+			return await sayWords(context,'need guild');
 		tname = name.split(' ',1)[0];
-		t = (context.message.server.id,tname);
+		t = (context.message.guild.id,tname);
 		
 
-		for row in util.DBcursor.execute('SELECT * FROM youtube where ID_Server = ? and username = ?',t):
+		for row in util.DBcursor.execute('SELECT * FROM youtube where ID_Guild = ? and username = ?',t):
 			if await askYesNoReaction(context, 'Are you sure you want to delete the YoutubeCheck for'+tname.upper()+'?'):
 				t = (row['id'],);
 				util.DBcursor.execute('DELETE FROM youtube where ID = ?',t);

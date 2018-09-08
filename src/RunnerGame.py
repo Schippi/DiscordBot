@@ -16,7 +16,7 @@ async def printgrid(grid, playerpos, message,score, client):
             else:
                 msg = msg +grid[j][i];                
         msg = msg+'\n';
-    await client.edit_message(message,'```\n'+msg+'\nscore: '+str(score)+'```');
+    await message.edit(content='```\n'+msg+'\nscore: '+str(score)+'```');
     
 def gameOver():
     return '+  ________\n+'+' /  _____/_____    _____   ____     _______  __ ___________ \n+'+'/   \\  ___\\__  \\  /     \\_/ __ \\   /  _ \\  \\/ // __ \\_  __ \\\n+'+'\\    \\_\\  \\/ __ \\|  Y Y  \\  ___/  (  <_> )   /\\  ___/|  | \\/\n+'+' \\______  (____  /__|_|  /\\___  >  \\____/ \\_/  \\___  >__|\n+'+'        \\/     \\/      \\/     \\/                   \\/';
@@ -28,7 +28,7 @@ async def playgame(message, playerID, client):
     playerpos = math.floor(playwidth /2);
     counter = 0;
     magicnumber = 50;
-    membr = message.server.get_member(playerID);
+    membr = message.guild.get_member(playerID);
     membrname = membr.nick if membr.nick else membr.name;
     
     playfield = [[0 for x in range(playwidth)] for y in range(playheight)] ;
@@ -75,5 +75,5 @@ async def playgame(message, playerID, client):
             playerpos = max(playerpos - 1,0);
     
     score = counter + score - magicnumber;        
-    await client.edit_message(message,'```diff\n'+gameOver()+'\n\n-        '+membrname+'\'s score: '+str(score)+'```');   
+    await message.edit(content ='```diff\n'+gameOver()+'\n\n-        '+membrname+'\'s score: '+str(score)+'```');   
     

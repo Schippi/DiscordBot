@@ -1,6 +1,6 @@
 settings = {};
-adminId = '106087197588889600';
-adminIds = ['106087197588889600'];
+adminId = 106087197588889600;
+adminIds = [106087197588889600];
 
 cfgPath = "cfg"
 #Discordbot/src/cfg/
@@ -12,9 +12,9 @@ def getSetting(idd = None, context = None):
 			#print(settings[id])
 			return settings[idd];
 	else:
-		if(context.message.server.id in settings.keys()):
-			#print(settings[context.message.server.id])
-			return settings[context.message.server.id];
+		if(context.message.guild.id in settings.keys()):
+			#print(settings[context.message.guild.id])
+			return settings[context.message.guild.id];
 	return None;
 
 import datetime;
@@ -28,7 +28,7 @@ class Timeout:
 	until = None;
 	oldRoles = [];
 
-class ServerSetting:
+class GuildSetting:
 	id = 0;
 	welcomeMessage = '';
 	scheduleMessage = '';
@@ -37,15 +37,15 @@ class ServerSetting:
 	commandpermissions = [];
 	timeouts = {};
 	customCommands = [];
-	server = '';
+	guild = '';
 	
 	def __str__(self):
 		return str(self.id+'\n\t '+str(self.commandpermissions)+'\n\t '+self.scheduleMessage+'\n\t '+self.welcomeMessage+'\n\t '+self.logLevel+'\n\t '+self.prefix);
 						
-	def __init__(self,server):
-		self.id = server.id;
-		self.server = server;
-		settings[server.id] = self;
+	def __init__(self,guild):
+		self.id = guild.id;
+		self.guild = guild;
+		settings[guild.id] = self;
 		self.loadSettings();
 	
 	def setWelcomeMessage(self,msg):
@@ -77,14 +77,14 @@ class ServerSetting:
 				
 	def hasPermission(self,roleID,command):
 		askingRole = None;
-		for r in self.server.roles:
+		for r in self.guild.roles:
 			if r.id == roleID:
 				askingRole = r;
 		if askingRole:		
 			for perm in self.commandpermissions:
 				if perm.command.lower() == command.lower():
 					checkingRole = None;
-					for r in self.server.roles:
+					for r in self.guild.roles:
 						if r.id == perm.role:
 							checkingRole = r;
 					if checkingRole:
@@ -125,7 +125,7 @@ class ServerSetting:
 		return False;
 		
 	def timeoutPerson(self, usr, amount):
-		for mem in self.server.members:
+		for mem in self.guild.members:
 			if ((mem.name == usr) or (mem.id == id)) and (mem.id != adminId):
 				until = datetime.datetime.utcnow() + datetime.timedelta(seconds = amount);
 				timout = Timeout();
@@ -143,7 +143,7 @@ class ServerSetting:
 			'schedule': self.scheduleMessage,
 			'loglevel': self.logLevel,
 			'prefix': self.prefix};
-		updateOrInsert('server', qdkp, qd,True);
+		updateOrInsert('guild', qdkp, qd,True);
 		
 		for k in self.customCommands:
 			k.save(False);
@@ -155,7 +155,7 @@ class ServerSetting:
 	
 	def loadSettings(self):
 		t = (self.id,);
-		util.DBcursor.execute('SELECT * FROM server where id = ?',t);
+		util.DBcursor.execute('SELECT * FROM guild where id = ?',t);
 		row1 = util.DBcursor.fetchone();
 		if row1:
 			self.welcomeMessage = row1['welcome'] if row1['welcome'] else '';
@@ -170,24 +170,24 @@ class ServerSetting:
 		#sleep(timout.until);
 		
 	def isAllowed(self,userID, command):
-		membr = self.server.get_member(userID);
-		allow = (userID == self.server.owner.id) or (userID in adminIds);
+		membr = self.guild.get_member(userID);
+		allow = (userID == self.guild.owner.id) or (userID in adminIds);
 		for role in membr.roles:
 			#mit und ohne !
 			allow = allow or self.hasPermission(role.id,command) or self.hasPermission(role.id,command[1:]);
 		allow = allow and not membr.bot;
 		return allow;
 	
-def isAllowed(contxt = None, userid = None, serverid = None, command = None):
-	if not contxt or not contxt.message or not contxt.message.server:
-		if serverid:
-			sett = getSetting(idd = serverid);
+def isAllowed(contxt = None, userid = None, guildid = None, command = None):
+	if not contxt or not contxt.message or not contxt.message.guild:
+		if guildid:
+			sett = getSetting(idd = guildid);
 			cmd = command;
 		else :
 			return False;
 	else:
 		cmd = contxt.message.content.split(" ",1)[0];
-		return isAllowed(None,contxt.message.author.id,contxt.message.server.id,cmd);
+		return isAllowed(None,contxt.message.author.id,contxt.message.guild.id,cmd);
 	try:	
 		return sett.isAllowed(userID = userid, command = cmd);
 	except:

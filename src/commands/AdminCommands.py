@@ -5,14 +5,13 @@ Created on 23.09.2017
 '''
 
 from discord.ext import commands;
-from discord.ext.commands import Bot;
-from ServerSettings import isAdmin;
+from GuildSettings import isAdmin;
 import discord;
 from util import quote;
 from util import sayWords;
 from util import logEx;
 import util;
-import ServerSettings;
+import GuildSettings;
 import TwitchChecker;
 from builtins import str;
 import math;
@@ -23,10 +22,10 @@ class AdminCommand():
 	
 	client = None;
 	
-	def __init__(self, client : Bot):
+	def __init__(self, client):
 		self.client = client
 
-	@commands.bot.command(pass_context=True, hidden=True)
+	@commands.command(hidden=True)
 	async def play(self, context):
 		"""ADMIN COMMAND : !play <game>"""
 		if isAdmin(context):
@@ -36,7 +35,7 @@ class AdminCommand():
 			else:
 				return await sayWords(context,'need argument');
 			
-	@commands.bot.command(pass_context=True, hidden=True)
+	@commands.command( hidden=True)
 	async def showlog(self, context):
 		"""ADMIN COMMAND : !play <game>"""
 		if isAdmin(context):
@@ -67,7 +66,7 @@ class AdminCommand():
 			else:
 				return await sayWords(context,'need argument');		
 			
-	@commands.bot.command(pass_context=True, hidden=True)
+	@commands.command( hidden=True)
 	async def strip(self, context):
 		"""ADMIN COMMAND : !strip <something>"""
 		if isAdmin(context):
@@ -78,18 +77,18 @@ class AdminCommand():
 			else:
 				return await sayWords(context,'need argument');
 			
-	@commands.bot.command(pass_context=True, hidden=True)
+	@commands.command(hidden=True)
 	async def broadcast(self, context):
 		"""ADMIN COMMAND : !broadcast <message>"""
 		if isAdmin(context):
 			cnt = context.message.content.split(' ',1);
 			if len(cnt) > 1:
-				for s in ServerSettings.settings.values():
-					await self.client.send_message(s.server.get_channel(s.id),cnt[1]);
+				for s in GuildSettings.settings.values():
+					await s.guild.get_channel(s.id).send(cnt[1]);
 			else:
 				return await sayWords(context,'need argument');
 
-	@commands.bot.command(pass_context=True, hidden=True, aliases=['insert', 'update', 'delete'])
+	@commands.command( hidden=True, aliases=['insert', 'update', 'delete'])
 	async def select(self,context):
 		if isAdmin(context):
 			msg = context.message.content[1:];
@@ -124,7 +123,7 @@ class AdminCommand():
 				message = template.format(type(ex).__name__, ex.args)   
 				return await sayWords(context, '`'+message+'`')
 
-	@commands.bot.command(pass_context=True, hidden=True)
+	@commands.command( hidden=True)
 	async def sendMail(self,context):
 		if isAdmin(context):
 			import yagmail;
@@ -134,48 +133,48 @@ class AdminCommand():
 			yag.send('theschippi@gmail.com', 'CSAR Reminder Mail', contents);
 			return await sayWords(context,'done');
 
-	@commands.group(pass_context=True, name = 'turn', hidden = True)
+	@commands.group( name = 'turn', hidden = True)
 	async def switchfeature(self, context):
 		"""ADMIN COMMAND : !turn [youtube|twitch] [on|off]"""
-		if context.invoked_subcommand is None and ServerSettings.isAllowed(context):
+		if context.invoked_subcommand is None and GuildSettings.isAllowed(context):
 			return await sayWords(context,'need arguments: `!turn [youtube|twitch] [on|off]`');
 			 
-	@switchfeature.group(name='twitch', pass_context = True)
+	@switchfeature.group(name='twitch')
 	async def switchtwitch(self, context):
-		if str(context.invoked_subcommand) == 'turn twitch' and ServerSettings.isAllowed(context):
+		if str(context.invoked_subcommand) == 'turn twitch' and GuildSettings.isAllowed(context):
 			return await sayWords(context,'Twitch status is: '+str(TwitchChecker.EnableTwitch));
 	
-	@switchtwitch.command(name='off', pass_context = True)
+	@switchtwitch.command(name='off')
 	async def switchtwitchoff(self, context):
-		if context.invoked_subcommand is None and ServerSettings.isAllowed(context):
+		if context.invoked_subcommand is None and GuildSettings.isAllowed(context):
 			TwitchChecker.EnableTwitch = False;
 			return await sayWords(context,'Twitch status is: '+str(TwitchChecker.EnableTwitch));
 	
-	@switchtwitch.command(name='on', pass_context = True)
+	@switchtwitch.command(name='on')
 	async def switchtwitchon(self, context):
-		if context.invoked_subcommand is None and ServerSettings.isAllowed(context):
+		if context.invoked_subcommand is None and GuildSettings.isAllowed(context):
 			TwitchChecker.EnableTwitch = True;
 			return await sayWords(context,'Twitch status is: '+str(TwitchChecker.EnableTwitch));
 			
-	@switchfeature.group(name='youtube', pass_context = True)
+	@switchfeature.group(name='youtube')
 	async def switchyoutube(self, context):
-		if str(context.invoked_subcommand) == 'turn youtube' and ServerSettings.isAllowed(context):
+		if str(context.invoked_subcommand) == 'turn youtube' and GuildSettings.isAllowed(context):
 			return await sayWords(context,'Youtube status is: '+str(TwitchChecker.EnableYT));
 	
-	@switchyoutube.command(name='off', pass_context = True)
+	@switchyoutube.command(name='off')
 	async def switchyoutubeoff(self, context):
-		if context.invoked_subcommand is None and ServerSettings.isAllowed(context):
+		if context.invoked_subcommand is None and GuildSettings.isAllowed(context):
 			TwitchChecker.EnableYT = False;
 			return await sayWords(context,'Youtube status is: '+str(TwitchChecker.EnableYT));
 	
-	@switchyoutube.command(name='on', pass_context = True)
+	@switchyoutube.command(name='on')
 	async def switchyoutubeon(self, context):
-		if context.invoked_subcommand is None and ServerSettings.isAllowed(context):
+		if context.invoked_subcommand is None and GuildSettings.isAllowed(context):
 			TwitchChecker.EnableYT = True;
 			return await sayWords(context,'Youtube status is: '+str(TwitchChecker.EnableYT));
 				
 			
-	@commands.bot.command(pass_context=True, hidden=True)
+	@commands.command( hidden=True)
 	async def debug(self, context):
 		if isAdmin(context):	  
 			import datetime;	  

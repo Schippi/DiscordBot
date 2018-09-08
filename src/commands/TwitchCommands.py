@@ -11,8 +11,8 @@ from util import askYesNoReaction;
 import util;
 import entities.TwitchEntry;
 import datetime;
-from ServerSettings import isAllowed;
-from ServerSettings import getSetting;
+from GuildSettings import isAllowed;
+from GuildSettings import getSetting;
 from util import fetch;
 import aiohttp;
 import json;
@@ -25,25 +25,25 @@ class TwitchCommand():
 	def __init__(self, bot):
 		self.bot = bot
 
-	@commands.group(pass_context=True)
+	@commands.group()
 	async def twitch(self, ctx):
 		"""TwitchAlert Control"""
 		if ctx.invoked_subcommand is None and isAllowed(ctx):
 			await self.bot.say('twitch commands are add, edit and delete')
 			
-	@twitch.command(name='add', pass_context = True)
+	@twitch.command(name='add')
 	async def add(self, context, name : str = None):
 		"""adds a new alert for <name>"""
 		if(not isAllowed(context)):
 			return;
 		if not name or name == '':
 			return await sayWords(context,'need arguments');
-		if not context.message.server:
-			return await sayWords(context,'need server');
+		if not context.message.guild:
+			return await sayWords(context,'need guild');
 		tname = name.split(' ',1)[0];
-		t = (context.message.server.id,tname);	
+		t = (context.message.guild.id,tname);	
 		entryDict = {'message':entities.TwitchEntry.defaultStreamText};
-		entryDict['id_server'] = context.message.server.id;
+		entryDict['id_guild'] = context.message.guild.id;
 		entryDict['id_channel'] = context.message.channel.id;
 		entryDict['id'] = None;				  
 		entryDict['username'] = tname;
@@ -62,7 +62,7 @@ class TwitchCommand():
 			entryDict['newtimer'] = True;
 			return await self.edit_twitch(context,entryDict);
 		else:
-			for row in util.DBcursor.execute('SELECT * FROM twitch where ID_Server = ? and username = ?',t):
+			for row in util.DBcursor.execute('SELECT * FROM twitch where ID_Guild = ? and username = ?',t):
 				return await sayWords(context,'There already exists an Alert for '+tname);
 		
 		urlsafename = urllib.parse.quote(tname, safe='');
@@ -80,43 +80,43 @@ class TwitchCommand():
 		
 		await self.edit_twitch(context,entryDict);
 		
-	@twitch.command(name='list', pass_context = True)
+	@twitch.command(name='list')
 	async def list(self, context):
 		"""lists active monitors"""
 		if(not isAllowed(context)):
 			return;
-		t = (context.message.server.id,'timer');
+		t = (context.message.guild.id,'timer');
 		l = [];
-		for row in util.DBcursor.execute('SELECT * FROM twitch where ID_Server = ? and not username = ?',t):
+		for row in util.DBcursor.execute('SELECT * FROM twitch where ID_Guild = ? and not username = ?',t):
 			l.append("`"+row['username']+"`");
 		return await sayWords(context, 'here are the channels being monitored: '+", ".join(l));
 		
-	@twitch.command(name='edit', pass_context = True)
+	@twitch.command(name='edit')
 	async def edit(self, context, name : str = None):
 		"""edits the alert for <name>"""
 		if(not isAllowed(context)):
 			return;
 		if not name or name == '':
 			return await sayWords(context,'need arguments');
-		if not context.message.server:
-			return await sayWords(context,'need server');
+		if not context.message.guild:
+			return await sayWords(context,'need guild');
 		tname = name.split(' ',1)[0];
 		entryDict = {};
 		if(tname.lower() == 'timer'):
-			t = (context.message.server.id,tname);	
+			t = (context.message.guild.id,tname);	
 			ids = '';
-			for row in util.DBcursor.execute('SELECT * FROM twitch where ID_Server = ? and username = ?',t):
+			for row in util.DBcursor.execute('SELECT * FROM twitch where ID_Guild = ? and username = ?',t):
 				ids = ids+str(row['id'])+', '
 			if not ids == '':
 				return await sayWords(context,'for timer editing use one of these id\'s: '+ids);
 		if(tname.isnumeric()):
-			t = (context.message.server.id,tname);
-			for row in util.DBcursor.execute('SELECT * FROM twitch where ID_Server = ? and id = ?',t):
+			t = (context.message.guild.id,tname);
+			for row in util.DBcursor.execute('SELECT * FROM twitch where ID_Guild = ? and id = ?',t):
 				for k in row.keys():
 					entryDict[k.lower()] = row[k];
 		else:
-			t = (context.message.server.id,tname);
-			for row in util.DBcursor.execute('SELECT * FROM twitch where ID_Server = ? and username = ?',t):
+			t = (context.message.guild.id,tname);
+			for row in util.DBcursor.execute('SELECT * FROM twitch where ID_Guild = ? and username = ?',t):
 				for k in row.keys():
 					entryDict[k.lower()] = row[k];
 		if len(entryDict.keys()) > 0:		
@@ -143,7 +143,7 @@ class TwitchCommand():
 					+prefix+'tcolor <color> : changes the color on the side. in HEX\n'
 					+prefix+'tgame <message> : only trigger when specific game is played\n'
 					+prefix+'ttime hh:mm-hh:mm-a,b,c : only trigger within timewindow UTC timezone, a,b,c = days on which to check 0= monday, 5 = saturday\n'
-					+prefix+'tchannel <id / name> : change the channel - must be on this server\n'
+					+prefix+'tchannel <id / name> : change the channel - must be on this guild\n'
 					+prefix+'tembed <message> : changes the Embed - , use %%name%%, %%game%%, %%title%% and %%url%% as placeholder\n'
 					+prefix+'tshow : show current options\n'
 					+prefix+'tabort : cancel the process\n'
@@ -182,16 +182,16 @@ class TwitchCommand():
 				if(reply.content.startswith(prefix+'tshow')):
 					rep = 'current options:'
 					for k in entryDict.keys():
-						if( not (k == 'id' or k == 'id_server' or k == 'username') and (not entryDict[k] is None)):
+						if( not (k == 'id' or k == 'id_guild' or k == 'username') and (not entryDict[k] is None)):
 							rep = rep+'\n'+k+'\t: '+str(entryDict[k]);
 					await sayWords(context,rep);
 					
 				if(reply.content.startswith(prefix+'tchannel')):
 					try:
 						ct = reply.content.split(' ',1);
-						chan = reply.server.get_channel(ct[1]);
+						chan = reply.guild.get_channel(ct[1]);
 						if not chan:
-							for c in reply.server.channels:
+							for c in reply.guild.channels:
 								if (c.type == discord.ChannelType.text and c.name.lower() == ct[1].strip().lower()):
 									chan = c;
 									break;
@@ -297,7 +297,7 @@ class TwitchCommand():
 					testx = entities.TwitchEntry.TwitchEntry(entryDict);
 					embedx = testx.getEmbed('Super Channel','Pong','http://google.com','welcome to the internet','image');
 					st = testx.getYString(testx.text,'[Super Channel]','[Pong]','http://google.com','[welcome to the internet]','[image]');
-					await self.bot.send_message(context.message.channel,content = st,embed=embedx);
+					await context.message.channel.send(content = st,embed=embedx);
 			else:
 				break;
 		if reply:
@@ -313,28 +313,28 @@ class TwitchCommand():
 			return;
 		if not name or name == '':
 			return await sayWords(context,'need arguments');
-		if not context.message.server:
-			return await sayWords(context,'need server');
+		if not context.message.guild:
+			return await sayWords(context,'need guild');
 		tname = name.split(' ',1)[0];
-		t = (context.message.server.id,tname);
+		t = (context.message.guild.id,tname);
 		
 		if(tname.lower() == 'timer'):
-			t = (context.message.server.id,tname);	
+			t = (context.message.guild.id,tname);	
 			ids = '';
-			for row in util.DBcursor.execute('SELECT * FROM twitch where ID_Server = ? and username = ?',t):
+			for row in util.DBcursor.execute('SELECT * FROM twitch where ID_Guild = ? and username = ?',t):
 				ids = ids+str(row['id'])+', '
 			if not ids == '':
 				return await sayWords(context,'for timer editing use one of these id\'s: '+ids);
 		if(tname.isnumeric()):
-			t = (context.message.server.id,tname);
-			for row in util.DBcursor.execute('SELECT * FROM twitch where ID_Server = ? and id = ?',t):
+			t = (context.message.guild.id,tname);
+			for row in util.DBcursor.execute('SELECT * FROM twitch where ID_Guild = ? and id = ?',t):
 				if await askYesNoReaction(context, 'Are you sure you want to delete the Timer '+str(row['id']).upper()+'?'):
 					t = (row['id'],);
 					util.DBcursor.execute('DELETE FROM twitch where ID = ?',t);
 					util.DB.commit();
 					return await sayWords(context, 'Alert deleted');
 		else:
-			for row in util.DBcursor.execute('SELECT * FROM twitch where ID_Server = ? and username = ?',t):
+			for row in util.DBcursor.execute('SELECT * FROM twitch where ID_Guild = ? and username = ?',t):
 				if await askYesNoReaction(context, 'Are you sure you want to delete the TwichChecker for '+tname.upper()+'?'):
 					t = (row['id'],);
 					util.DBcursor.execute('DELETE FROM twitch where ID = ?',t);

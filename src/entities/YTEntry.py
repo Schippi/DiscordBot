@@ -22,7 +22,7 @@ class YTEntry:
 	
 	def __init__(self,dic):
 		self.id = dic['id']; 
-		self.server = int(dic['id_server']);
+		self.guild = int(dic['id_guild']);
 		self.channel = int(dic['id_channel']);
 		self.text = dic['message'];
 		self.image = dic['image'];
@@ -42,7 +42,7 @@ class YTEntry:
 		self.username = dic['username'];			
 		
 	def save(self):
-		dic = {'id_server':self.server,
+		dic = {'id_guild':self.guild,
 			'id_channel': self.channel,
 			'message': self.text,
 			'username': self.username,

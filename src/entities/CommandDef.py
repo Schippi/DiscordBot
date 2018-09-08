@@ -10,14 +10,14 @@ import util;
 class Command:
     id = None;
     command = '';
-    serverid = None;
+    guildid = None;
     response = None;
     
-    def __init__(self,idd,serverid,command,response):
+    def __init__(self,idd,guildid,command,response):
         self.id = idd;
         self.command = command;
         self.response = response;
-        self.serverid = serverid;
+        self.guildid = guildid;
     
     def __str__(self):
         return str(self.id)+' - '+self.command;
@@ -25,7 +25,7 @@ class Command:
         
     def save(self, commit = True):
         qdkp = {'id':self.id};
-        qd = {'ID_Server':self.serverid,
+        qd = {'ID_Guild':self.guildid,
             'command': self.command,
             'response': self.response};
         self.id = updateOrInsert('commands', qdkp, qd,False);
@@ -36,11 +36,11 @@ class Command:
         util.delete('commands', 'id', self.id);
         util.DB.commit();
         
-def load(serverid):
+def load(guildid):
     result = [];
-    t = (serverid,);
-    for row in util.DBcursor.execute('SELECT * FROM commands where ID_Server = ?',t):
-        result.append(Command(row['id'],row['id_server'],row['command'],row['response']));
+    t = (guildid,);
+    for row in util.DBcursor.execute('SELECT * FROM commands where ID_Guild = ?',t):
+        result.append(Command(row['id'],row['id_guild'],row['command'],row['response']));
     return result;
     
         
