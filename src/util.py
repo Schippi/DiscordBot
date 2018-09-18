@@ -149,11 +149,22 @@ async def sayWords(context = None,message = None,sett = None, chan = None):
 async def askYesNoReaction(context, question):
 	msg = await sayWords(context, question);
 	await asyncio.sleep(0.1);
-	await client.add_reaction(msg, '\N{WHITE HEAVY CHECK MARK}');
+	await msg.add_reaction('\N{WHITE HEAVY CHECK MARK}');
 	await asyncio.sleep(0.1);
-	await client.add_reaction(msg,'\N{NEGATIVE SQUARED CROSS MARK}'); 
-	res = await client.wait_for_reaction(['\N{WHITE HEAVY CHECK MARK}', '\N{NEGATIVE SQUARED CROSS MARK}'], message=msg, user= context.message.author, timeout = 20);
-	return res and ('\N{WHITE HEAVY CHECK MARK}' == res.reaction.emoji);
+	await msg.add_reaction('\N{NEGATIVE SQUARED CROSS MARK}');
+	def check(reaction,user):
+		#print(reaction.message.id == msg.id);
+		#print(user == context.message.author);
+		#print(reaction.emoji in ['\N{WHITE HEAVY CHECK MARK}', '\N{NEGATIVE SQUARED CROSS MARK}']);
+		if reaction.message.id == msg.id and user == context.message.author and reaction.emoji in ['\N{WHITE HEAVY CHECK MARK}', '\N{NEGATIVE SQUARED CROSS MARK}']:
+			return True;
+		return False;
+	res = None;
+	try:
+		reaction,user = await client.wait_for(event='reaction_add',check = check, timeout = 20);
+	except:
+		pass;
+	return res and ('\N{WHITE HEAVY CHECK MARK}' == reaction.emoji);
 
 async def fetch(session, url, headers):
 	with async_timeout.timeout(10):

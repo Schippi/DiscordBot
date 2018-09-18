@@ -27,14 +27,14 @@ class TTSJack():
 						
 		self.inlineemotes = {	1:':one:',
 						2:':two:',
-						3:'three',
-						4:'four',
-						5:'five',
-						6:'six',
-						7:'seven',
-						8:'eight',
-						9:'nine',
-						10:'ten'}
+						3:':three:',
+						4:':four:',
+						5:':five:',
+						6:':six:',
+						7:':seven:',
+						8:':eight:',
+						9:':nine:',
+						10:':ten:'}
 
 	@commands.group()
 	async def ttsjack(self, ctx):
@@ -84,13 +84,15 @@ class TTSJack():
 	async def get_answer(self, m, question):
 		msg = await m.send(question); 
 		# ^^ sollte m sein 
-		res = await self.bot.wait_for_message(author = m, timeout = 20);
+		def check(message):
+			return message.author == m;
+		res = await self.bot.wait_for(event = 'message', check = check, timeout = 20);
 		return res;
 	
 	
 	async def slow(self,msg):
 		await asyncio.sleep(5);
-		await self.bot.add_reaction(msg, '\N{NEGATIVE SQUARED CROSS MARK}');
+		await msg.add_reaction('\N{NEGATIVE SQUARED CROSS MARK}');
 		
 	
 	
@@ -104,11 +106,14 @@ class TTSJack():
 		
 		for i in range(peoplePlaying):
 			if(i != yourNumber):
-				await self.bot.add_reaction(msg, self.emotes[i+1]);
+				print(i)
+				await msg.add_reaction(self.emotes[i+1]);
 				
-		priv_channel = self.bot.connection._get_private_channel_by_user(m.id)
+		#priv_channel = self.bot.connection._get_private_channel_by_user(m.id)
 		
 		def intcheck(msg):
+			if not msg.author == m:
+				return False;
 			try:
 				if msg.content in self.inlineemotes:
 					return True;
@@ -116,21 +121,17 @@ class TTSJack():
 				return True;
 			except:
 				return False;
+		
+		def emojiCheck(reaction,user):
+			return user == m.id and reaction.message.id == msg.id and reaction.emoji in self.emotes; 
 	
-		taskMsg = asyncio.ensure_future(self.bot.wait_for_message(channel= priv_channel, author = m, timeout = 20, check = intcheck));
-		taskEmote = asyncio.ensure_future(self.bot.wait_for_reaction(message = msg, user = m, timeout = 20));
+		taskMsg = asyncio.ensure_future(self.bot.wait_for(event='message', timeout = 20, check = intcheck));
+		taskEmote = asyncio.ensure_future(self.bot.wait_for(event='reaction_add',check = emojiCheck,  timeout = 20));
 
 		tasks = [taskMsg,
 				taskEmote];
-				
-		#await self.bot.add_reaction(msg, '');
-		# ^^ sollte m sein 
-		#tasks = [
-		#	asyncio.ensure_future(self.bot.add_reaction(msg, '\N{WHITE HEAVY CHECK MARK}')),
-		#	asyncio.ensure_future(self.slow(msg))
-		#	];
 			
-		await self.bot.edit_message(msg,question+'\n + vote now!')
+		await msg.edit(content= question+'\n + vote now!');
 		
 		doneTasks,pendingTasks = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED);
 		for x in pendingTasks:
@@ -159,13 +160,15 @@ class TTSJack():
 		
 		msg = await sayWords(context, role.mention+ '\n game is about to start, you have 30 seconds to press ready');
 		await asyncio.sleep(0.1);
-		await self.bot.add_reaction(msg, '\N{WHITE HEAVY CHECK MARK}');
+		await msg.add_reaction('\N{WHITE HEAVY CHECK MARK}');
 		await asyncio.sleep(0.25);
-		await self.bot.add_reaction(msg,'\N{NEGATIVE SQUARED CROSS MARK}'); 
+		await msg.add_reaction('\N{NEGATIVE SQUARED CROSS MARK}'); 
 		alreadyVoted = {};
 		def check(reaction, user):
-			if not user in alreadyVoted and not user.id == self.bot.user.id:
+			if reaction.message.id == msg.id and not user in alreadyVoted and not user.id == self.bot.user.id:
 				e = str(reaction.emoji)
+				if not e in ['\N{WHITE HEAVY CHECK MARK}', '\N{NEGATIVE SQUARED CROSS MARK}']:
+					return False;
 				alreadyVoted[user] = e;
 				return True;
 				#if e.startswith(('\N{WHITE HEAVY CHECK MARK}', '\N{NEGATIVE SQUARED CROSS MARK}')):
@@ -178,10 +181,16 @@ class TTSJack():
 				relevantMembers.append(mem);
 				print(mem.name);
 		for m in relevantMembers:
-			res = await self.bot.wait_for_reaction(['\N{WHITE HEAVY CHECK MARK}', '\N{NEGATIVE SQUARED CROSS MARK}'], 
-												message=msg, check=check, timeout = 30);
-			if not res or ( '\N{NEGATIVE SQUARED CROSS MARK}' == res.reaction.emoji):
+			res = None;
+			try:
+				reaction,user = await self.bot.wait_for(event='reaction_add', 
+												check=check, timeout = 30);
+				res = 1;
+			except asyncio.TimeoutError:
+				res = None;
+			if not res or ( '\N{NEGATIVE SQUARED CROSS MARK}' == reaction.emoji):
 				return await sayWords(context, 'aborted');
+				
 		await sayWords(context, 'game starting, buckle in');
 		failed = False;
 		
