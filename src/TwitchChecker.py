@@ -30,7 +30,7 @@ from datetime import datetime;
 from util import toDateTime;
 from util import fetch;
 
-file = open(cfgPath+"/../tokens/twitch.token","r");
+file = open(util.cfgPath+"/../tokens/twitch.token","r");
 try:
 	contents =file.read().splitlines(); 
 	TwitchAPI = contents[0];
@@ -38,7 +38,7 @@ except:
 	pass;
 file.close();
 
-file = open(cfgPath+"/../tokens/youtube.token","r");
+file = open(util.cfgPath+"/../tokens/youtube.token","r");
 try:
 	contents =file.read().splitlines(); 
 	YTAPI = contents[0];
