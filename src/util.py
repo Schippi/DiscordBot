@@ -18,7 +18,6 @@ YTAPI = '';
 if len(sys.argv) >= 3:
 	cfgPath = sys.argv[2];
 	
-print(cfgPath+"/../tokens/twitch.token","r");
 file = open(cfgPath+"/../tokens/twitch.token","r");
 try:
 	contents =file.read().splitlines(); 
@@ -183,12 +182,11 @@ async def askYesNoReaction(context, question):
 		if reaction.message.id == msg.id and user == context.message.author and reaction.emoji in ['\N{WHITE HEAVY CHECK MARK}', '\N{NEGATIVE SQUARED CROSS MARK}']:
 			return True;
 		return False;
-	res = None;
 	try:
 		reaction,user = await client.wait_for(event='reaction_add',check = check, timeout = 20);
 	except:
-		pass;
-	return res and ('\N{WHITE HEAVY CHECK MARK}' == reaction.emoji);
+		return False;
+	return not reaction is None and ('\N{WHITE HEAVY CHECK MARK}' == reaction.emoji);
 
 async def fetch(session, url, headers):
 	with async_timeout.timeout(10):
@@ -201,18 +199,20 @@ async def fetch(session, url, headers):
 def sendMail(a,b):
 	import yagmail;
 	import base64;
-	file = open(cfgPath+"/../tokens/mail.token","r");
 	try:
+		file = open(cfgPath+"/../tokens/mail.token","r");
 		contents =file.read().splitlines(); 
 		NAME = contents[0];
 		TOKEN = contents[1];
 	except:
-		pass;
+		print("mailing not setup");
+		if not file is None:
+			file.close();
+		return;
 	file.close();
 	yag = yagmail.SMTP(NAME,base64.b64decode(TOKEN).decode());
-	#yag = yagmail.SMTP('theschippi@gmail.com','vzzllqykrnrpislf');
 	contents = [b];
-	yag.send('theschippi@gmail.com', a, contents);
+	yag.send(NAME, a, contents);
 	
 def changeLog():
 	return '''0.3.0: introduction of changelog\n
