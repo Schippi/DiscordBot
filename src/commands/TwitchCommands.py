@@ -100,9 +100,9 @@ class TwitchCommand():
 			return await sayWords(context,'need arguments');
 		if not context.message.guild:
 			return await sayWords(context,'need guild');
-		tname = name.split(' ',1)[0];
+		tname = name.split(' ',1)[0].lower();
 		entryDict = {};
-		if(tname.lower() == 'timer'):
+		if(tname == 'timer'):
 			t = (context.message.guild.id,tname);	
 			ids = '';
 			for row in util.DBcursor.execute('SELECT * FROM twitch where ID_Guild = ? and username = ?',t):
@@ -116,7 +116,7 @@ class TwitchCommand():
 					entryDict[k.lower()] = row[k];
 		else:
 			t = (context.message.guild.id,tname);
-			for row in util.DBcursor.execute('SELECT * FROM twitch where ID_Guild = ? and username = ?',t):
+			for row in util.DBcursor.execute('SELECT * FROM twitch where ID_Guild = ? and lower(username) = ?',t):
 				for k in row.keys():
 					entryDict[k.lower()] = row[k];
 		if len(entryDict.keys()) > 0:		

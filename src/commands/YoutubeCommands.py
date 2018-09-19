@@ -116,7 +116,7 @@ class YoutubeCommand():
 			return await sayWords(context,'need arguments');
 		if not context.message.guild:
 			return await sayWords(context,'need guild');
-		tname = name.split(' ',1)[0];
+		tname = name.split(' ',1)[0].lower();
 		entryDict = {};
 	
 		t = (context.message.guild.id,tname);
