@@ -486,7 +486,7 @@ async def sayInChannel(context : discord.ext.commands.Context):
 		ct = ct[1].split(':',1);
 		if msg == '' or len(ct) != 2:
 			return await sayWords(context, "need arguments, missing : " + str(len(ct)) + str(ct));
-		ch = context.message.guild.get_channel(ct[0]);
+		ch = context.message.guild.get_channel(int(ct[0]));
 		if not ch:
 			for c in context.message.guild.channels:
 				if(c.type == discord.ChannelType.text and c.name.lower() == ct[0].strip().lower()):

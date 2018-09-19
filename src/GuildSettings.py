@@ -170,6 +170,7 @@ class GuildSetting:
 		#sleep(timout.until);
 		
 	def isAllowed(self,userID, command):
+		userID = int(userID);
 		membr = self.guild.get_member(userID);
 		allow = (userID == self.guild.owner.id) or (userID in adminIds);
 		for role in membr.roles:

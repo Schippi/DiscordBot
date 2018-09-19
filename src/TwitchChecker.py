@@ -104,11 +104,11 @@ async def startChecking(client):
 								l = None;
 								embed = entr.getEmbed(n,g,u,t,l);
 								if not testing:
-									await client.get_guild(str(entr.guild)).get_channel(str(entr.channel)).send(content = entr.getYString(entr.text,n,g,u,t,l),embed=embed);
+									await client.get_guild(entr.guild).get_channel(entr.channel).send(content = entr.getYString(entr.text,n,g,u,t,l),embed=embed);
 									print('timer {0} triggered entry: {1}:{2} - {3}'.format(entr.id, entr.fromtimeH, entr.fromtimeM, entr.days));
 								else:
 									try:
-										await client.get_guild('196211645289201665').get_channel('196211645289201665').send(content = entr.getYString(entr.text,n,g,u,t,l),embed=embed);
+										await client.get_guild(196211645289201665).get_channel(196211645289201665).send(content = entr.getYString(entr.text,n,g,u,t,l),embed=embed);
 									except Exception as e:
 										print(e);
 					if streamArray:
@@ -130,10 +130,10 @@ async def startChecking(client):
 												if (entr.shouldprint(g) and not streamprinted[entr]):
 													embed = entr.getEmbed(n,g,u,t,l);
 													if not testing:
-														await client.get_guild(str(entr.guild)).get_channel(str(entr.channel)).send(content = entr.getYString(entr.text,n,g,u,t,l),embed=embed);
+														await client.get_guild(entr.guild).get_channel(entr.channel).send(content = entr.getYString(entr.text,n,g,u,t,l),embed=embed);
 													else:
 														try:
-															await client.get_guild('196211645289201665').get_channel('196211645289201665').send(content = entr.getYString(entr.text,n,g,u,t,l),embed=embed);
+															await client.get_guild(196211645289201665).get_channel(196211645289201665).send(content = entr.getYString(entr.text,n,g,u,t,l),embed=embed);
 														except Exception as e:
 															print(e);
 													#sayWords(None, entr.getYString(n,g,u,l,t), entr.guild, entr.channel);
@@ -247,10 +247,10 @@ async def startChecking(client):
 										embed = entr.getEmbed(ytUsrs[yt].displayname,u,t,thumb);
 										print(entr.getYString(entr.text,ytUsrs[yt].displayname,u,t,thumb))
 										if not testing:
-											await client.get_guild(str(entr.guild)).get_channel(str(entr.channel)).send(content = entr.getYString(entr.text,ytUsrs[yt].displayname,u,t,thumb),embed=embed);
+											await client.get_guild(entr.guild).get_channel(entr.channel).send(content = entr.getYString(entr.text,ytUsrs[yt].displayname,u,t,thumb),embed=embed);
 										else:
 											try:
-												await client.get_guild('196211645289201665').get_channel('196211645289201665').send(content = entr.getYString(entr.text,ytUsrs[yt].displayname,u,t,thumb),embed=embed);
+												await client.get_guild(196211645289201665).get_channel(196211645289201665).send(content = entr.getYString(entr.text,ytUsrs[yt].displayname,u,t,thumb),embed=embed);
 											except Exception as e:
 												print(e);
 										logEx('sent Youtube message for '+yt);

@@ -5,6 +5,8 @@ import threading;
 import asyncio;
 import async_timeout;
 import sys;
+import yagmail;
+import base64;
 
 DBcursor = None;
 DB = None;
@@ -186,7 +188,7 @@ async def askYesNoReaction(context, question):
 		reaction,user = await client.wait_for(event='reaction_add',check = check, timeout = 20);
 	except:
 		return False;
-	return not reaction is None and ('\N{WHITE HEAVY CHECK MARK}' == reaction.emoji);
+	return not reaction is None and not user is None and ('\N{WHITE HEAVY CHECK MARK}' == reaction.emoji);
 
 async def fetch(session, url, headers):
 	with async_timeout.timeout(10):
@@ -197,8 +199,6 @@ async def fetch(session, url, headers):
 				return '';
 			
 def sendMail(a,b):
-	import yagmail;
-	import base64;
 	try:
 		file = open(cfgPath+"/../tokens/mail.token","r");
 		contents =file.read().splitlines(); 
