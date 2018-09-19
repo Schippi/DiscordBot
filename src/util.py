@@ -4,12 +4,36 @@ from datetime import datetime, timedelta;
 import threading;
 import asyncio;
 import async_timeout;
+import sys;
 
 DBcursor = None;
 DB = None;
 cfgPath = None;
 timeStr= '%Y-%m-%dT%H:%M:%S.%fZ';
 lock = threading.Lock();
+#your Client-ID - go to https://blog.twitch.tv/client-id-required-for-kraken-api-calls-afbb8e95f843 and follow the instructions
+TwitchAPI = '';
+YTAPI = '';
+
+if len(sys.argv) >= 3:
+	cfgPath = sys.argv[2];
+	
+print(cfgPath+"/../tokens/twitch.token","r");
+file = open(cfgPath+"/../tokens/twitch.token","r");
+try:
+	contents =file.read().splitlines(); 
+	TwitchAPI = contents[0];
+except:
+	pass;
+file.close();
+
+file = open(cfgPath+"/../tokens/youtube.token","r");
+try:
+	contents =file.read().splitlines(); 
+	YTAPI = contents[0];
+except:
+	pass;
+file.close();
 
 def toDateTime(strr):
 	if(strr == None):

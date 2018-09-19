@@ -16,7 +16,7 @@ from GuildSettings import getSetting;
 from util import fetch;
 import aiohttp;
 import json;
-from TwitchChecker import TwitchAPI;
+from util import TwitchAPI;
 from util import sendMail;
 import urllib;
 

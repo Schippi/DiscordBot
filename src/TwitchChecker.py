@@ -3,9 +3,7 @@
 ####################################################################
 
 
-#your Client-ID - go to https://blog.twitch.tv/client-id-required-for-kraken-api-calls-afbb8e95f843 and follow the instructions
-TwitchAPI = '';
-YTAPI = '';
+
 #in what interval do you want to check the Status
 MinuteInterval = 1
 
@@ -29,22 +27,6 @@ import fileinput
 from datetime import datetime;
 from util import toDateTime;
 from util import fetch;
-
-file = open(util.cfgPath+"/../tokens/twitch.token","r");
-try:
-	contents =file.read().splitlines(); 
-	TwitchAPI = contents[0];
-except:
-	pass;
-file.close();
-
-file = open(util.cfgPath+"/../tokens/youtube.token","r");
-try:
-	contents =file.read().splitlines(); 
-	YTAPI = contents[0];
-except:
-	pass;
-file.close();
 
 checkStatusOnStart = False;
 EnableTwitch = True;
