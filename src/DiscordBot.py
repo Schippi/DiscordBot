@@ -1,4 +1,3 @@
-from commands.JackCommands import TTSJack
 CSARversion = '0.3.0'
 
 import GuildSettings;
@@ -10,7 +9,6 @@ import logging;
 from datetime import datetime, timedelta;
 import sqlite3;
 import os;
-from RunnerGame import playgame;
 import asyncio;
 from asyncio import CancelledError;
 import signal;
@@ -23,11 +21,14 @@ from commands.TwitchCommands import TwitchCommand;
 from commands.AdminCommands import AdminCommand;
 from commands.YoutubeCommands import YoutubeCommand;
 from commands.JackCommands import TTSJack;
+from RunnerGame import playgame;
 
 import discord;
 from discord.ext import commands;
+from discord.ext.commands.errors import CommandNotFound;
+from discord.guild import Guild;
 
-from TwitchChecker import startChecking
+from TwitchChecker import startChecking;
 
 from util import sayWords;
 from util import quote;
