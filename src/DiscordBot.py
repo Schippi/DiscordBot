@@ -245,8 +245,8 @@ async def setLogLevel(context):
 	"""!setLogLevel whisper|mute|channel : how the bot responds"""
 	if isAllowed(context):
 		cnt = context.message.content.split(' ',1);
-		if len(cnt) > 1:
-			getSetting(context = context).setLogLevel(cnt[1]);
+		if len(cnt) > 1 and cnt[1].lower() in ('mute','whisper'):
+			getSetting(context = context).setLogLevel(cnt[1].lower());
 			return await sayWords(context,'loglevel set to:\n\n'+quote(cnt[1]));
 		else:
 			getSetting(context = context).setLogLevel('channel');
