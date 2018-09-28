@@ -184,6 +184,8 @@ class GuildSetting:
 		return allow;
 	
 def isAllowed(contxt = None, userid = None, guildid = None, command = None):
+	if isAdmin(contxt) or userid in adminIds:
+		return True;
 	if not contxt or not contxt.message or not contxt.message.guild:
 		if guildid:
 			sett = getSetting(idd = guildid);
