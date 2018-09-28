@@ -158,7 +158,7 @@ async def on_guild_join(guild):
 	GuildSetting(guild);
 	print("new server!: "+ guild.name);
 	
-@client.command()
+@client.command(hidden=True)
 async def shitgame(context):
 	if(context.message.guild):
 		m = await context.send('initializing...\n be in a voicechannel - deaf = down - mute = up')
