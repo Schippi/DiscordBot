@@ -99,8 +99,8 @@ def printRoles(client,context):
 async def on_ready():
 	
 	for svr in client.guilds:
-		print(svr.name);
 		GuildSetting(svr);
+		print(svr.name);
 	if not testing:	
 		sendMail('Bot Back Up','bot back online');
 	else:
