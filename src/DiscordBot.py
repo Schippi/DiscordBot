@@ -182,12 +182,10 @@ async def get(context):
 @client.command()
 async def allow(context):
 	"""!allow <command>:<role> : allows rights to use the command"""
-	for svr in client.guilds:
-		GuildSetting(svr);
 	if isAllowed(context):
 		cnt = context.message.content.split(' ',1);
 		if(len(cnt) < 2):
-			return await sayWords(context,needArgs('!allow <Command> <Role> '));
+			return await sayWords(context,needArgs('!allow <Command>:<Role> '));
 		cnt = cnt[1].split(':',1);
 		if(len(cnt) > 1):
 			rl = getRoleID(context,cnt[1].strip());
@@ -203,9 +201,11 @@ async def allow(context):
 		
 @client.command()
 async def deny(context):
-	"""!deny <command> <role> : revokes rights to use the command"""
+	"""!deny <command>:<role> : revokes rights to use the command"""
 	if isAllowed(context):
 		cnt = context.message.content.split(' ',1);
+		if(len(cnt) < 2):
+			return await sayWords(context,needArgs('!deny <Command>:<Role> '));
 		cnt = cnt[1].split(':',1);
 		if(len(cnt) > 1):
 			rl = getRoleID(context,cnt[1].strip());
@@ -213,9 +213,9 @@ async def deny(context):
 				getSetting(context = context).removePermission(rl,cnt[0]);
 				return await sayWords(context,'command '+cnt[0]+' now usable by Role '+cnt[1]);
 			else:
-				return await sayWords(context,'no such role:\n'+quote('!allow <Command>:<Role>'));
+				return await sayWords(context,'no such role:\n'+quote('!deny <Command>:<Role>'));
 		else:
-			return await sayWords(context,needArgs('!allow <Command> <Role> '));
+			return await sayWords(context,needArgs('!deny <Command>:<Role> '));
 	else:
 		return await sayWords(context,NOT_ALLOWED);
 			
