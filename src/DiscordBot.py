@@ -156,6 +156,7 @@ async def on_message(message):
 @client.event
 async def on_guild_join(guild):
 	GuildSetting(guild);
+	print("new server!: "+ guild.name);
 	
 @client.command()
 async def shitgame(context):
