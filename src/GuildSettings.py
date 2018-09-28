@@ -126,8 +126,8 @@ class GuildSetting:
 		
 	def timeoutPerson(self, usr, amount):
 		for mem in self.guild.members:
-			print('timed out'+'   '+mem.name+'#'+mem.discriminator)
 			if ((mem.name+'#'+mem.discriminator == usr) or (str(mem.id) == usr)) and (mem.id != adminId):
+				print('timed out'+'   '+mem.name+'#'+mem.discriminator)
 				until = datetime.datetime.utcnow() + datetime.timedelta(seconds = amount);
 				timout = Timeout();
 				timout.until = amount;

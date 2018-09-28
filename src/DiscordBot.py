@@ -261,11 +261,12 @@ async def timeout(context):
 	i = 0;
 	cnt = context.message.content.split(' ',1)[1];
 	if not context.message.guild:
-		cnt = cnt.rsplit(' ',2);
-		if not cnt[len(cnt)-1].isdigit():
+		cnt = cnt.rsplit(' ');
+		if not cnt[len(cnt)-1].isdigit() or len(cnt) < 3:
 			cnt = ' '.join(cnt).split(' ',1);
 			cnt.append('600');
 		else:
+			cnt = ' '.join(cnt).rsplit(' ',2);
 			tmp = cnt[len(cnt)-1];
 			cnt = ' '.join(cnt).split(' ',1);
 			tmp2 = cnt[len(cnt)-1].rsplit(' ',1)[0];
