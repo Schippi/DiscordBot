@@ -126,7 +126,8 @@ class GuildSetting:
 		
 	def timeoutPerson(self, usr, amount):
 		for mem in self.guild.members:
-			if ((mem.name == usr) or (mem.id == id)) and (mem.id != adminId):
+			print('timed out'+'   '+mem.name+'#'+mem.discriminator)
+			if ((mem.name+'#'+mem.discriminator == usr) or (str(mem.id) == usr)) and (mem.id != adminId):
 				until = datetime.datetime.utcnow() + datetime.timedelta(seconds = amount);
 				timout = Timeout();
 				timout.until = amount;
@@ -135,6 +136,9 @@ class GuildSetting:
 					timout.oldRoles.append(role);
 				self.timeouts[mem.id] = until;	
 				self.saveSettings();
+				return True;
+		return False;
+			
 		
 			
 	def saveSettings(self):

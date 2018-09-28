@@ -259,27 +259,37 @@ async def timeout(context):
 	"""!timeout [guildID if whispering] <person> <time in seconds>"""
 	allowed = False;
 	i = 0;
+	cnt = context.message.content.split(' ',1)[1];
 	if not context.message.guild:
-		cnt = context.message.content.split(' ',3);
-		if len(cnt) == 3:
+		cnt = cnt.rsplit(' ',2);
+		if not cnt[len(cnt)-1].isdigit():
+			cnt = ' '.join(cnt).split(' ',1);
 			cnt.append('600');
-		if len(cnt) > 3:
-			sett = getSetting(cnt[1]);
+		else:
+			tmp = cnt[len(cnt)-1];
+			cnt = ' '.join(cnt).split(' ',1);
+			tmp2 = cnt[len(cnt)-1].rsplit(' ',1)[0];
+			cnt[len(cnt)-1] = tmp2;
+			cnt.append(tmp);
+		if len(cnt) > 2:
+			sett = getSetting(int(cnt[0]));
 			i = 1;
-			allowed = isAllowed(userid =context.message.author.id, guildid=cnt[1], command=cnt[0]);
+			allowed = isAllowed(userid =context.message.author.id, guildid=int(cnt[0]), command='timeout');
 	else:
 		allowed = isAllowed(context);
 		sett = getSetting(context = context);
-		cnt = context.message.content.split(' ',2);
-		if len(cnt) == 2:
+		cnt = cnt.rsplit(' ',1);
+		if not cnt[len(cnt)-1].isdigit():
 			cnt.append('600');
 	if allowed:
-		if len(cnt) > 2+i:
-			usr = cnt[1+i]
-			amount = int(cnt[2+i]);			
-			sett.timeoutPerson(usr,amount)
-			if(amount > 1):
-				return await context.send(usr + ' has been timed out for '+str(amount)+'seconds');	
+		if len(cnt) > 1+i:
+			usr = cnt[0+i];
+			amount = int(cnt[1+i]);			
+			if sett.timeoutPerson(usr,amount):
+				if(amount > 1):
+					return await context.send(usr + ' has been timed out for '+str(amount)+'seconds');
+			else:
+				return await context.send('cannot find user, enter with # or use the user-id')	
 		else:
 			return await context.send(needArgs('!timeout [guildid] <user> [time in seconds = 600]'));
 		
