@@ -236,7 +236,7 @@ async def startChecking(client):
 							thumb = thumb['url'];	
 							t = newestItem['snippet']['title'];
 							newid = newestItem['snippet']['resourceId']['videoId'];
-							if(newid != ytUsrs[yt].lastID or ytUsrs[yt].changed == True):
+							if(newid != ytUsrs[yt].lastID or ytUsrs[yt].lastprinted != newestTimeAsString or ytUsrs[yt].changed == True):
 								ytUsrs[yt].lastID = newid;
 								ytUsrs[yt].lastprinted = newestTimeAsString;
 								ytUsrs[yt].save();
