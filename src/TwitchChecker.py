@@ -241,21 +241,23 @@ async def startChecking(client):
 								ytUsrs[yt].lastprinted = newestTimeAsString;
 								ytUsrs[yt].save();
 							u = 'https://www.youtube.com/watch?v='+	newid;
-							for entr in ytentries[yt]:
-								try:
-									if (entr.shouldprint(newestTime)):
-										embed = entr.getEmbed(ytUsrs[yt].displayname,u,t,thumb);
-										print(entr.getYString(entr.text,ytUsrs[yt].displayname,u,t,thumb))
-										if not testing:
-											await client.get_guild(entr.guild).get_channel(entr.channel).send(content = entr.getYString(entr.text,ytUsrs[yt].displayname,u,t,thumb),embed=embed);
-										else:
-											try:
-												await client.get_guild(196211645289201665).get_channel(196211645289201665).send(content = entr.getYString(entr.text,ytUsrs[yt].displayname,u,t,thumb),embed=embed);
-											except Exception as e:
-												print(e);
-										logEx('sent Youtube message for '+yt);
-								except Exception as e:
-									logEx(e);
+							
+							if(newid != ytUsrs[yt].lastID):
+								for entr in ytentries[yt]:
+									try:
+										if (entr.shouldprint(newestTime)):
+											embed = entr.getEmbed(ytUsrs[yt].displayname,u,t,thumb);
+											print(entr.getYString(entr.text,ytUsrs[yt].displayname,u,t,thumb))
+											if not testing:
+												await client.get_guild(entr.guild).get_channel(entr.channel).send(content = entr.getYString(entr.text,ytUsrs[yt].displayname,u,t,thumb),embed=embed);
+											else:
+												try:
+													await client.get_guild(196211645289201665).get_channel(196211645289201665).send(content = entr.getYString(entr.text,ytUsrs[yt].displayname,u,t,thumb),embed=embed);
+												except Exception as e:
+													print(e);
+											logEx('sent Youtube message for '+yt);
+									except Exception as e:
+										logEx(e);
 						except aiohttp.ClientConnectionError as ex:
 							logEx(ex);
 						except asyncio.TimeoutError as ex:
