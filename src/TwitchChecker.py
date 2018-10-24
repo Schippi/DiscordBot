@@ -236,13 +236,13 @@ async def startChecking(client):
 							thumb = thumb['url'];	
 							t = newestItem['snippet']['title'];
 							newid = newestItem['snippet']['resourceId']['videoId'];
+							oldid = ytUsrs[yt].lastID;
 							if(newid != ytUsrs[yt].lastID or ytUsrs[yt].lastprinted != newestTimeAsString or ytUsrs[yt].changed == True):
 								ytUsrs[yt].lastID = newid;
 								ytUsrs[yt].lastprinted = newestTimeAsString;
 								ytUsrs[yt].save();
 							u = 'https://www.youtube.com/watch?v='+	newid;
-							
-							if(newid != ytUsrs[yt].lastID):
+							if(newid != oldid):
 								for entr in ytentries[yt]:
 									try:
 										if (entr.shouldprint(newestTime)):
