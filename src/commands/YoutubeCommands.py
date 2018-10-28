@@ -15,7 +15,7 @@ from GuildSettings import getSetting;
 from util import fetch;
 import aiohttp;
 import json;
-from TwitchChecker import YTAPI;
+from util import YTAPI;
 from util import sendMail;
 import urllib;
 
@@ -116,7 +116,7 @@ class YoutubeCommand():
 			return await sayWords(context,'need arguments');
 		if not context.message.guild:
 			return await sayWords(context,'need guild');
-		tname = name.split(' ',1)[0];
+		tname = name.split(' ',1)[0].lower();
 		entryDict = {};
 	
 		t = (context.message.guild.id,tname);

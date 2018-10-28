@@ -1,4 +1,3 @@
-from commands.JackCommands import TTSJack
 CSARversion = '0.3.0'
 
 import GuildSettings;
@@ -10,7 +9,6 @@ import logging;
 from datetime import datetime, timedelta;
 import sqlite3;
 import os;
-from RunnerGame import playgame;
 import asyncio;
 from asyncio import CancelledError;
 import signal;
@@ -23,11 +21,14 @@ from commands.TwitchCommands import TwitchCommand;
 from commands.AdminCommands import AdminCommand;
 from commands.YoutubeCommands import YoutubeCommand;
 from commands.JackCommands import TTSJack;
+from RunnerGame import playgame;
 
 import discord;
 from discord.ext import commands;
+from discord.ext.commands.errors import CommandNotFound;
+from discord.guild import Guild;
 
-from TwitchChecker import startChecking
+from TwitchChecker import startChecking;
 
 from util import sayWords;
 from util import quote;
@@ -99,8 +100,8 @@ def printRoles(client,context):
 async def on_ready():
 	
 	for svr in client.guilds:
-		print(svr.name);
 		GuildSetting(svr);
+		print(svr.name);
 	if not testing:	
 		sendMail('Bot Back Up','bot back online');
 	else:
@@ -137,6 +138,8 @@ async def on_message(message):
 					ok = False;
 			if(ok):
 				msg = message.content.split(' ',1);
+				if (len(msg) > 0 and msg[0].startswith('!help') and sett.prefix != '!'):
+					return await sayWords(sett=sett, chan = message.channel,message= 'prefix is "'+sett.prefix+'" - use '+sett.prefix+'help for more help')
 				if (len(msg) > 0) and (msg[0][:1] == checkPrefix(client,message)):
 					c = client.all_commands.get(msg[0][1:]);
 					if (c is None) and sett.isAllowed(userID = message.author.id,command = msg[0]):
@@ -153,8 +156,9 @@ async def on_message(message):
 @client.event
 async def on_guild_join(guild):
 	GuildSetting(guild);
+	print("new server!: "+ guild.name);
 	
-@client.command()
+@client.command(hidden=True)
 async def shitgame(context):
 	if(context.message.guild):
 		m = await context.send('initializing...\n be in a voicechannel - deaf = down - mute = up')
@@ -178,12 +182,10 @@ async def get(context):
 @client.command()
 async def allow(context):
 	"""!allow <command>:<role> : allows rights to use the command"""
-	for svr in client.guilds:
-		GuildSetting(svr);
 	if isAllowed(context):
 		cnt = context.message.content.split(' ',1);
 		if(len(cnt) < 2):
-			return await sayWords(context,needArgs('!allow <Command> <Role> '));
+			return await sayWords(context,needArgs('!allow <Command>:<Role> '));
 		cnt = cnt[1].split(':',1);
 		if(len(cnt) > 1):
 			rl = getRoleID(context,cnt[1].strip());
@@ -199,9 +201,11 @@ async def allow(context):
 		
 @client.command()
 async def deny(context):
-	"""!deny <command> <role> : revokes rights to use the command"""
+	"""!deny <command>:<role> : revokes rights to use the command"""
 	if isAllowed(context):
 		cnt = context.message.content.split(' ',1);
+		if(len(cnt) < 2):
+			return await sayWords(context,needArgs('!deny <Command>:<Role> '));
 		cnt = cnt[1].split(':',1);
 		if(len(cnt) > 1):
 			rl = getRoleID(context,cnt[1].strip());
@@ -209,9 +213,9 @@ async def deny(context):
 				getSetting(context = context).removePermission(rl,cnt[0]);
 				return await sayWords(context,'command '+cnt[0]+' now usable by Role '+cnt[1]);
 			else:
-				return await sayWords(context,'no such role:\n'+quote('!allow <Command>:<Role>'));
+				return await sayWords(context,'no such role:\n'+quote('!deny <Command>:<Role>'));
 		else:
-			return await sayWords(context,needArgs('!allow <Command> <Role> '));
+			return await sayWords(context,needArgs('!deny <Command>:<Role> '));
 	else:
 		return await sayWords(context,NOT_ALLOWED);
 			
@@ -219,7 +223,7 @@ async def deny(context):
 async def on_member_join(member):
 	sett = getSetting(member.guild.id);
 	if sett and (sett.getWelcomeMessage() != ''):
-		print('welcomed: '+member.user.username+'#'+member.user.discriminator);
+		print('welcomed: '+member.user.username+'#'+member.user.discriminator+'('+str(member.user.id)+')');
 		return await member.send(sett.getWelcomeMessage());
 		
 @client.command()
@@ -241,8 +245,8 @@ async def setLogLevel(context):
 	"""!setLogLevel whisper|mute|channel : how the bot responds"""
 	if isAllowed(context):
 		cnt = context.message.content.split(' ',1);
-		if len(cnt) > 1:
-			getSetting(context = context).setLogLevel(cnt[1]);
+		if len(cnt) > 1 and cnt[1].lower() in ('mute','whisper'):
+			getSetting(context = context).setLogLevel(cnt[1].lower());
 			return await sayWords(context,'loglevel set to:\n\n'+quote(cnt[1]));
 		else:
 			getSetting(context = context).setLogLevel('channel');
@@ -255,27 +259,38 @@ async def timeout(context):
 	"""!timeout [guildID if whispering] <person> <time in seconds>"""
 	allowed = False;
 	i = 0;
+	cnt = context.message.content.split(' ',1)[1];
 	if not context.message.guild:
-		cnt = context.message.content.split(' ',3);
-		if len(cnt) == 3:
+		cnt = cnt.rsplit(' ');
+		if not cnt[len(cnt)-1].isdigit() or len(cnt) < 3:
+			cnt = ' '.join(cnt).split(' ',1);
 			cnt.append('600');
-		if len(cnt) > 3:
-			sett = getSetting(cnt[1]);
+		else:
+			cnt = ' '.join(cnt).rsplit(' ',2);
+			tmp = cnt[len(cnt)-1];
+			cnt = ' '.join(cnt).split(' ',1);
+			tmp2 = cnt[len(cnt)-1].rsplit(' ',1)[0];
+			cnt[len(cnt)-1] = tmp2;
+			cnt.append(tmp);
+		if len(cnt) > 2:
+			sett = getSetting(int(cnt[0]));
 			i = 1;
-			allowed = isAllowed(userid =context.message.author.id, guildid=cnt[1], command=cnt[0]);
+			allowed = isAllowed(userid =context.message.author.id, guildid=int(cnt[0]), command='timeout');
 	else:
 		allowed = isAllowed(context);
 		sett = getSetting(context = context);
-		cnt = context.message.content.split(' ',2);
-		if len(cnt) == 2:
+		cnt = cnt.rsplit(' ',1);
+		if not cnt[len(cnt)-1].isdigit():
 			cnt.append('600');
 	if allowed:
-		if len(cnt) > 2+i:
-			usr = cnt[1+i]
-			amount = int(cnt[2+i]);			
-			sett.timeoutPerson(usr,amount)
-			if(amount > 1):
-				return await context.send(usr + ' has been timed out for '+str(amount)+'seconds');	
+		if len(cnt) > 1+i:
+			usr = cnt[0+i];
+			amount = int(cnt[1+i]);			
+			if sett.timeoutPerson(usr,amount):
+				if(amount > 1):
+					return await context.send(usr + ' has been timed out for '+str(amount)+'seconds');
+			else:
+				return await context.send('cannot find user, enter with # or use the user-id')	
 		else:
 			return await context.send(needArgs('!timeout [guildid] <user> [time in seconds = 600]'));
 		
@@ -486,7 +501,7 @@ async def sayInChannel(context : discord.ext.commands.Context):
 		ct = ct[1].split(':',1);
 		if msg == '' or len(ct) != 2:
 			return await sayWords(context, "need arguments, missing : " + str(len(ct)) + str(ct));
-		ch = context.message.guild.get_channel(ct[0]);
+		ch = context.message.guild.get_channel(int(ct[0]));
 		if not ch:
 			for c in context.message.guild.channels:
 				if(c.type == discord.ChannelType.text and c.name.lower() == ct[0].strip().lower()):

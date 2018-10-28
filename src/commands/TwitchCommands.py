@@ -16,7 +16,7 @@ from GuildSettings import getSetting;
 from util import fetch;
 import aiohttp;
 import json;
-from TwitchChecker import TwitchAPI;
+from util import TwitchAPI;
 from util import sendMail;
 import urllib;
 
@@ -100,9 +100,9 @@ class TwitchCommand():
 			return await sayWords(context,'need arguments');
 		if not context.message.guild:
 			return await sayWords(context,'need guild');
-		tname = name.split(' ',1)[0];
+		tname = name.split(' ',1)[0].lower();
 		entryDict = {};
-		if(tname.lower() == 'timer'):
+		if(tname == 'timer'):
 			t = (context.message.guild.id,tname);	
 			ids = '';
 			for row in util.DBcursor.execute('SELECT * FROM twitch where ID_Guild = ? and username = ?',t):
@@ -116,7 +116,7 @@ class TwitchCommand():
 					entryDict[k.lower()] = row[k];
 		else:
 			t = (context.message.guild.id,tname);
-			for row in util.DBcursor.execute('SELECT * FROM twitch where ID_Guild = ? and username = ?',t):
+			for row in util.DBcursor.execute('SELECT * FROM twitch where ID_Guild = ? and lower(username) = ?',t):
 				for k in row.keys():
 					entryDict[k.lower()] = row[k];
 		if len(entryDict.keys()) > 0:		
@@ -140,7 +140,7 @@ class TwitchCommand():
 					'- Customizing Options:\n'
 					+prefix+'tmessage <message> : set custom message, use %%name%%, %%game%%, %%title%% and %%url%% as placeholder\n'
 					+prefix+'timage <url> : the displayed picture\n'
-					+prefix+'tcolor <color> : changes the color on the side. in HEX\n'
+					+prefix+'tcolor <color> : changes the color on the side of the embed. in HEX\n'
 					+prefix+'tgame <message> : only trigger when specific game is played\n'
 					+prefix+'ttime hh:mm-hh:mm-a,b,c : only trigger within timewindow UTC timezone, a,b,c = days on which to check 0= monday, 5 = saturday\n'
 					+prefix+'tchannel <id / name> : change the channel - must be on this guild\n'
@@ -148,7 +148,7 @@ class TwitchCommand():
 					+prefix+'tshow : show current options\n'
 					+prefix+'tabort : cancel the process\n'
 					+prefix+'tfinish : complete the process\n'
-					+prefix+'ttest : test it\n'
+					+prefix+'ttest : test it in this channel\n'
 					+prefix+'thelp : print help again\n'
 					+'current time is: '+datetime.datetime.now().strftime('%H:%M:%S')
 					+'```');
@@ -185,7 +185,7 @@ class TwitchCommand():
 					rep = 'current options:'
 					for k in entryDict.keys():
 						if( not (k == 'id' or k == 'id_guild' or k == 'username') and (not entryDict[k] is None)):
-							rep = rep+'\n'+k+'\t: '+str(entryDict[k]);
+							rep = rep+'\n'+k+'\t: `'+str(entryDict[k])+'`';
 					await sayWords(context,rep);
 					
 				if(reply.content.startswith(prefix+'tchannel')):

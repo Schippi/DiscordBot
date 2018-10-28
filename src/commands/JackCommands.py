@@ -86,16 +86,15 @@ class TTSJack():
 		# ^^ sollte m sein 
 		def check(message):
 			return message.author == m;
-		res = await self.bot.wait_for(event = 'message', check = check, timeout = 20);
-		return res;
-	
+		try:
+			return await self.bot.wait_for(event = 'message', check = check, timeout = 20);
+		except:
+			return None;
 	
 	async def slow(self,msg):
 		await asyncio.sleep(5);
 		await msg.add_reaction('\N{NEGATIVE SQUARED CROSS MARK}');
 		
-	
-	
 	async def get_number_answer(self, m, question:str, yourNumber:int, peoplePlaying:int):
 		if not m:
 			return m,0;
@@ -106,7 +105,6 @@ class TTSJack():
 		
 		for i in range(peoplePlaying):
 			if(i != yourNumber):
-				print(i)
 				await msg.add_reaction(self.emotes[i+1]);
 				
 		#priv_channel = self.bot.connection._get_private_channel_by_user(m.id)
@@ -123,10 +121,25 @@ class TTSJack():
 				return False;
 		
 		def emojiCheck(reaction,user):
-			return user == m.id and reaction.message.id == msg.id and reaction.emoji in self.emotes; 
+			print(reaction.emoji in self.emotes.values());
+			return user.id == m.id and reaction.message.id == msg.id and reaction.emoji in self.emotes.values(); 
 	
-		taskMsg = asyncio.ensure_future(self.bot.wait_for(event='message', timeout = 20, check = intcheck));
-		taskEmote = asyncio.ensure_future(self.bot.wait_for(event='reaction_add',check = emojiCheck,  timeout = 20));
+		async def waitMessageWrap():
+			try:
+				a = await self.bot.wait_for(event='message', timeout = 20, check = intcheck);
+				return a;
+			except:
+				return None;
+			
+		async def waitEmojiWrap():
+			try:
+				b = await self.bot.wait_for(event='reaction_add',check = emojiCheck,  timeout = 20)
+				return b;
+			except:
+				return None;	
+	
+		taskMsg = asyncio.ensure_future(waitMessageWrap());
+		taskEmote = asyncio.ensure_future(waitEmojiWrap());
 
 		tasks = [taskMsg,
 				taskEmote];
@@ -138,13 +151,14 @@ class TTSJack():
 			x.cancel();
 		#try:
 		for x in doneTasks:
-			res = x.result();
-			if isinstance(res, discord.message.Message):
-				return m,int(res.content);
-			elif isinstance(res, discord.client.WaitedReaction):
+			tup = x.result();
+			if isinstance(tup, discord.message.Message):
+				return m,int(tup.content);
+			elif isinstance(tup, tuple):
+				res = tup[0];
 				#print(res.reaction.emoji.encode("ascii"));
 				for k, v in self.emotes.items():
-					if v == res.reaction.emoji:
+					if v == res.emoji:
 						return m,k;
 			else:
 				return m,0;	

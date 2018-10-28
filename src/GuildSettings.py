@@ -126,7 +126,8 @@ class GuildSetting:
 		
 	def timeoutPerson(self, usr, amount):
 		for mem in self.guild.members:
-			if ((mem.name == usr) or (mem.id == id)) and (mem.id != adminId):
+			if ((mem.name+'#'+mem.discriminator == usr) or (str(mem.id) == usr)) and (mem.id != adminId):
+				print('timed out'+'   '+mem.name+'#'+mem.discriminator)
 				until = datetime.datetime.utcnow() + datetime.timedelta(seconds = amount);
 				timout = Timeout();
 				timout.until = amount;
@@ -135,6 +136,9 @@ class GuildSetting:
 					timout.oldRoles.append(role);
 				self.timeouts[mem.id] = until;	
 				self.saveSettings();
+				return True;
+		return False;
+			
 		
 			
 	def saveSettings(self):
@@ -170,6 +174,7 @@ class GuildSetting:
 		#sleep(timout.until);
 		
 	def isAllowed(self,userID, command):
+		userID = int(userID);
 		membr = self.guild.get_member(userID);
 		allow = (userID == self.guild.owner.id) or (userID in adminIds);
 		for role in membr.roles:
@@ -179,6 +184,8 @@ class GuildSetting:
 		return allow;
 	
 def isAllowed(contxt = None, userid = None, guildid = None, command = None):
+	if isAdmin(contxt) or userid in adminIds:
+		return True;
 	if not contxt or not contxt.message or not contxt.message.guild:
 		if guildid:
 			sett = getSetting(idd = guildid);

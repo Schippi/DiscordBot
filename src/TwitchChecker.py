@@ -3,9 +3,7 @@
 ####################################################################
 
 
-#your Client-ID - go to https://blog.twitch.tv/client-id-required-for-kraken-api-calls-afbb8e95f843 and follow the instructions
-TwitchAPI = '';
-YTAPI = '';
+
 #in what interval do you want to check the Status
 MinuteInterval = 1
 
@@ -29,22 +27,6 @@ import fileinput
 from datetime import datetime;
 from util import toDateTime;
 from util import fetch;
-
-file = open(util.cfgPath+"/../tokens/twitch.token","r");
-try:
-	contents =file.read().splitlines(); 
-	TwitchAPI = contents[0];
-except:
-	pass;
-file.close();
-
-file = open(util.cfgPath+"/../tokens/youtube.token","r");
-try:
-	contents =file.read().splitlines(); 
-	YTAPI = contents[0];
-except:
-	pass;
-file.close();
 
 checkStatusOnStart = False;
 EnableTwitch = True;
@@ -127,10 +109,9 @@ async def startChecking(client):
 									except:
 										print('timer broken');
 										pass;
-									
 								else:
 									try:
-										await client.get_guild('196211645289201665').get_channel('196211645289201665').send(content = entr.getYString(entr.text,n,g,u,t,l),embed=embed);
+										await client.get_guild(196211645289201665).get_channel(196211645289201665).send(content = entr.getYString(entr.text,n,g,u,t,l),embed=embed);
 									except Exception as e:
 										print(e);
 					if streamArray:
@@ -152,10 +133,10 @@ async def startChecking(client):
 												if (entr.shouldprint(g) and not streamprinted[entr]):
 													embed = entr.getEmbed(n,g,u,t,l);
 													if not testing:
-														await client.get_guild(str(entr.guild)).get_channel(str(entr.channel)).send(content = entr.getYString(entr.text,n,g,u,t,l),embed=embed);
+														await client.get_guild(entr.guild).get_channel(entr.channel).send(content = entr.getYString(entr.text,n,g,u,t,l),embed=embed);
 													else:
 														try:
-															await client.get_guild('196211645289201665').get_channel('196211645289201665').send(content = entr.getYString(entr.text,n,g,u,t,l),embed=embed);
+															await client.get_guild(196211645289201665).get_channel(196211645289201665).send(content = entr.getYString(entr.text,n,g,u,t,l),embed=embed);
 														except Exception as e:
 															print(e);
 													#sayWords(None, entr.getYString(n,g,u,l,t), entr.guild, entr.channel);
@@ -267,26 +248,28 @@ async def startChecking(client):
 							thumb = thumb['url'];	
 							t = newestItem['snippet']['title'];
 							newid = newestItem['snippet']['resourceId']['videoId'];
-							if(newid != ytUsrs[yt].lastID or ytUsrs[yt].changed == True):
+							oldid = ytUsrs[yt].lastID;
+							if(newid != ytUsrs[yt].lastID or ytUsrs[yt].lastprinted != newestTimeAsString or ytUsrs[yt].changed == True):
 								ytUsrs[yt].lastID = newid;
 								ytUsrs[yt].lastprinted = newestTimeAsString;
 								ytUsrs[yt].save();
 							u = 'https://www.youtube.com/watch?v='+	newid;
-							for entr in ytentries[yt]:
-								try:
-									if (entr.shouldprint(newestTime)):
-										embed = entr.getEmbed(ytUsrs[yt].displayname,u,t,thumb);
-										print(entr.getYString(entr.text,ytUsrs[yt].displayname,u,t,thumb))
-										if not testing:
-											await client.get_guild(str(entr.guild)).get_channel(str(entr.channel)).send(content = entr.getYString(entr.text,ytUsrs[yt].displayname,u,t,thumb),embed=embed);
-										else:
-											try:
-												await client.get_guild('196211645289201665').get_channel('196211645289201665').send(content = entr.getYString(entr.text,ytUsrs[yt].displayname,u,t,thumb),embed=embed);
-											except Exception as e:
-												print(e);
-										logEx('sent Youtube message for '+yt);
-								except Exception as e:
-									logEx(e);
+							if(newid != oldid):
+								for entr in ytentries[yt]:
+									try:
+										if (entr.shouldprint(newestTime)):
+											embed = entr.getEmbed(ytUsrs[yt].displayname,u,t,thumb);
+											print(entr.getYString(entr.text,ytUsrs[yt].displayname,u,t,thumb))
+											if not testing:
+												await client.get_guild(entr.guild).get_channel(entr.channel).send(content = entr.getYString(entr.text,ytUsrs[yt].displayname,u,t,thumb),embed=embed);
+											else:
+												try:
+													await client.get_guild(196211645289201665).get_channel(196211645289201665).send(content = entr.getYString(entr.text,ytUsrs[yt].displayname,u,t,thumb),embed=embed);
+												except Exception as e:
+													print(e);
+											logEx('sent Youtube message for '+yt);
+									except Exception as e:
+										logEx(e);
 						except aiohttp.ClientConnectionError as ex:
 							logEx(ex);
 						except asyncio.TimeoutError as ex:
