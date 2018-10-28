@@ -77,8 +77,7 @@ async def startChecking(client):
 		streams = {};
 		for row in util.DBcursor.execute('SELECT * FROM twitch'):
 			streamonline[row['username'].lower()] = not checkStatusOnStart;
-				
-		while not client.is_closed:
+		while not client.is_closed():
 			try:
 				streams = {};
 				for row in util.DBcursor.execute('SELECT * FROM twitch'):
@@ -122,8 +121,13 @@ async def startChecking(client):
 								l = None;
 								embed = entr.getEmbed(n,g,u,t,l);
 								if not testing:
-									await client.get_guild(str(entr.guild)).get_channel(str(entr.channel)).send(content = entr.getYString(entr.text,n,g,u,t,l),embed=embed);
-									print('timer {0} triggered entry: {1}:{2} - {3}'.format(entr.id, entr.fromtimeH, entr.fromtimeM, entr.days));
+									try:
+										await client.get_guild(str(entr.guild)).get_channel(str(entr.channel)).send(content = entr.getYString(entr.text,n,g,u,t,l),embed=embed);
+										print('timer {0} triggered entry: {1}:{2} - {3}'.format(entr.id, entr.fromtimeH, entr.fromtimeM, entr.days));
+									except:
+										print('timer broken');
+										pass;
+									
 								else:
 									try:
 										await client.get_guild('196211645289201665').get_channel('196211645289201665').send(content = entr.getYString(entr.text,n,g,u,t,l),embed=embed);
@@ -222,14 +226,23 @@ async def startChecking(client):
 						try:
 							async with aiohttp.ClientSession() as session:
 								#html = await fetch(session,'https://www.googleapis.com/youtube/v3/search?part=snippet&key='+YTAPI+'&channelId='+ytChannelId[yt]+'&order=date&type=video&safeSearch=none',{});
-								html = await fetch(session,'https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&key='+YTAPI+'&playlistId='+ytUsrs[yt].uploadID,{});
+								html = await fetch(session,'https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=25&key='+YTAPI+'&playlistId='+ytUsrs[yt].uploadID,{});
 							html = json.loads(html);
 							newestItem = None;
+							
+							#
+							#total = html['pageInfo']['totalResults']
+							#if total == old + 1
+							#	then if not found and nextPageToken != null: 
+							#		fetch http:// &pageToken= html['nextPageToken']
+							#
+							
 							#timeStr ohne millisec
 							if len(html['items']) == 0:
 								continue;
 							#bestDate = toDateTime(ytUsrs[yt].lastprinted);
 							newestItem = html['items'][0];
+							#print('>>'+str(len(html['items'])));
 							bestDate = toDateTime(html['items'][0].get('snippet').get('publishedAt'));
 							for itm in html['items']:
 								itemDate = itm.get('snippet').get('publishedAt');

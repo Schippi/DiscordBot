@@ -4,12 +4,16 @@ from datetime import datetime, timedelta;
 import threading;
 import asyncio;
 import async_timeout;
+import sys;
 
 DBcursor = None;
 DB = None;
 cfgPath = None;
 timeStr= '%Y-%m-%dT%H:%M:%S.%fZ';
 lock = threading.Lock();
+
+if len(sys.argv) >= 3:
+	cfgPath = sys.argv[2];
 
 def toDateTime(strr):
 	if(strr == None):
