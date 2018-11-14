@@ -81,11 +81,15 @@ class YoutubeCommand():
 		"""post latest video of <name>"""
 		if(not isAllowed(context)):
 			return;
-		if not name or name == '':
-			return await sayWords(context,'need arguments');
 		if not context.message.guild:
 			return await sayWords(context,'need guild');
-		tname = context.message.content.split(' ',1)[1];
+		if not name or name == '':
+			t = (context.message.guild.id,);
+			for row in util.DBcursor.execute('SELECT * FROM youtube where id_guild = ?',t):
+				tname = row['username'];
+				break;
+		else:
+			tname = context.message.content.split(' ',1)[1];
 		t = (tname.lower(),tname.lower(),);
 		for row in util.DBcursor.execute('SELECT * FROM YTUser where lower(username) = ? or lower(displayname) = ?',t):
 			if(row['lastid']):
