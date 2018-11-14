@@ -15,7 +15,9 @@ import json
 import time
 import util;
 from util import logEx;
-import entities.TwitchEntry;
+from entities import TwitchEntry;
+
+#import entities.TwitchEntry;
 import entities.YTEntry;
 import entities.YTUser;
 import asyncio;
@@ -32,17 +34,23 @@ checkStatusOnStart = False;
 EnableTwitch = True;
 EnableYT = True;
 stuff_lock = asyncio.Lock();
-
-class SvrChan:
-	def __init__(self,s,c,m):
-		self.guildid = s;
-		self.channelid = c;
-		self.messages = m;
-		self.time = datetime.utcnow();
 		
 async def startChecking(client):
+	global EnableTwitch;
+	global EnableYT;
+	global stuff_lock;
+	global checkStatusOnStart;
+	
 	if not EnableTwitch and not EnableYT:
 		raise;
+	
+	if not util.TwitchAPI:
+		EnableTwitch = False;
+		print('WARNING: Twitch TOKEN not set');
+	if not util.YTAPI:
+		EnableYT = False;
+		print('WARNING: Youtube TOKEN not set');	
+		
 	try:
 		fil = open(util.cfgPath+'/testing.cfg','r');
 		testing = True;
@@ -86,7 +94,7 @@ async def startChecking(client):
 					try:
 						if EnableTwitch and len(streams.keys()) > 0:
 							async with aiohttp.ClientSession() as session:
-								html = await fetch(session,'https://api.twitch.tv/kraken/streams?channel='+','.join(streams.keys()),{'client-id':TwitchAPI});
+								html = await fetch(session,'https://api.twitch.tv/kraken/streams?channel='+','.join(streams.keys()),{'client-id':util.TwitchAPI});
 							html = json.loads(html);
 							streamArray = html['streams'];
 					except aiohttp.ClientConnectionError as ex:
@@ -183,11 +191,11 @@ async def startChecking(client):
 							try:
 								usrused = True;
 								async with aiohttp.ClientSession() as session:
-									html = await fetch(session,'https://www.googleapis.com/youtube/v3/channels?part=id,contentDetails&key='+YTAPI+'&forUsername='+yt,{});
+									html = await fetch(session,'https://www.googleapis.com/youtube/v3/channels?part=id,contentDetails&key='+util.YTAPI+'&forUsername='+yt,{});
 								html = json.loads(html);
 								if len(html['items']) == 0:
 									async with aiohttp.ClientSession() as session:
-										html = await fetch(session,'https://www.googleapis.com/youtube/v3/channels?part=id,snippet,contentDetails&key='+YTAPI+'&id='+ytCaseSensitive[yt],{});
+										html = await fetch(session,'https://www.googleapis.com/youtube/v3/channels?part=id,snippet,contentDetails&key='+util.YTAPI+'&id='+ytCaseSensitive[yt],{});
 									html = json.loads(html);
 									usrused = False;
 								ytUsrs[yt].YTID = html['items'][0]['id'];
@@ -207,7 +215,7 @@ async def startChecking(client):
 						try:
 							async with aiohttp.ClientSession() as session:
 								#html = await fetch(session,'https://www.googleapis.com/youtube/v3/search?part=snippet&key='+YTAPI+'&channelId='+ytChannelId[yt]+'&order=date&type=video&safeSearch=none',{});
-								html = await fetch(session,'https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=25&key='+YTAPI+'&playlistId='+ytUsrs[yt].uploadID,{});
+								html = await fetch(session,'https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=25&key='+util.YTAPI+'&playlistId='+ytUsrs[yt].uploadID,{});
 							html = json.loads(html);
 							newestItem = None;
 							
@@ -292,13 +300,9 @@ async def startChecking(client):
 					await asyncio.sleep(1 * 5)
 	except BaseException as ex:
 		err = str(ex);
+		logEx(ex);
 		if(not testing) and (err != ''):
-			import yagmail;
-			import base64;
-			#yagmail.register('theschippi@gmail.com',base64.b64decode('dnp6bGxxeWtybnJwaXNsZg=='))
-			yag = yagmail.SMTP('theschippi@gmail.com',base64.b64decode('dnp6bGxxeWtybnJwaXNsZg=='));
-			contents = [time.strftime('%X %x %Z') + ': ' + 'Exception:\n\t '+err];
-			yag.send('theschippi@gmail.com', 'Guild crashed', contents);
+			util.sendMail('TwitchCheckerloop crashed',time.strftime('%X %x %Z') + ': ' + 'Exception:\n\t '+err);
 		else:
 			pass;
 	except CancelledError:
