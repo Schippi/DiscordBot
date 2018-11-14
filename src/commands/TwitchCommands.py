@@ -89,25 +89,36 @@ class TwitchCommand():
 		l = [];
 		for row in util.DBcursor.execute('SELECT * FROM twitch where ID_Guild = ? and not username = ?',t):
 			l.append("`"+row['username']+"`");
-		return await sayWords(context, 'here are the channels being monitored: '+", ".join(l));
+		return await sayWords(context, 'here are the channels being monitored: \n'+"\n".join(l));
 		
 	@twitch.command(name='edit')
 	async def edit(self, context, name : str = None):
 		"""edits the alert for <name>"""
 		if(not isAllowed(context)):
 			return;
-		if not name or name == '':
-			return await sayWords(context,'need arguments');
 		if not context.message.guild:
 			return await sayWords(context,'need guild');
+		if not name or name == '':
+			cnt = 0;
+			t = (context.message.guild.id,'timer');
+			for row in util.DBcursor.execute('SELECT * FROM twitch where ID_Guild = ? and not username = ?',t):
+				cnt = cnt + 1;
+				name = row['username'].lower();
+			if cnt != 1:
+				sayWords(context,'there are multiple checks active, please specify which check you want to edit')
+				return await self.list(context);
+			return await sayWords(context,'need arguments');
 		tname = name.split(' ',1)[0].lower();
 		entryDict = {};
 		if(tname == 'timer'):
 			t = (context.message.guild.id,tname);	
 			ids = '';
+			cnt = 0;
 			for row in util.DBcursor.execute('SELECT * FROM twitch where ID_Guild = ? and username = ?',t):
-				ids = ids+str(row['id'])+', '
-			if not ids == '':
+				ids = ids+str(row['id'])+', ';
+				cnt = cnt + 1;
+				tname = row['id'];
+			if cnt > 1:
 				return await sayWords(context,'for timer editing use one of these id\'s: '+ids);
 		if(tname.isnumeric()):
 			t = (context.message.guild.id,tname);
@@ -314,10 +325,17 @@ class TwitchCommand():
 		if(not isAllowed(context)):
 			return;
 		if not name or name == '':
-			return await sayWords(context,'need arguments');
+			cnt = 0;
+			t = (context.message.guild.id,'timer');
+			for row in util.DBcursor.execute('SELECT * FROM twitch where ID_Guild = ? and not username = ?',t):
+				cnt = cnt +1;
+				name = row['username'].lower();
+			if cnt != 1:
+				sayWords(context,'there are multiple checks active, please specify which check you want to delete')
+				return await self.list(context);
 		if not context.message.guild:
 			return await sayWords(context,'need guild');
-		tname = name.split(' ',1)[0];
+		tname = name.split(' ',1)[0].lower();
 		t = (context.message.guild.id,tname);
 		
 		if(tname.lower() == 'timer'):
