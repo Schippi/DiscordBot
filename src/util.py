@@ -5,6 +5,8 @@ import threading;
 import asyncio;
 import async_timeout;
 import sys;
+import base64;
+import yagmail;
 
 DBcursor = None;
 DB = None;
@@ -199,7 +201,7 @@ async def fetch(session, url, headers):
 			except asyncio.TimeoutError:
 				return '';
 			
-def sendMail(a,b):
+def sendMail(title,inhalt):
 	try:
 		file = open(cfgPath+"/../tokens/mail.token","r");
 		contents =file.read().splitlines(); 
@@ -212,8 +214,8 @@ def sendMail(a,b):
 		return;
 	file.close();
 	yag = yagmail.SMTP(NAME,base64.b64decode(TOKEN).decode());
-	contents = [b];
-	yag.send(NAME, a, contents);
+	contents = [inhalt];
+	yag.send(NAME, title, contents);
 	
 def changeLog():
 	return '''0.3.0: introduction of changelog\n
