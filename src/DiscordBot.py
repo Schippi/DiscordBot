@@ -18,6 +18,7 @@ from GuildSettings import isAllowed;
 from GuildSettings import getSetting;
 
 from commands.TwitchCommands import TwitchCommand;
+from commands.TimerCommands import TimerCommand;
 from commands.AdminCommands import AdminCommand;
 from commands.YoutubeCommands import YoutubeCommand;
 from commands.JackCommands import TTSJack;
@@ -538,10 +539,12 @@ def ask_exit():
 	
 util.client = client;
 #client.remove_command('help');
+#startChecking(None);
 checkingTask = client.loop.create_task(startChecking(client));
 
 client.add_cog(TwitchCommand(client));
 client.add_cog(YoutubeCommand(client));
+#client.add_cog(TimerCommand(client));
 client.add_cog(AdminCommand(client));
 client.add_cog(TTSJack(client));
 
