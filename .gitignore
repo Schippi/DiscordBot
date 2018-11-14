@@ -2,6 +2,7 @@
 *.token
 *.cfg
 *.pyc
+*.log
 .settings/*
 src/cfg/*
 src/tokens/*
