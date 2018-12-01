@@ -141,11 +141,12 @@ async def on_message(message):
 				msg = message.content.split(' ',1);
 				if (len(msg) > 0 and msg[0].startswith('!help') and sett.prefix != '!'):
 					return await sayWords(sett=sett, chan = message.channel,message= 'prefix is "'+sett.prefix+'" - use '+sett.prefix+'help for more help')
-				if (len(msg) > 0) and (msg[0][:1] == checkPrefix(client,message)):
-					c = client.all_commands.get(msg[0][1:]);
-					if (c is None) and sett.isAllowed(userID = message.author.id,command = msg[0]):
+				prefixlen = len(sett.prefix);
+				if (len(msg) > 0) and (msg[0][:prefixlen] == checkPrefix(client,message)):
+					c = client.all_commands.get(msg[0][prefixlen:]);
+					if (c is None) and sett.isAllowed(userID = message.author.id,command = msg[0][prefixlen:]):
 						for cmd in sett.customCommands:
-							if(cmd.command == msg[0][1:]):
+							if(cmd.command == msg[0][prefixlen:]):
 								ok = False;
 								await sayWords(sett = sett, message = cmd.response, chan = message.channel);
 		if(ok):
