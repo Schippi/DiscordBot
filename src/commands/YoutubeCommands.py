@@ -19,7 +19,7 @@ from util import YTAPI;
 from util import sendMail;
 import urllib;
 
-class YoutubeCommand():
+class YoutubeCommand(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
 

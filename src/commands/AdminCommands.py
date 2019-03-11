@@ -18,7 +18,7 @@ import math;
 import fileinput;
 
 
-class AdminCommand():
+class AdminCommand(commands.Cog):
 	
 	client = None;
 	

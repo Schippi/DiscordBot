@@ -21,7 +21,7 @@ from util import sendMail;
 import urllib;
 
 
-class TwitchCommand():
+class TwitchCommand(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
 

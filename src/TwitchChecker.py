@@ -166,8 +166,12 @@ async def startChecking(client):
 									streamprinted[entr] = False;						
 						for removed in (set(streamonline.keys()) - set(streams.keys())):
 							streamonline.pop(removed,None);
+						for removed in (set(streamonline.keys()) - set(streamprinted.keys())):
+							streamprinted[entr] = False;
 						for removed in (set(streamprinted.keys()) - set(streams.keys())):
 							streamprinted.pop(removed,None);
+						
+								
 					else:
 						onlin = 0;
 				twitMessage = str(cnt)+' | '+time.strftime('%X %x %Z')+' online: '+str(onlin)+' | '+str(llist);

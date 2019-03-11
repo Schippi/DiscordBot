@@ -10,7 +10,7 @@ from GuildSettings import isAllowed;
 import asyncio;
 import random;
 
-class TTSJack():
+class TTSJack(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot;
 		self.gamesRunning = [];
