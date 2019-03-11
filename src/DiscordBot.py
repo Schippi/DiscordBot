@@ -1,4 +1,4 @@
-CSARversion = '0.3.0'
+CSARversion = '0.4.0'
 
 import GuildSettings;
 import sys;
@@ -515,9 +515,9 @@ async def sayInChannel(context : discord.ext.commands.Context):
 			return await sayWords(context, "channel "+ct[0]+" not found on this guild");
 		
 @client.command()
-async def version(*msg):
+async def version(context):
 	"""displays the running version """
-	return await client.say('CSAR v.'+CSARversion+'\nApi: '+ discord.__version__);
+	return await sayWords(context,'CSAR v.'+CSARversion+'\nApi: '+ discord.__version__);
 		
 # HELP FUNCTIONS		
 		
