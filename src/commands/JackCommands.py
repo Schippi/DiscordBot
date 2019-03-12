@@ -40,7 +40,7 @@ class TTSJack(commands.Cog):
 	async def ttsjack(self, ctx):
 		"""TTSJack Control"""
 		if ctx.invoked_subcommand is None and isAllowed(ctx):
-			await self.bot.say('ttsjack help')
+			await sayWords(ctx,'ttsjack help')
 			
 	@ttsjack.command(name='play')
 	async def play(self, context):

@@ -19,6 +19,8 @@ import json;
 from util import TwitchAPI;
 from util import sendMail;
 import urllib;
+import traceback;
+import sys;
 
 
 class TwitchCommand(commands.Cog):
@@ -29,7 +31,7 @@ class TwitchCommand(commands.Cog):
 	async def twitch(self, ctx):
 		"""TwitchAlert Control"""
 		if ctx.invoked_subcommand is None and isAllowed(ctx):
-			await self.bot.say('twitch commands are add, edit and delete')
+			await util.sayWords(ctx,'twitch commands are add, edit and delete')
 			
 	@twitch.command(name='add')
 	async def add(self, context, name : str = None):
@@ -163,10 +165,11 @@ class TwitchCommand(commands.Cog):
 					+prefix+'thelp : print help again\n'
 					+'current time is: '+datetime.datetime.now().strftime('%H:%M:%S')
 					+'```');
-		await self.bot.say(helpstring);  
+		await util.sayWords(context,helpstring);  
 		while True:
+			auth = context.message.author;
 			def check(msg):
-				return (msg.content.startswith(prefix+'tshow') or 
+				return (auth == msg.author) and (msg.content.startswith(prefix+'tshow') or 
 						msg.content.startswith(prefix+'tchannel') or  
 						msg.content.startswith(prefix+'tfinish') or 
 						msg.content.startswith(prefix+'tabort') or 
@@ -179,8 +182,9 @@ class TwitchCommand(commands.Cog):
 						msg.content.startswith(prefix+'ttest') or 
 						msg.content.startswith(prefix+'thelp'));
 			try:
-				reply = await self.bot.wait_for(event= 'message', author = context.message.author, timeout= 120, check = check);
+				reply = await self.bot.wait_for(event= 'message', timeout= 120, check = check);
 			except:
+				traceback.print_exc(file=sys.stdout);
 				reply = None;
 			if reply:
 				if(reply.content.startswith(prefix+'tabort')):
@@ -202,10 +206,10 @@ class TwitchCommand(commands.Cog):
 				if(reply.content.startswith(prefix+'tchannel')):
 					try:
 						ct = reply.content.split(' ',1);
-						chan = reply.guild.get_channel(ct[1]);
+						chan = reply.guild.get_channel(int(ct[1]));
 						if not chan:
 							for c in reply.guild.channels:
-								if (c.type == discord.ChannelType.text and c.name.lower() == ct[1].strip().lower()):
+								if (c.type == discord.ChannelType == 0 and c.name.lower() == ct[1].strip().lower()):
 									chan = c;
 									break;
 						if chan:
@@ -214,6 +218,7 @@ class TwitchCommand(commands.Cog):
 						else:
 							await sayWords(context,'channel not found!\n'+quote('!tchannel <id or name>'));
 					except:
+						traceback.print_exc(file=sys.stdout);
 						await sayWords(context,'wrong format!\n'+quote('!tchannel <id or name>'));
 						
 				if(reply.content.startswith(prefix+'tcolor')):
@@ -237,7 +242,7 @@ class TwitchCommand(commands.Cog):
 						entryDict['avatar'] = None;
 						await sayWords(context,'avatar cleared');
 				if(reply.content.startswith(prefix+'thelp')):
-					await self.bot.say(helpstring);
+					await util.sayWords(context,helpstring);
 				if(reply.content.startswith(prefix+'tmessage')):
 					ct = reply.content.split(' ',1);
 					if len(ct) == 2:

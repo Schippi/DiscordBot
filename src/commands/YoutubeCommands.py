@@ -27,7 +27,7 @@ class YoutubeCommand(commands.Cog):
 	async def youtube(self, ctx):
 		"""Youtube Control"""
 		if ctx.invoked_subcommand is None and isAllowed(ctx):
-			await self.bot.say('youtube commands are add, edit and delete')
+			await util.sayWords(ctx,'youtube commands are add, edit and delete')
 			
 	@youtube.command(name='add')
 	async def add(self, context, name : str = None):
@@ -151,10 +151,10 @@ class YoutubeCommand(commands.Cog):
 					+prefix+'ytest : test it\n'
 					+prefix+'yhelp : print help again'
 					'```');
-		await self.bot.say(helpstring);  
+		await sayWords(context,helpstring);  
 		while True:
 			def check(msg):
-				return (msg.content.startswith(prefix+'yshow') or 
+				return (context.message.author == msg.author) and (msg.content.startswith(prefix+'yshow') or 
 						msg.content.startswith(prefix+'ychannel') or  
 						msg.content.startswith(prefix+'yfinish') or 
 						msg.content.startswith(prefix+'yabort') or 
@@ -165,7 +165,7 @@ class YoutubeCommand(commands.Cog):
 						msg.content.startswith(prefix+'yimage') or 
 						msg.content.startswith(prefix+'yhelp'));
 			
-			reply = await self.bot.wait_for_message(author = context.message.author, timeout= 120, check = check);
+			reply = await self.bot.wait_for_message(timeout= 120, check = check);
 			if reply:
 				if(reply.content.startswith(prefix+'yabort')):
 					reply = None;
@@ -182,7 +182,7 @@ class YoutubeCommand(commands.Cog):
 				if(reply.content.startswith(prefix+'ychannel')):
 					try:
 						ct = reply.content.split(' ',1);
-						chan = reply.guild.get_channel(ct[1]);
+						chan = reply.guild.get_channel(int(ct[1]));
 						if not chan:
 							for c in reply.guild.channels:
 								if (c.type == discord.ChannelType.text and c.name.lower() == ct[1].strip().lower()):
@@ -217,7 +217,7 @@ class YoutubeCommand(commands.Cog):
 						entryDict['image'] = None;
 						await sayWords(context,'image cleared');
 				if(reply.content.startswith(prefix+'yhelp')):
-					await self.bot.say(helpstring);
+					await sayWords(context,helpstring);
 				if(reply.content.startswith(prefix+'ymessage')):
 					ct = reply.content.split(' ',1);
 					if len(ct) == 2:

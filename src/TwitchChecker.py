@@ -30,7 +30,8 @@ from datetime import datetime;
 from util import toDateTime;
 from util import fetch;
 
-checkStatusOnStart = False;
+
+checkStatusOnStart = True;
 EnableTwitch = True;
 EnableYT = True;
 stuff_lock = asyncio.Lock();
@@ -79,12 +80,13 @@ async def startChecking(client):
 				for strm in streams.keys():
 					if not strm in streamonline:
 						streamonline[strm] = not checkStatusOnStart;
-				if checkStatusOnStart:
+				if checkStatusOnStart and not testing:
 					try:
 						for i, line in enumerate(fileinput.input('TwitchChecker.py', inplace=1)):
 							selfChanger = line.replace('checkStatusOnStart = True', 'checkStatusOnStart = False');
 							sys.stdout.write(selfChanger)  # replace 'sit' and write
 					except Exception as e:
+						traceback.print_exc(file=sys.stdout);
 						logEx(e);
 				llist = [];
 				cnt = cnt + 1;
@@ -98,8 +100,10 @@ async def startChecking(client):
 							html = json.loads(html);
 							streamArray = html['streams'];
 					except aiohttp.ClientConnectionError as ex:
+						traceback.print_exc(file=sys.stdout);
 						logEx(ex);
 					except asyncio.TimeoutError as ex:
+						traceback.print_exc(file=sys.stdout);
 						logEx(ex);
 					if 'timer' in streams.keys():	
 						for entr in streams['timer']:
@@ -112,7 +116,7 @@ async def startChecking(client):
 								embed = entr.getEmbed(n,g,u,t,l);
 								if not testing:
 									try:
-										await client.get_guild(str(entr.guild)).get_channel(str(entr.channel)).send(content = entr.getYString(entr.text,n,g,u,t,l),embed=embed);
+										await client.get_guild(entr.guild).get_channel(entr.channel).send(content = entr.getYString(entr.text,n,g,u,t,l),embed=embed);
 										print('timer {0} triggered entry: {1}:{2} - {3}'.format(entr.id, entr.fromtimeH, entr.fromtimeM, entr.days));
 									except:
 										print('timer broken');
@@ -152,6 +156,8 @@ async def startChecking(client):
 													logEx('sent Twitch message for '+n);
 													#print(10);
 											except Exception as e:
+												print(streamername)
+												traceback.print_exc(file=sys.stdout);
 												logEx(e); 
 									#print(11);			
 									onlin = onlin + 1;

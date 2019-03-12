@@ -84,7 +84,7 @@ class AdminCommand(commands.Cog):
 			cnt = context.message.content.split(' ',1);
 			if len(cnt) > 1:
 				for s in GuildSettings.settings.values():
-					await s.guild.get_channel(s.id).send(cnt[1]);
+					await s.guild.get_channel(int(s.id)).send(cnt[1]);
 			else:
 				return await sayWords(context,'need argument');
 
