@@ -14,4 +14,11 @@
 	<natures>
 		<nature>org.python.pydev.pythonNature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>discord</name>
+			<type>2</type>
+			<location>C:/Program Files (x86)/Python36-32/Lib/site-packages/discord</location>
+		</link>
+	</linkedResources>
 </projectDescription>
