@@ -31,7 +31,7 @@ from util import toDateTime;
 from util import fetch;
 
 
-checkStatusOnStart = True;
+checkStatusOnStart = False;
 EnableTwitch = True;
 EnableYT = True;
 stuff_lock = asyncio.Lock();
