@@ -23,6 +23,7 @@ from commands.AdminCommands import AdminCommand;
 from commands.YoutubeCommands import YoutubeCommand;
 from commands.JackCommands import TTSJack;
 from RunnerGame import playgame;
+import traceback;
 
 import discord;
 from discord.ext import commands;
@@ -65,16 +66,26 @@ except Exception:
 	
 DBFile = util.cfgPath+'/bot.db';
 DBJournal = util.cfgPath+'/bot.db-journal';
-
+DBLOG = util.cfgPath+'/botlog.db';
+DBLOGJournal = util.cfgPath+'/bot.db-journal';
 
 try:
 	os.remove(DBJournal);
+except OSError:
+	pass;
+try:
+	os.remove(DBLOGJournal);
 except OSError:
 	pass;
 
 util.DB = sqlite3.connect(DBFile);
 util.DB.row_factory = util.dict_factory;
 util.DBcursor = util.DB.cursor();
+
+LOGDB = sqlite3.connect(DBLOG);
+LOGDB.row_factory = util.dict_factory;
+LOGDBcursor = LOGDB.cursor();
+LOGCNT = 0;
 
 def checkPrefix(bot, disMessage):
 	try:
@@ -117,6 +128,26 @@ async def on_message(message):
 	ok = True;
 	if message.author.id != client.user.id: # and not message.author.bot
 		if message.guild:
+			try:
+				global LOGCNT;
+				LOGCNT = (LOGCNT + 1) % 3;
+				valdict = {};
+				valdict['GUILD_ID'] = message.guild.id;
+				valdict['AUTHOR_ID'] = message.author.id;
+				membrname = message.author.nick if message.author.nick else message.author.name;
+				valdict['AUTHOR_NAME'] = membrname+'#'+message.author.discriminator;
+				valdict['TIME'] = time.strftime('%X %x'); 
+				valdict['MESSAGE'] = message.content; 
+				vallist = list(valdict.keys());
+				q1 = 'INSERT INTO LOG ('+', '.join(vallist)+' )';
+				q1 = q1+' values ( '+ ', '.join(['?' for s in vallist])+' )';
+				l1 = list(valdict.values());
+				LOGDBcursor.execute(q1,l1);
+				if(LOGCNT <= 0):
+					LOGDB.commit();
+			except Exception as e:
+				traceback.print_exc(file=sys.stdout);
+				#pass;
 			sett = getSetting(message.guild.id);
 			if sett is None:
 				ok = False;
