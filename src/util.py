@@ -16,6 +16,7 @@ lock = threading.Lock();
 #your Client-ID - go to https://blog.twitch.tv/client-id-required-for-kraken-api-calls-afbb8e95f843 and follow the instructions
 TwitchAPI = '';
 YTAPI = '';
+pleaseLog=True;
 
 if len(sys.argv) >= 3:
 	cfgPath = sys.argv[2];

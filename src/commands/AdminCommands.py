@@ -16,6 +16,7 @@ import TwitchChecker;
 from builtins import str;
 import math;
 import fileinput;
+from util import pleaseLog;
 
 
 class AdminCommand(commands.Cog):
@@ -155,6 +156,23 @@ class AdminCommand(commands.Cog):
 		if context.invoked_subcommand is None and GuildSettings.isAllowed(context):
 			TwitchChecker.EnableTwitch = True;
 			return await sayWords(context,'Twitch status is: '+str(TwitchChecker.EnableTwitch));
+		
+	@switchfeature.group(name='log')
+	async def switchtlog(self, context):
+		if str(context.invoked_subcommand) == 'turn log' and GuildSettings.isAllowed(context):
+			return await sayWords(context,'Log status is: '+str(util.pleaseLog));
+	
+	@switchtlog.command(name='off')
+	async def switchlogoff(self, context):
+		if context.invoked_subcommand is None and GuildSettings.isAllowed(context):
+			util.pleaseLog = False;
+			return await sayWords(context,'Log status is: '+str(util.pleaseLog));
+	
+	@switchtlog.command(name='on')
+	async def switchlogon(self, context):
+		if context.invoked_subcommand is None and GuildSettings.isAllowed(context):
+			util.pleaseLog = True;
+			return await sayWords(context,'Log status is: '+str(util.pleaseLog));
 			
 	@switchfeature.group(name='youtube')
 	async def switchyoutube(self, context):

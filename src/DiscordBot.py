@@ -36,6 +36,7 @@ from util import sayWords;
 from util import quote;
 from util import askYesNoReaction;
 from util import sendMail;
+from util import pleaseLog;
 
 logging.basicConfig(level=logging.INFO);
 NOT_ALLOWED = 'You are not allowed to call this command!';
@@ -86,6 +87,7 @@ LOGDB = sqlite3.connect(DBLOG);
 LOGDB.row_factory = util.dict_factory;
 LOGDBcursor = LOGDB.cursor();
 LOGCNT = 0;
+LOGDBCHANGES = 0;
 
 def checkPrefix(bot, disMessage):
 	try:
@@ -129,23 +131,29 @@ async def on_message(message):
 	if message.author.id != client.user.id: # and not message.author.bot
 		if message.guild:
 			try:
-				global LOGCNT;
-				LOGCNT = (LOGCNT + 1) % 10;
-				valdict = {};
-				valdict['GUILD_ID'] = message.guild.id;
-				valdict['AUTHOR_ID'] = message.author.id;
-				valdict['MESSAGE_ID'] = message.id;
-				membrname = message.author.nick if message.author.nick else message.author.name;
-				valdict['AUTHOR_NAME'] = membrname+'#'+message.author.discriminator;
-				valdict['TIME'] = time.strftime('%X %x'); 
-				valdict['MESSAGE'] = message.content; 
-				vallist = list(valdict.keys());
-				q1 = 'INSERT INTO LOG ('+', '.join(vallist)+' )';
-				q1 = q1+' values ( '+ ', '.join(['?' for s in vallist])+' )';
-				l1 = list(valdict.values());
-				LOGDBcursor.execute(q1,l1);
-				if(LOGCNT <= 0):
-					LOGDB.commit();
+				if util.pleaseLog:
+					global LOGCNT;
+					LOGCNT = (LOGCNT + 1) % 10;
+					valdict = {};
+					valdict['GUILD_ID'] = message.guild.id;
+					valdict['AUTHOR_ID'] = message.author.id;
+					valdict['MESSAGE_ID'] = message.id;
+					membrname = message.author.nick if message.author.nick else message.author.name;
+					valdict['AUTHOR_NAME'] = membrname+'#'+message.author.discriminator;
+					valdict['TIME'] = time.strftime('%X %x'); 
+					valdict['MESSAGE'] = message.content; 
+					vallist = list(valdict.keys());
+					q1 = 'INSERT INTO LOG ('+', '.join(vallist)+' )';
+					q1 = q1+' values ( '+ ', '.join(['?' for s in vallist])+' )';
+					l1 = list(valdict.values());
+					LOGDBcursor.execute(q1,l1);
+					if(LOGCNT <= 0):
+						LOGDB.commit();
+				else:
+					global LOGDBCHANGES;
+					if(LOGDBCHANGES < LOGDB.total_changes):
+						LOGDB.commit();
+						LOGDBCHANGES = LOGDB.total_changes;						
 			except Exception as e:
 				traceback.print_exc(file=sys.stdout);
 				#pass;
