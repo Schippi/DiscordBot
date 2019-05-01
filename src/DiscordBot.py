@@ -130,10 +130,11 @@ async def on_message(message):
 		if message.guild:
 			try:
 				global LOGCNT;
-				LOGCNT = (LOGCNT + 1) % 3;
+				LOGCNT = (LOGCNT + 1) % 10;
 				valdict = {};
 				valdict['GUILD_ID'] = message.guild.id;
 				valdict['AUTHOR_ID'] = message.author.id;
+				valdict['MESSAGE_ID'] = message.id;
 				membrname = message.author.nick if message.author.nick else message.author.name;
 				valdict['AUTHOR_NAME'] = membrname+'#'+message.author.discriminator;
 				valdict['TIME'] = time.strftime('%X %x'); 
