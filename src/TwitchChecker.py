@@ -130,6 +130,13 @@ async def startChecking(client):
 						try:
 							for streamjson in streamArray:
 								if streamjson:
+									isRerun = False;
+									try:
+										stype = streamjson['stream_type'].lower();
+										if(stype == "rerun"):
+											isRerun = True;
+									except:
+										pass;
 									streamername = streamjson['channel']['name'].lower();
 									llist.append(streamername);
 									if not streamonline[streamername]:
@@ -145,10 +152,16 @@ async def startChecking(client):
 												if (entr.shouldprint(g) and not streamprinted[entr]):
 													embed = entr.getEmbed(n,g,u,t,l);
 													if not testing:
-														await client.get_guild(entr.guild).get_channel(entr.channel).send(content = entr.getYString(entr.text,n,g,u,t,l),embed=embed);
+														ttext = entr.text;
+														if isRerun:
+															ttext = entr.text.replace("@here","Rerun!").replace("@everyone","Rerun!");
+														await client.get_guild(entr.guild).get_channel(entr.channel).send(content = entr.getYString(ttext,n,g,u,t,l),embed=embed);
 													else:
 														try:
-															await client.get_guild(196211645289201665).get_channel(196211645289201665).send(content = entr.getYString(entr.text,n,g,u,t,l),embed=embed);
+															ttext = entr.text;
+															if isRerun:
+																ttext = entr.text.replace("@here","Rerun!").replace("@everyone","Rerun!");
+															await client.get_guild(196211645289201665).get_channel(196211645289201665).send(content = entr.getYString(ttext,n,g,u,t,l),embed=embed);
 														except Exception as e:
 															print(e);
 													#sayWords(None, entr.getYString(n,g,u,l,t), entr.guild, entr.channel);
