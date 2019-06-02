@@ -66,6 +66,16 @@ async def startChecking(client):
 		streamonline = {};
 		streamprinted = {};
 		streams = {};
+		
+		util.DBcursor.execute('''CREATE TABLE IF NOT EXISTS twitchstats (
+			'ID'	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+			'DATE'	TEXT,
+			'viewcount'	INTEGER,
+			'game'	TEXT,
+			'channel'	TEXT
+		);''');
+		util.DB.commit();
+		
 		for row in util.DBcursor.execute('SELECT * FROM twitch'):
 			streamonline[row['username'].lower()] = not checkStatusOnStart;
 		while not client.is_closed():
