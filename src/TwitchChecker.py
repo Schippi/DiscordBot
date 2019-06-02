@@ -138,14 +138,24 @@ async def startChecking(client):
 									except:
 										pass;
 									streamername = streamjson['channel']['name'].lower();
+									n = streamjson['channel']['display_name'];
+									
+									g = streamjson['game'];
+									u = streamjson['channel']['url'];
+									t = streamjson['channel']['status'];
+									l = streamjson['channel']['logo'];
+									
+									if((streamername in ['nilesy','hybridpanda', 'ravs_'] ) and cnt%5 == 0):
+										try:
+											viewcount = int(streamjson['viewers']);
+											mydate = time.strftime('%Y-%m-%d %H:%M:%S');
+											util.DBcursor.execute('insert into twitchstats(channel,date,viewcount,game) values(?,?,?,?)',(streamername,mydate,viewcount,g));
+										except Exception as e:
+											print(e);
+									
 									llist.append(streamername);
 									if not streamonline[streamername]:
 										for entr in streams[streamername]:
-											n = streamjson['channel']['display_name'];
-											g = streamjson['game'];
-											u = streamjson['channel']['url'];
-											t = streamjson['channel']['status'];
-											l = streamjson['channel']['logo'];
 											#print(time.strftime('%X %x %Z ')+n+' print: '+str(entr.shouldprint(g)));
 											try:
 												#print(streamprinted[entr]);
@@ -175,6 +185,7 @@ async def startChecking(client):
 									#print(11);			
 									onlin = onlin + 1;
 									#print(12);
+							util.DB.commit();
 						finally:
 							#print(14);
 							onlin = onlin + 1 - 1;
