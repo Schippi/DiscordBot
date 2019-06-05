@@ -195,7 +195,11 @@ async def startChecking(client):
 									#print(11);			
 									onlin = onlin + 1;
 									#print(12);
-							util.DB.commit();
+							try:                
+								util.DB.commit();
+							except Exception as e:
+								traceback.print_exc(file=sys.stdout);
+								logEx(e);
 						finally:
 							#print(14);
 							onlin = onlin + 1 - 1;
@@ -301,7 +305,8 @@ async def startChecking(client):
 							t = newestItem['snippet']['title'];
 							newid = newestItem['snippet']['resourceId']['videoId'];
 							oldid = ytUsrs[yt].lastID;
-							if(newid != ytUsrs[yt].lastID or ytUsrs[yt].lastprinted != newestTimeAsString or ytUsrs[yt].changed == True):
+							oldTime = toDateTime(ytUsrs[yt].lastprinted);
+							if(newid != ytUsrs[yt].lastID and (oldTime < newestTime or ytUsrs[yt].changed == True)):
 								ytUsrs[yt].lastID = newid;
 								ytUsrs[yt].lastprinted = newestTimeAsString;
 								ytUsrs[yt].save();
