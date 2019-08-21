@@ -41,7 +41,7 @@ if len(sys.argv) >= 3:
 	cfgPath = sys.argv[2];
 
 def toDateTime(strr):
-	if(strr == None):
+	if(strr == None or len(strr.strip()) == 0):
 		return 1; 
 	return datetime.strptime(strr, timeStr);
 
