@@ -44,7 +44,7 @@ class AdminCommand(commands.Cog):
 			if len(cnt) > 1:
 				try:
 					#filename = 'H:/Code/LiClipse Workspace/DiscordBot/TwitchChecker.log';
-					filename = '~/err.log';
+					filename = '~/Discordbot.log';
 					for counter, line in enumerate(fileinput.input(filename, mode='r')):
 						pass;
 					stri = '';

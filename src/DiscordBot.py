@@ -169,13 +169,20 @@ async def on_message(message):
 					d1_ts = time.mktime(now.timetuple())
 					d2_ts = time.mktime(untilDate.timetuple())
 					minu = int(round(d2_ts-d1_ts) / 60) + 1;
-					if minu == 1:
-						await message.author.send('you are currently timed out.\ntake a deep breath and come back in '+str(minu)+' minute');
-					else:
-						await message.author.send('you are currently timed out.\ntake a deep breath and come back in '+str(minu)+' minutes');
-					print('timed out a message from '+message.author.username+'#'+message.author.discriminator+':');
-					print(message.content);
-					return await client.delete_message(message);
+					try:
+						print('timed out a message from '+message.author.mention+':');
+						print(message.content);
+					except:
+						pass;
+					try:
+						await message.delete();
+						if minu == 1:
+							await message.author.send('you are currently timed out.\ntake a deep breath and come back in '+str(minu)+' minute');
+						else:
+							await message.author.send('you are currently timed out.\ntake a deep breath and come back in '+str(minu)+' minutes');
+					except:
+						print('tried to delete but couldnt');
+						pass;
 					ok = False;
 			if(ok):
 				msg = message.content.split(' ',1);

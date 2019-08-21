@@ -155,7 +155,7 @@ async def startChecking(client):
 									t = streamjson['channel']['status'];
 									l = streamjson['channel']['logo'];
 									
-									if((streamername in ['nilesy','hybridpanda', 'ravs_'] ) and cnt%5 == 0):
+									if((streamername in ['nilesy','hybridpanda', 'ravs_'] ) and cnt%2 == 0):
 										try:
 											viewcount = int(streamjson['viewers']);
 											mydate = time.strftime('%Y-%m-%d %H:%M:%S');
@@ -267,6 +267,7 @@ async def startChecking(client):
 							html = json.loads(html);
 							newestItem = None;
 							
+							
 							#
 							#total = html['pageInfo']['totalResults']
 							#if total == old + 1
@@ -279,6 +280,8 @@ async def startChecking(client):
 								continue;
 							#bestDate = toDateTime(ytUsrs[yt].lastprinted);
 							newestItem = html['items'][0];
+							#print(newestItem);
+							#print("");
 							#print('>>'+str(len(html['items'])));
 							bestDate = toDateTime(html['items'][0].get('snippet').get('publishedAt'));
 							for itm in html['items']:
@@ -287,6 +290,7 @@ async def startChecking(client):
 								if(not bestDate or bestDate <= dd):
 									newestItem = itm;
 									bestDate = dd;
+									#print(itemDate+" "+itm['snippet']['resourceId']['videoId']);
 							#newestItem = html['items'][0];
 							newestTimeAsString = newestItem['snippet']['publishedAt'];
 							newestTime = toDateTime(newestTimeAsString);
@@ -303,6 +307,8 @@ async def startChecking(client):
 								thumb = thumb['default'];
 							thumb = thumb['url'];	
 							t = newestItem['snippet']['title'];
+							#print(t);
+							#print("");
 							newid = newestItem['snippet']['resourceId']['videoId'];
 							oldid = ytUsrs[yt].lastID;
 							oldTime = toDateTime(ytUsrs[yt].lastprinted);
@@ -312,6 +318,7 @@ async def startChecking(client):
 								ytUsrs[yt].save();
 							u = 'https://www.youtube.com/watch?v='+	newid;
 							if(newid != oldid):
+								print(oldid + '  -->  '+newid);
 								for entr in ytentries[yt]:
 									try:
 										if (entr.shouldprint(newestTime)):
