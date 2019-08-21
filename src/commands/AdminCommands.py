@@ -98,6 +98,7 @@ class AdminCommand(commands.Cog):
 			sss = [];
 			maxlinelength = 18*9;
 			cellwidth = 10;
+			maxmsgs = 6;
 			try:
 				mystr = "";
 				for row in util.DBcursor.execute(msg):
@@ -115,6 +116,9 @@ class AdminCommand(commands.Cog):
 					if len(mystr) + maxlinelength > 2000:
 						await sayWords(context, '`'+mystr+'`');
 						mystr = '';
+						maxmsgs = maxmsgs - 1;
+						if maxmsgs < 0:
+							break;
 				if mystr == '':
 					util.DB.commit();  
 					mystr = 'success';	  

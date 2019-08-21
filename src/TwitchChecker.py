@@ -80,12 +80,32 @@ async def startChecking(client):
 			streamonline[row['username'].lower()] = not checkStatusOnStart;
 		while not client.is_closed():
 			try:
+				try:
+					newpeople ={};
+					for row in util.DBcursor.execute('SELECT distinct lower(username) as username FROM twitch where userid is null'):
+						newpeople[row['username']] = [];
+					if len(newpeople.keys()) > 0:
+						async with aiohttp.ClientSession() as session:
+							myjson = await fetch(session,'https://api.twitch.tv/kraken/users?login='+','.join(newpeople.keys()),{'client-id':util.TwitchAPI,'Accept':'application/vnd.twitchtv.v5+json'});
+						myjson = json.loads(myjson);
+						#print(myjson);
+						myArray = myjson["users"];
+						if myArray:
+							for myEnt in myArray:
+								newpeople[myEnt["name"].lower()] = myEnt["_id"]; 
+						for p in newpeople:
+							util.DBcursor.execute('update twitch set userid = ? where username = ?',[newpeople[p],p]);
+						util.DB.commit();
+				except:
+					pass;	
 				streams = {};
+				ids = {};
 				for row in util.DBcursor.execute('SELECT * FROM twitch'):
 					if not row['username'] in streams:
 						streams[row['username'].lower()] = [];
 					ent = entities.TwitchEntry.TwitchEntry(row);
 					streams[row['username'].lower()].append(ent);
+					ids[row['username'].lower()] = row['userid'];
 					streamprinted[ent] = False;
 				for strm in streams.keys():
 					if not strm in streamonline:
@@ -106,8 +126,9 @@ async def startChecking(client):
 					try:
 						if EnableTwitch and len(streams.keys()) > 0:
 							async with aiohttp.ClientSession() as session:
-								html = await fetch(session,'https://api.twitch.tv/kraken/streams?channel='+','.join(streams.keys()),{'client-id':util.TwitchAPI});
+								html = await fetch(session,'https://api.twitch.tv/kraken/streams?channel='+','.join(ids.values()),{'client-id':util.TwitchAPI,'Accept':'application/vnd.twitchtv.v5+json'});
 							html = json.loads(html);
+							#print(html);
 							streamArray = html['streams'];
 					except aiohttp.ClientConnectionError as ex:
 						traceback.print_exc(file=sys.stdout);
