@@ -138,7 +138,7 @@ async def on_message(message):
 					valdict['GUILD_ID'] = message.guild.id;
 					valdict['AUTHOR_ID'] = message.author.id;
 					valdict['MESSAGE_ID'] = message.id;
-					membrname = message.author.nick if message.author.nick else message.author.name;
+					membrname = message.author.display_name if message.author.display_name else message.author.name;
 					valdict['AUTHOR_NAME'] = membrname+'#'+message.author.discriminator;
 					valdict['TIME'] = time.strftime('%X %x'); 
 					valdict['MESSAGE'] = message.content; 
