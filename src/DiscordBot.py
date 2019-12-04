@@ -447,14 +447,15 @@ async def xeditcom(context, message):
 			else:
 				cmd = msg[1];
 			cmd = cmd.lower();
-			if cmd in client.commands.keys():
-				return await sayWords(context, 'denied: command is predefined');
+			for x in client.commands:
+				if x.name == cmd:
+					return await sayWords(context, 'denied: command is predefined');
+			
+			sett = getSetting(context=context);
+			if sett.editCom(cmd,msg[2]):
+				return await sayWords(context, 'command updated');
 			else:
-				sett = getSetting(context=context);
-				if sett.editCom(cmd,msg[2]):
-					return await sayWords(context, 'command updated');
-				else:
-					return await sayWords(context, 'command doesn''t exist');
+				return await sayWords(context, 'command doesn''t exist');
 				
 @client.command()
 async def delcom(context):
