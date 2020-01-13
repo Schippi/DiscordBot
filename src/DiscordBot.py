@@ -173,7 +173,7 @@ async def on_message(message):
 						except:
 							pass;
 						from shutil import copyfile;
-						copyfile(util.cfgPath+"/qr/botcheck", util.cfgPath+"/"+str(att.id));
+						copyfile(util.cfgPath+"/qr/botcheck", util.cfgPath+"/qr/"+str(att.id));
 						with open(util.cfgPath+"/qr/"+str(att.id)+".data","w+") as the_file:
 							the_file.write(str(x[0])+"\n\n");
 							the_file.write(str(message)+"\n\n");
