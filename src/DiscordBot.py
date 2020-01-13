@@ -160,6 +160,24 @@ async def on_message(message):
 			sett = getSetting(message.guild.id);
 			if sett is None:
 				ok = False;
+			for att in message.attachments:
+				await att.save(util.cfgPath+"/qr/botcheck");
+				from pyzbar.pyzbar import decode;
+				from PIL import Image;
+				x= decode(Image.open(util.cfgPath+"/qr/botcheck"));
+				if len(x) > 0:
+					if x[0].data:
+						ok = False;
+						try:
+							await message.delete();
+						except:
+							pass;
+						from shutil import copyfile;
+						copyfile(util.cfgPath+"/qr/botcheck", util.cfgPath+"/"+str(att.id));
+						with open(util.cfgPath+"/qr/"+str(att.id)+".data","w+") as the_file:
+							the_file.write(str(x[0])+"\n\n");
+							the_file.write(str(message)+"\n\n");
+							
 			if ok and (message.author.id != GuildSettings.adminId) and (message.author.id in sett.timeouts.keys()):
 				now = datetime.utcnow();
 				untilDate = sett.timeouts[message.author.id];
