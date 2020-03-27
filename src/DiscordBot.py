@@ -591,10 +591,9 @@ async def version(context):
 	"""displays the running version """
 	return await sayWords(context,'CSAR v.'+CSARversion+'\nApi: '+ discord.__version__);
 
-@client.command(aliases = ['utc'])
-async def time(context):
+@client.command(aliases = ['utc','time'])
+async def servertime(context):
 	"""displays the current time"""
-	import time
 	return await sayWords(context,'Servertime: '+time.strftime('%Y-%m-%d %H:%M:%S'));
 		
 # HELP FUNCTIONS		
