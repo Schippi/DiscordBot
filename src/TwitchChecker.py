@@ -258,6 +258,7 @@ async def startChecking(client):
 					for yt in ytentries:
 						if not ytUsrs[yt] or not ytUsrs[yt].uploadID or not ytUsrs[yt].id or not ytUsrs[yt].displayname:
 							try:
+								#print(yt)
 								usrused = True;
 								async with aiohttp.ClientSession() as session:
 									html = await fetch(session,'https://www.googleapis.com/youtube/v3/channels?part=id,contentDetails&key='+util.YTAPI+'&forUsername='+yt,{});
@@ -270,6 +271,7 @@ async def startChecking(client):
 								ytUsrs[yt].YTID = html['items'][0]['id'];
 								ytUsrs[yt].uploadID = html['items'][0].get('contentDetails').get('relatedPlaylists').get('uploads',None);
 								ytUsrs[yt].changed = True;
+								
 								if usrused:
 									ytUsrs[yt].displayname = yt;
 								else:
@@ -287,7 +289,6 @@ async def startChecking(client):
 								html = await fetch(session,'https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=25&key='+util.YTAPI+'&playlistId='+ytUsrs[yt].uploadID,{});
 							html = json.loads(html);
 							newestItem = None;
-							
 							
 							#
 							#total = html['pageInfo']['totalResults']
@@ -328,18 +329,19 @@ async def startChecking(client):
 								thumb = thumb['default'];
 							thumb = thumb['url'];	
 							t = newestItem['snippet']['title'];
-							#print(t);
 							#print("");
 							newid = newestItem['snippet']['resourceId']['videoId'];
 							oldid = ytUsrs[yt].lastID;
 							oldTime = toDateTime(ytUsrs[yt].lastprinted);
-							if(newid != ytUsrs[yt].lastID and (oldTime < newestTime or ytUsrs[yt].changed == True)):
+							
+							if(newid != ytUsrs[yt].lastID and (oldTime == 1 or oldTime < newestTime or ytUsrs[yt].changed == True)):
 								ytUsrs[yt].lastID = newid;
 								ytUsrs[yt].lastprinted = newestTimeAsString;
 								ytUsrs[yt].save();
 							u = 'https://www.youtube.com/watch?v='+	newid;
 							if(newid != oldid):
-								print(oldid + '  -->  '+newid);
+								if oldid:
+									print(oldid + '  -->  '+newid);
 								for entr in ytentries[yt]:
 									try:
 										if (entr.shouldprint(newestTime)):
