@@ -165,7 +165,7 @@ class YoutubeCommand(commands.Cog):
 						msg.content.startswith(prefix+'yimage') or 
 						msg.content.startswith(prefix+'yhelp'));
 			
-			reply = await self.bot.wait_for_message(timeout= 120, check = check);
+			reply = await self.bot.wait_for(event='message',timeout= 120, check = check);
 			if reply:
 				if(reply.content.startswith(prefix+'yabort')):
 					reply = None;
