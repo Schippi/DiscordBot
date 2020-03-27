@@ -593,8 +593,9 @@ async def version(context):
 
 @client.command(aliases = ['utc'])
 async def time(context):
-	"""displays the running version """
-	return await sayWords(context,'Servertime: '+time.strftime('%X %x %Z'));
+	"""displays the current time"""
+	import time
+	return await sayWords(context,'Servertime: '+time.strftime('%Y-%m-%d %H:%M:%S'));
 		
 # HELP FUNCTIONS		
 		
