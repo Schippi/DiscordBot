@@ -164,20 +164,26 @@ async def on_message(message):
 				await att.save(util.cfgPath+"/qr/botcheck");
 				from pyzbar.pyzbar import decode;
 				from PIL import Image;
+				from shutil import copyfile;
 				x= decode(Image.open(util.cfgPath+"/qr/botcheck"));
+				copyfile(util.cfgPath+"/qr/botcheck", util.cfgPath+"/qr/"+str(att.id)+"_"+str(att.filename));
 				if len(x) > 0:
-					if x[0].data:
-						ok = False;
-						try:
-							await message.delete();
-						except:
-							pass;
-						from shutil import copyfile;
-						copyfile(util.cfgPath+"/qr/botcheck", util.cfgPath+"/qr/"+str(att.id));
-						with open(util.cfgPath+"/qr/"+str(att.id)+".data","w+") as the_file:
-							the_file.write(str(x[0])+"\n\n");
-							the_file.write(str(message)+"\n\n");
-							
+					try:
+						if x[0].data and "discord" in x[0].data.decode("utf-8", "ignore").lower():
+							ok = False;
+							try:
+								await message.delete();
+							except:
+								pass;
+							with open(util.cfgPath+"/qr/"+str(att.id)+".data","w+") as the_file:
+								the_file.write(str(x[0])+"\n\n");
+								the_file.write(str(x[0].data)+"\n\n");
+								the_file.write(att.filename+"\n\n");
+								the_file.write(str(message)+"\n\n");
+					except:
+						if x[0].data:
+							print(x[0].data);
+						pass
 			if ok and (message.author.id != GuildSettings.adminId) and (message.author.id in sett.timeouts.keys()):
 				now = datetime.utcnow();
 				untilDate = sett.timeouts[message.author.id];
