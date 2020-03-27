@@ -590,6 +590,11 @@ async def sayInChannel(context : discord.ext.commands.Context):
 async def version(context):
 	"""displays the running version """
 	return await sayWords(context,'CSAR v.'+CSARversion+'\nApi: '+ discord.__version__);
+
+@client.command(aliases = ['utc'])
+async def time(context):
+	"""displays the running version """
+	return await sayWords(context,'Servertime: '+time.strftime('%X %x %Z'));
 		
 # HELP FUNCTIONS		
 		
