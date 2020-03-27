@@ -2,19 +2,24 @@
 
 first setup:
 
-python -m pip install pytz
-
-python -m pip install -U git+https://github.com/Rapptz/discord.py@rewrite
-
-python -m pip install yagmail
+istall with pip
+yagmail==0.11.220
+async_timeout==3.0.1
+aiohttp==3.5.4
+pytz==2019.1
+discord.py==1.2.5
+pyzbar==0.1.8
+discord==1.0.1
+Pillow==7.0.0
 
 
 mv cfg/empty.db cfg/bot.db
 
-touch tokens/twitch.token
+echo "YOUR TWITCH API KEY" > tokens/twitch.token
+echo "YOUR YOUTUBE API KEY" > tokens/youtube.token
+echo "YOUR DISCORD API KEY" > tokens/dicord.token
+echo "YOUR EMAIL ADDRESS" > tokens/mail.token
+echo "YOUR EMAIL APPPLICATION PASSWORD" >> tokens/mail.token
 
-touch tokens/youtube.token
-
-touch tokens/mail.token
-
-touch tokens/test.token
+cd src
+python3 -u DiscordBot.py ../tokens/dicord.token ../cfg
