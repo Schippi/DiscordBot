@@ -363,6 +363,9 @@ async def startChecking(client):
 							logEx(ex);
 						except KeyError as ex:
 							logEx(ex);
+						except ValueError as ex:
+							logEx(ex);
+							print(str(newestItem['snippet']));
 				print(twitMessage+'; '+ytMessage);			
 			#	if onlin == len(streams):
 			#		time.sleep(1800)
