@@ -12,6 +12,7 @@ DBcursor = None;
 DB = None;
 cfgPath = None;
 timeStr= '%Y-%m-%dT%H:%M:%S.%fZ';
+backupStr = '%Y-%m-%dT%H:%M:%SZ'
 lock = threading.Lock();
 #your Client-ID - go to https://blog.twitch.tv/client-id-required-for-kraken-api-calls-afbb8e95f843 and follow the instructions
 TwitchAPI = '';
@@ -43,7 +44,12 @@ if len(sys.argv) >= 3:
 def toDateTime(strr):
 	if(strr == None or len(strr.strip()) == 0):
 		return 1; 
-	return datetime.strptime(strr, timeStr);
+	try:
+		return datetime.strptime(strr, timeStr);
+	except ValueError as ex:
+		logEx(ex);
+		print('DATETIME ValueError Backup triggered with: ' + strr);
+		return datetime.strptime(strr, backupStr);
 
 def getMarkupStr(args):
 	if(len(args) > 1):
