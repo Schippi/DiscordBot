@@ -1,4 +1,5 @@
 #!/bin/bash
+git pull
 COUNTER=0
 while [ $COUNTER  -le 10 ]; do
 	python3 -u DiscordBot.py ../tokens/live.token ../cfg |& tee -i -a ~/Discordbot.log
