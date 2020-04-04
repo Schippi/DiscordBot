@@ -116,10 +116,6 @@ async def on_ready():
 	for svr in client.guilds:
 		GuildSetting(svr);
 		print(svr.name);
-	if not testing:	
-		sendMail('Bot Back Up','bot back online');
-	else:
-		pass;
 	await client.change_presence(activity=discord.Activity(name='Feel Good (Gorillaz)', type=0));
 	#TwitchChecker.client = client;
 	
@@ -636,6 +632,8 @@ print("discord.py version: " + discord.__version__);
 msg = "";
 
 try:
+	if not testing:	
+		sendMail('Bot is restarting','bot probably back online');
 	client.run(TOKEN); 
 	print("client stopped for some reason");
 	msg = msg + '\n'+time.strftime('%X %x %Z') +' Crash: no Exception :-('
