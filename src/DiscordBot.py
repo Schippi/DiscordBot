@@ -292,7 +292,7 @@ async def deny(context):
 async def on_member_join(member):
 	sett = getSetting(member.guild.id);
 	if sett and (sett.getWelcomeMessage() != ''):
-		print('welcomed: '+member.mention+'('+str(member.user.id)+')');
+		print('welcomed: '+member.mention+'('+str(member.discriminator)+')');
 		return await member.send(sett.getWelcomeMessage());
 		
 @client.command()
