@@ -47,8 +47,6 @@ def toDateTime(strr):
 	try:
 		return datetime.strptime(strr, timeStr);
 	except ValueError as ex:
-		logEx(ex);
-		print('DATETIME ValueError Backup triggered with: ' + strr);
 		return datetime.strptime(strr, backupStr);
 
 def getMarkupStr(args):
@@ -207,6 +205,21 @@ async def fetch(session, url, headers):
 				return await response.text()
 			except asyncio.TimeoutError:
 				return '';
+			
+def getControlVal(mystring,dflt):
+	valset = False;
+	for row in DBcursor.execute('SELECT * FROM control where key = ?',(mystring,)):
+		valset = True;
+		return row['value'];
+	if not valset:
+		DBcursor.execute('insert into control(key,value) values(?,?)',(mystring,dflt));
+		DB.commit();
+		return dflt;
+	return None;
+
+def setControlVal(mystring,val):
+	DBcursor.execute('update control set value = ? where key = ?',(val,mystring));
+	DB.commit();
 			
 def sendMail(title,inhalt):
 	try:
