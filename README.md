@@ -29,6 +29,8 @@ mv cfg/empty.db cfg/bot.db
 
 echo "YOUR TWITCH API KEY" > tokens/twitch.token
 
+echo "YOUR TWITCH API SECRET" >> tokens/twitch.token
+
 echo "YOUR YOUTUBE API KEY" > tokens/youtube.token
 
 echo "YOUR DISCORD API KEY" > tokens/dicord.token
@@ -39,4 +41,4 @@ echo "YOUR EMAIL APPPLICATION PASSWORD" >> tokens/mail.token
 
 cd src
 
-python3 -u DiscordBot.py ../tokens/dicord.token ../cfg
+python3 -u DiscordBot.py ../tokens/dicord.token ../cfg example.com 8080
