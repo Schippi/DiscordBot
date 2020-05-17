@@ -59,9 +59,9 @@ file.close();
 
 if len(sys.argv) >= 3:
 	util.cfgPath = sys.argv[2];
-    
+
 if len(sys.argv) >= 4:
-    util.serverHost = int(sys.argv[3]);  
+	util.serverHost = sys.argv[3];
 	
 if len(sys.argv) >= 5:
 	util.serverPort = int(sys.argv[4]);
