@@ -11,6 +11,9 @@ import sqlite3;
 import os;
 import asyncio;
 from asyncio import CancelledError;
+
+from aiohttp import web;
+
 import signal;
 
 from GuildSettings import GuildSetting;
@@ -56,6 +59,12 @@ file.close();
 
 if len(sys.argv) >= 3:
 	util.cfgPath = sys.argv[2];
+    
+if len(sys.argv) >= 4:
+    util.serverHost = int(sys.argv[3]);  
+	
+if len(sys.argv) >= 5:
+	util.serverPort = int(sys.argv[4]);
 	
 try:
 	fil = open(util.cfgPath+'/testing.cfg','r');
@@ -68,7 +77,7 @@ except Exception:
 DBFile = util.cfgPath+'/bot.db';
 DBJournal = util.cfgPath+'/bot.db-journal';
 DBLOG = util.cfgPath+'/botlog.db';
-DBLOGJournal = util.cfgPath+'/bot.db-journal';
+DBLOGJournal = util.cfgPath+'/botlog.db-journal';
 
 try:
 	os.remove(DBJournal);
@@ -76,7 +85,7 @@ except OSError:
 	pass;
 try:
 	os.remove(DBLOGJournal);
-except OSError:
+except OSError as e:
 	pass;
 
 util.DB = sqlite3.connect(DBFile);
@@ -142,9 +151,14 @@ async def on_message(message):
 					q1 = 'INSERT INTO LOG ('+', '.join(vallist)+' )';
 					q1 = q1+' values ( '+ ', '.join(['?' for s in vallist])+' )';
 					l1 = list(valdict.values());
-					LOGDBcursor.execute(q1,l1);
+					try:
+						LOGDBcursor.execute(q1,l1);
+					except sqlite3.OperationalError as e:
+						await asyncio.sleep(0.5);
+						LOGDBcursor.execute(q1,l1);
 					if(LOGCNT <= 0):
 						LOGDB.commit();
+						
 				else:
 					global LOGDBCHANGES;
 					if(LOGDBCHANGES < LOGDB.total_changes):
@@ -609,7 +623,16 @@ def ask_exit():
 	print('recieved Keyboard interrupt, exiting..');
 	for task in asyncio.Task.all_tasks():
 		task.cancel();                    
-	asyncio.ensure_future(exit());  
+	asyncio.ensure_future(exit()); 
+	
+
+async def handle(request):
+	name = request.match_info.get('name', "Anonymous")
+	text = "Hello, " + name+'\n\n'+str(await request.content.read());
+	text = text+'\n\n'+str(request.headers);
+	print(text);
+	return web.Response(text=request.headers['hub_challenge'])
+		 
 	
 util.client = client;
 #client.remove_command('help');
@@ -622,11 +645,25 @@ client.add_cog(YoutubeCommand(client));
 client.add_cog(AdminCommand(client));
 client.add_cog(TTSJack(client));
 
-try:
-	for sig in (signal.SIGINT, signal.SIGTERM):          
+
+app = web.Application()
+app.router.add_get('/', handle)
+app.router.add_get('/{name}', handle)
+
+runner = web.AppRunner(app)
+
+client.loop.run_until_complete(runner.setup())
+site = web.TCPSite(runner, util.serverHost, util.serverPort)
+client.loop.run_until_complete(site.start())
+
+
+
+for sig in (signal.SIGINT, signal.SIGTERM):
+	try:          
 		client.loop.add_signal_handler(sig, ask_exit);
-except NotImplementedError:
-	print("no signals supported");
+	except NotImplementedError:
+		print("no signals supported");
+		
 print("discord.py version: " + discord.__version__);
 
 msg = "";

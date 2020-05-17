@@ -88,7 +88,7 @@ class AdminCommand(commands.Cog):
 					await s.guild.get_channel(int(s.id)).send(cnt[1]);
 			else:
 				return await sayWords(context,'need argument');
-
+			
 	@commands.command( hidden=True, aliases=['insert', 'update', 'delete'])
 	async def select(self,context):
 		if isAdmin(context):
@@ -127,6 +127,50 @@ class AdminCommand(commands.Cog):
 				template = "An exception of type {0} occurred. Arguments:\n{1!r}"
 				message = template.format(type(ex).__name__, ex.args)   
 				return await sayWords(context, '`'+message+'`')
+	
+	
+	@commands.group( name = 'youtubecontrol', hidden = True)
+	async def youtubecontrol(self,contxt):
+		if contxt.invoked_subcommand is None and isAdmin(contxt):
+			return await sayWords(contxt, 'need argument');
+			
+	@youtubecontrol.command(name = 'frequency', hidden=True)
+	async def frequencyYT(self,context, msg : str):
+		if isAdmin(context):
+			msg = context.message.content[1:];
+			if len(msg) == 0:
+				return await sayWords(context,'need argument');
+			try:
+				util.setControlVal('frequencyYT',int(msg));
+			except Exception as e:
+				return await sayWords(context,str(e));
+			
+	@youtubecontrol.command(name = 'itemcount', hidden=True)
+	async def itemcountYT(self,context, msg : str):
+		if isAdmin(context):
+			msg = context.message.content[1:];
+			if len(msg) == 0:
+				return await sayWords(context,'need argument');
+			try:
+				util.setControlVal('itemCountYT',int(msg));
+			except Exception as e:
+				return await sayWords(context,str(e));
+			
+	@commands.group( name = 'twitchcontrol', hidden = True)
+	async def twitchcontrol(self,contxt):
+		if contxt.invoked_subcommand is None and isAdmin(contxt):
+			return await sayWords(contxt, 'need argument');
+			
+	@twitchcontrol.command(name = 'frequency', hidden=True)
+	async def frequencyTW(self,context, msg : str):
+		if isAdmin(context):
+			msg = context.message.content[1:];
+			if len(msg) == 0:
+				return await sayWords(context,'need argument');
+			try:
+				util.setControlVal('frequencyTW',int(msg));
+			except Exception as e:
+				return await sayWords(context,str(e));
 
 	@commands.command( hidden=True)
 	async def sendMail(self,context):

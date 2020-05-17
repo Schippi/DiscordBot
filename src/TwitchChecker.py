@@ -14,7 +14,7 @@ MinuteInterval = 1
 import json
 import time
 import util;
-from util import logEx;
+from util import logEx, AuthFailed;
 from entities import TwitchEntry;
 
 #import entities.TwitchEntry;
@@ -27,27 +27,40 @@ import traceback;
 import sys
 import fileinput
 from datetime import datetime;
+from datetime import timedelta;
+from dateutil import tz
 from util import toDateTime;
+from util import dateToStr;
 from util import fetch;
+from util import posting;
+from util import getControlVal;
+from util import setControlVal;
 
 
 checkStatusOnStart = False;
 EnableTwitch = True;
 EnableYT = True;
+frequencyYT = 2;
+itemCountYT = 10;
+frequencyTW = 1;
 stuff_lock = asyncio.Lock();
+
 		
 async def startChecking(client):
 	global EnableTwitch;
 	global EnableYT;
 	global stuff_lock;
 	global checkStatusOnStart;
+	global frequencyYT;
+	global itemCountYT;
+	global frequencyTW;
 	
 	if not EnableTwitch and not EnableYT:
 		raise;
 	
-	if not util.TwitchAPI:
+	if not util.TwitchAPI or not util.TwitchSECRET:
 		EnableTwitch = False;
-		print('WARNING: Twitch TOKEN not set');
+		print('WARNING: Twitch TOKENs not set');
 	if not util.YTAPI:
 		EnableYT = False;
 		print('WARNING: Youtube TOKEN not set');	
@@ -62,6 +75,7 @@ async def startChecking(client):
 	
 	try:
 		await client.wait_until_ready();
+		session = aiohttp.ClientSession(); 
 		cnt = 0;
 		streamonline = {};
 		streamprinted = {};
@@ -76,17 +90,48 @@ async def startChecking(client):
 		);''');
 		util.DB.commit();
 		
+		
+		util.DBcursor.execute('''CREATE TABLE IF NOT EXISTS  `control` (
+				`Key`	TEXT,
+				`value`	TEXT
+			);''');
+		util.DB.commit();
+		
+		#util.DBcursor.execute('''DROP TABLE  `game`;''');
+		
+		util.DBcursor.execute('''CREATE TABLE IF NOT EXISTS  `game` (
+				`id`	INTEGER,
+				`name`	TEXT,
+				`boxart`	TEXT
+			);''');
+		util.DB.commit();
+		
+		
 		for row in util.DBcursor.execute('SELECT * FROM twitch'):
 			streamonline[row['username'].lower()] = not checkStatusOnStart;
 		while not client.is_closed():
 			try:
 				try:
 					newpeople ={};
+					frequencyYT = int(getControlVal('frequencyYT',frequencyYT));
+					itemCountYT = int(getControlVal('itemCountYT',itemCountYT));
+					frequencyTW = int(getControlVal('frequencyTW',frequencyTW));
+					
+					oauthToken = getControlVal('token_oauth','');
+					
+					if(oauthToken == ''):
+						print('Authorization for the first time');
+						util.AuthMe(session);
+						
 					for row in util.DBcursor.execute('SELECT distinct lower(username) as username FROM twitch where userid is null'):
 						newpeople[row['username']] = [];
 					if len(newpeople.keys()) > 0:
-						async with aiohttp.ClientSession() as session:
-							myjson = await fetch(session,'https://api.twitch.tv/kraken/users?login='+','.join(newpeople.keys()),{'client-id':util.TwitchAPI,'Accept':'application/vnd.twitchtv.v5+json'});
+						lookURL = 'https://api.twitch.tv/helix/users?login='+'&login='.join(newpeople.keys())
+						myjson = await fetch(session,lookURL,{'client-id':util.TwitchAPI,
+																'Accept':'application/vnd.twitchtv.v5+json',
+																'Authorization':'Bearer '+oauthToken});
+						
+								
 						myjson = json.loads(myjson);
 						#print(myjson);
 						myArray = myjson["users"];
@@ -124,12 +169,15 @@ async def startChecking(client):
 				streamArray = None;
 				with (await stuff_lock):
 					try:
-						if EnableTwitch and len(streams.keys()) > 0:
-							async with aiohttp.ClientSession() as session:
-								html = await fetch(session,'https://api.twitch.tv/kraken/streams?channel='+','.join(ids.values()),{'client-id':util.TwitchAPI,'Accept':'application/vnd.twitchtv.v5+json'});
+						if EnableTwitch and (len(streams.keys()) > 0) and (cnt % frequencyTW == 0) :
+							html = await fetch(session,'https://api.twitch.tv/helix/streams?user_id='+'&user_id='.join(ids.values()),{'client-id':util.TwitchAPI,
+																															'Accept':'application/vnd.twitchtv.v5+json',
+																															'Authorization':'Bearer '+oauthToken});
 							html = json.loads(html);
-							#print(html);
-							streamArray = html['streams'];
+							print(html);
+							streamArray = html['data'];
+						else:
+							streamArray = None;
 					except aiohttp.ClientConnectionError as ex:
 						traceback.print_exc(file=sys.stdout);
 						logEx(ex);
@@ -159,26 +207,33 @@ async def startChecking(client):
 										print(e);
 					if streamArray:
 						try:
+							#fetch metadata in first loop
+							display_names = {};
+							gamesToFetch = set([k['game_id'] for k in streamArray]);
+							games = await util.getGames(gamesToFetch,session,oauthToken);
+							print(games);
+							
 							for streamjson in streamArray:
 								if streamjson:
 									isRerun = False;
 									try:
-										stype = streamjson['stream_type'].lower();
+										stype = streamjson['type'].lower();
 										if(stype == "rerun"):
 											isRerun = True;
 									except:
 										pass;
-									streamername = streamjson['channel']['name'].lower();
-									n = streamjson['channel']['display_name'];
+									streamername = streamjson['user_name'].lower();
+									n = streamjson['user_name'];
 									
-									g = streamjson['game'];
-									u = streamjson['channel']['url'];
-									t = streamjson['channel']['status'];
-									l = streamjson['channel']['logo'];
+									g = games[streamjson['game_id']];
+									
+									u = 'https://www.twitch.tv/'+streamername;
+									t = streamjson['title'];
+									l = streamjson['thumbnail_url'].replace('{width}','300').replace('{height}','300');
 									
 									if((streamername in ['nilesy','hybridpanda', 'ravs_'] ) and cnt%2 == 0):
 										try:
-											viewcount = int(streamjson['viewers']);
+											viewcount = int(streamjson['viewer_count']);
 											mydate = time.strftime('%Y-%m-%d %H:%M:%S');
 											util.DBcursor.execute('insert into twitchstats(channel,date,viewcount,game) values(?,?,?,?)',(streamername,mydate,viewcount,g));
 										except Exception as e:
@@ -196,13 +251,46 @@ async def startChecking(client):
 														ttext = entr.text;
 														if isRerun:
 															ttext = entr.text.replace("@here","Rerun!").replace("@everyone","Rerun!");
-														await client.get_guild(entr.guild).get_channel(entr.channel).send(content = entr.getYString(ttext,n,g,u,t,l),embed=embed);
+														messages = await client.get_guild(entr.guild).get_channel(entr.channel).history(limit=5).flatten();
+														today = datetime.utcnow().date() - timedelta(hours = 3);
+														start = datetime(today.year, today.month, today.day);
+														doit = True;
+														for mymsg in messages:
+																if mymsg.author == client.user:
+																	if mymsg.created_at > today:
+																		alle = False;
+																		for tee in entr.text.split():
+																			if not (tee in mymsg.content) and not (tee in '%%game%% %%name%% %%url%% %%img%% %%title%% %%time%%'):
+																				alle = True;
+																				print(tee)
+																				break;
+																		doit = doit and alle;
+																		print("wanted but didnt: "+str(doit));
+														if doit:	
+															await client.get_guild(entr.guild).get_channel(entr.channel).send(content = entr.getYString(ttext,n,g,u,t,l),embed=embed);
 													else:
 														try:
 															ttext = entr.text;
 															if isRerun:
 																ttext = entr.text.replace("@here","Rerun!").replace("@everyone","Rerun!");
-															await client.get_guild(196211645289201665).get_channel(196211645289201665).send(content = entr.getYString(ttext,n,g,u,t,l),embed=embed);
+															messages = await client.get_guild(196211645289201665).get_channel(196211645289201665).history(limit=5).flatten();
+															today = datetime.utcnow().date();
+															start = datetime(today.year, today.month, today.day);
+															doit = True;
+															for mymsg in messages:
+																if mymsg.author == client.user:
+																	if mymsg.created_at > start:
+																		alle = False;
+																		for tee in entr.text.split():
+																			if not (tee in mymsg.content) and not (tee in '%%game%% %%name%% %%url%% %%img%% %%title%% %%time%%'):
+																				alle = True;
+																				print(tee)
+																				break;
+																		doit = doit and alle;
+																		print("wanted but didnt: "+str(doit));
+															if doit:
+																await client.get_guild(196211645289201665).get_channel(196211645289201665).send(content = entr.getYString(ttext,n,g,u,t,l),embed=embed);
+															break;
 														except Exception as e:
 															print(e);
 													#sayWords(None, entr.getYString(n,g,u,l,t), entr.guild, entr.channel);
@@ -235,14 +323,13 @@ async def startChecking(client):
 							streamprinted[entr] = False;
 						for removed in (set(streamprinted.keys()) - set(streams.keys())):
 							streamprinted.pop(removed,None);
-						
-								
 					else:
 						onlin = 0;
+						
 				twitMessage = str(cnt)+' | '+time.strftime('%X %x %Z')+' online: '+str(onlin)+' | '+str(llist);
-				ytMessage = 'no youtube';
+				ytMessage = 'no youtube ('+str(frequencyYT)+')';
 				llist = [];
-				if EnableYT:
+				if EnableYT and (cnt % frequencyYT == 0):
 					ytentries = {}
 					ytCaseSensitive = {};
 					ytUsrs = {};
@@ -260,12 +347,10 @@ async def startChecking(client):
 							try:
 								#print(yt)
 								usrused = True;
-								async with aiohttp.ClientSession() as session:
-									html = await fetch(session,'https://www.googleapis.com/youtube/v3/channels?part=id,contentDetails&key='+util.YTAPI+'&forUsername='+yt,{});
+								html = await fetch(session,'https://www.googleapis.com/youtube/v3/channels?part=id,contentDetails&key='+util.YTAPI+'&forUsername='+yt,{});
 								html = json.loads(html);
 								if len(html['items']) == 0:
-									async with aiohttp.ClientSession() as session:
-										html = await fetch(session,'https://www.googleapis.com/youtube/v3/channels?part=id,snippet,contentDetails&key='+util.YTAPI+'&id='+ytCaseSensitive[yt],{});
+									html = await fetch(session,'https://www.googleapis.com/youtube/v3/channels?part=id,snippet,contentDetails&key='+util.YTAPI+'&id='+ytCaseSensitive[yt],{});
 									html = json.loads(html);
 									usrused = False;
 								ytUsrs[yt].YTID = html['items'][0]['id'];
@@ -283,89 +368,93 @@ async def startChecking(client):
 								logEx(ex);
 							except asyncio.TimeoutError as ex:
 								logEx(ex);
-						try:
-							async with aiohttp.ClientSession() as session:
-								#html = await fetch(session,'https://www.googleapis.com/youtube/v3/search?part=snippet&key='+YTAPI+'&channelId='+ytChannelId[yt]+'&order=date&type=video&safeSearch=none',{});
-								html = await fetch(session,'https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=25&key='+util.YTAPI+'&playlistId='+ytUsrs[yt].uploadID,{});
-							html = json.loads(html);
-							newestItem = None;
-							
-							#
-							#total = html['pageInfo']['totalResults']
-							#if total == old + 1
-							#	then if not found and nextPageToken != null: 
-							#		fetch http:// &pageToken= html['nextPageToken']
-							#
-							
-							#timeStr ohne millisec
-							if len(html['items']) == 0:
-								continue;
-							#bestDate = toDateTime(ytUsrs[yt].lastprinted);
-							newestItem = html['items'][0];
-							#print(newestItem);
-							#print("");
-							#print('>>'+str(len(html['items'])));
-							bestDate = toDateTime(html['items'][0].get('snippet').get('publishedAt'));
-							for itm in html['items']:
-								itemDate = itm.get('snippet').get('publishedAt');
-								dd = toDateTime(itemDate)
-								if(not bestDate or bestDate <= dd):
-									newestItem = itm;
-									bestDate = dd;
-									#print(itemDate+" "+itm['snippet']['resourceId']['videoId']);
-							#newestItem = html['items'][0];
-							newestTimeAsString = newestItem['snippet']['publishedAt'];
-							newestTime = toDateTime(newestTimeAsString);
-							thumb = newestItem['snippet']['thumbnails'];
-							if 'maxres' in thumb:
-								thumb = thumb['maxres'];
-							elif 'standard' in thumb:
-								thumb = thumb['standard'];	
-							elif 'high' in thumb:
-								thumb = thumb['high'];
-							elif 'medium' in thumb:
-								thumb = thumb['medium'];
-							else:
-								thumb = thumb['default'];
-							thumb = thumb['url'];	
-							t = newestItem['snippet']['title'];
-							#print("");
-							newid = newestItem['snippet']['resourceId']['videoId'];
-							oldid = ytUsrs[yt].lastID;
-							oldTime = toDateTime(ytUsrs[yt].lastprinted);
-							
-							if(newid != ytUsrs[yt].lastID and (oldTime == 1 or oldTime < newestTime or ytUsrs[yt].changed == True)):
-								ytUsrs[yt].lastID = newid;
-								ytUsrs[yt].lastprinted = newestTimeAsString;
-								ytUsrs[yt].save();
-							u = 'https://www.youtube.com/watch?v='+	newid;
-							if(newid != oldid):
-								if oldid:
-									print(oldid + '  -->  '+newid);
-								for entr in ytentries[yt]:
-									try:
-										if (entr.shouldprint(newestTime)):
-											embed = entr.getEmbed(ytUsrs[yt].displayname,u,t,thumb);
-											print(entr.getYString(entr.text,ytUsrs[yt].displayname,u,t,thumb))
-											if not testing:
-												await client.get_guild(entr.guild).get_channel(entr.channel).send(content = entr.getYString(entr.text,ytUsrs[yt].displayname,u,t,thumb),embed=embed);
-											else:
-												try:
-													await client.get_guild(196211645289201665).get_channel(196211645289201665).send(content = entr.getYString(entr.text,ytUsrs[yt].displayname,u,t,thumb),embed=embed);
-												except Exception as e:
-													print(e);
-											logEx('sent Youtube message for '+yt);
-									except Exception as e:
-										logEx(e);
-						except aiohttp.ClientConnectionError as ex:
-							logEx(ex);
-						except asyncio.TimeoutError as ex:
-							logEx(ex);
-						except KeyError as ex:
-							logEx(ex);
-						except ValueError as ex:
-							logEx(ex);
-							print(str(newestItem['snippet']));
+							except KeyError as ex:
+								ytMessage = 'Youtube Daily Limit Exceeded';
+								if('Daily Limit Exceeded' in str(html)):
+									ytWorks = False;
+									break;
+						if ytWorks and ytUsrs[yt].uploadID:
+							try:
+								html = await fetch(session,'https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults='+str(itemCountYT)+'&key='+util.YTAPI+'&playlistId='+ytUsrs[yt].uploadID,{});
+								html = json.loads(html);
+								newestItem = None;
+								
+								#
+								#total = html['pageInfo']['totalResults']
+								#if total == old + 1
+								#	then if not found and nextPageToken != null: 
+								#		fetch http:// &pageToken= html['nextPageToken']
+								#
+								
+								#timeStr ohne millisec
+								if len(html['items']) == 0:
+									continue;
+								#bestDate = toDateTime(ytUsrs[yt].lastprinted);
+								newestItem = html['items'][0];
+								#print(newestItem);
+								#print("");
+								#print('>>'+str(len(html['items'])));
+								bestDate = toDateTime(html['items'][0].get('snippet').get('publishedAt'));
+								for itm in html['items']:
+									itemDate = itm.get('snippet').get('publishedAt');
+									dd = toDateTime(itemDate)
+									if(not bestDate or bestDate <= dd):
+										newestItem = itm;
+										bestDate = dd;
+										#print(itemDate+" "+itm['snippet']['resourceId']['videoId']);
+								#newestItem = html['items'][0];
+								newestTimeAsString = newestItem['snippet']['publishedAt'];
+								newestTime = toDateTime(newestTimeAsString);
+								thumb = newestItem['snippet']['thumbnails'];
+								if 'maxres' in thumb:
+									thumb = thumb['maxres'];
+								elif 'standard' in thumb:
+									thumb = thumb['standard'];	
+								elif 'high' in thumb:
+									thumb = thumb['high'];
+								elif 'medium' in thumb:
+									thumb = thumb['medium'];
+								else:
+									thumb = thumb['default'];
+								thumb = thumb['url'];	
+								t = newestItem['snippet']['title'];
+								#print("");
+								newid = newestItem['snippet']['resourceId']['videoId'];
+								oldid = ytUsrs[yt].lastID;
+								oldTime = toDateTime(ytUsrs[yt].lastprinted);
+								
+								if(newid != ytUsrs[yt].lastID and (oldTime == 1 or oldTime < newestTime or ytUsrs[yt].changed == True)):
+									ytUsrs[yt].lastID = newid;
+									ytUsrs[yt].lastprinted = newestTimeAsString;
+									ytUsrs[yt].save();
+								u = 'https://www.youtube.com/watch?v='+	newid;
+								if(newid != oldid):
+									if oldid:
+										print(oldid + '  -->  '+newid);
+									for entr in ytentries[yt]:
+										try:
+											if (entr.shouldprint(newestTime)):
+												embed = entr.getEmbed(ytUsrs[yt].displayname,u,t,thumb);
+												print(entr.getYString(entr.text,ytUsrs[yt].displayname,u,t,thumb))
+												if not testing:
+													await client.get_guild(entr.guild).get_channel(entr.channel).send(content = entr.getYString(entr.text,ytUsrs[yt].displayname,u,t,thumb),embed=embed);
+												else:
+													try:
+														await client.get_guild(196211645289201665).get_channel(196211645289201665).send(content = entr.getYString(entr.text,ytUsrs[yt].displayname,u,t,thumb),embed=embed);
+													except Exception as e:
+														print(e);
+												logEx('sent Youtube message for '+yt);
+										except Exception as e:
+											logEx(e);
+							except aiohttp.ClientConnectionError as ex:
+								logEx(ex);
+							except asyncio.TimeoutError as ex:
+								logEx(ex);
+							except KeyError as ex:
+								logEx(ex);
+							except ValueError as ex:
+								logEx(ex);
+								print(str(newestItem['snippet']));
 				print(twitMessage+'; '+ytMessage);			
 			#	if onlin == len(streams):
 			#		time.sleep(1800)
@@ -376,13 +465,17 @@ async def startChecking(client):
 				except:
 					pass;
 			if testing:
-				await asyncio.sleep(1 * 15)
+				#for st in streamonline.keys():
+				#	streamonline[st] = False;
+				await asyncio.sleep(4 * 15)
 			else:
 				for i in range(12):
 					await asyncio.sleep(1 * 5)
 	except BaseException as ex:
 		err = str(ex);
 		logEx(ex);
+		if testing:
+			print(err);
 		if(not testing) and (err != ''):
 			util.sendMail('TwitchCheckerloop crashed',time.strftime('%X %x %Z') + ': ' + 'Exception:\n\t '+err);
 		else:

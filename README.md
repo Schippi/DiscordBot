@@ -20,6 +20,10 @@ discord==1.0.1
 
 Pillow==7.0.0
 
+pip install aiodns
+
+pip install cchardet
+
 ---------------------
 mv cfg/empty.db cfg/bot.db
 

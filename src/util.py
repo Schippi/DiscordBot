@@ -7,17 +7,25 @@ import async_timeout;
 import sys;
 import base64;
 import yagmail;
+import json;
+from _ast import Await
 
 DBcursor = None;
 DB = None;
 cfgPath = None;
+serverPort = 8081;
+serverHost = 'localhost'
 timeStr= '%Y-%m-%dT%H:%M:%S.%fZ';
 backupStr = '%Y-%m-%dT%H:%M:%SZ'
 lock = threading.Lock();
 #your Client-ID - go to https://blog.twitch.tv/client-id-required-for-kraken-api-calls-afbb8e95f843 and follow the instructions
 TwitchAPI = '';
+TwitchSECRET = '';
 YTAPI = '';
 pleaseLog=True;
+
+class AuthFailed(Exception):
+	pass;
 
 if len(sys.argv) >= 3:
 	cfgPath = sys.argv[2];
@@ -26,7 +34,10 @@ file = open(cfgPath+"/../tokens/twitch.token","r");
 try:
 	contents =file.read().splitlines(); 
 	TwitchAPI = contents[0];
+	TwitchSECRET = contents[1];
 except:
+	TwitchAPI = '';
+	TwitchSECRET = '';
 	pass;
 file.close();
 
@@ -48,6 +59,9 @@ def toDateTime(strr):
 		return datetime.strptime(strr, timeStr);
 	except ValueError as ex:
 		return datetime.strptime(strr, backupStr);
+	
+def dateToStr(dd):
+	return dd.strftime(timeStr);
 
 def getMarkupStr(args):
 	if(len(args) > 1):
@@ -198,9 +212,29 @@ async def askYesNoReaction(context, question):
 		return False;
 	return not reaction is None and not user is None and ('\N{WHITE HEAVY CHECK MARK}' == reaction.emoji);
 
-async def fetch(session, url, headers):
+async def fetch(session, url, headers,secondTime=False):
 	with async_timeout.timeout(10):
 		async with session.get(url, headers = headers) as response:
+			try:
+				if (response.status == 401):
+					print(await response.text())
+					print(url)
+					print(headers)
+					if (('twitch' in url) and ('WWW-Authenticate' in response.headers.keys())):
+						if secondTime:
+							raise AuthFailed;
+						else:
+							headers['Authorization'] = 'Bearer '+(await AuthMe(session));
+							return await fetch(session,url,headers,True);
+				else:
+					return await response.text()
+			except asyncio.TimeoutError:
+				return '';
+
+			
+async def posting(session, url, payload):
+	with async_timeout.timeout(10):
+		async with session.post(url, data = payload) as response:
 			try:
 				return await response.text()
 			except asyncio.TimeoutError:
@@ -217,9 +251,36 @@ def getControlVal(mystring,dflt):
 		return dflt;
 	return None;
 
+async def getGames(ids,session,oauthToken):
+	placeholders= ', '.join(['?']*len(ids));
+	retdict = {};
+	for row in DBcursor.execute('SELECT * FROM game where id in ({})'.format(placeholders),tuple(ids)):
+		retdict[str(row['id'])] = row['name'];
+																	
+	if (len(retdict.keys()) < len(ids)):
+		lookURL = 'https://api.twitch.tv/helix/games?id='+('&id='.join(ids));
+		
+		myjson = await fetch(session,lookURL,{'client-id':TwitchAPI,
+								'Accept':'application/vnd.twitchtv.v5+json',
+								'Authorization':'Bearer '+oauthToken});
+		myjson = json.loads(myjson);
+		for d in myjson['data']:
+			DBcursor.execute('insert into game(id,name,boxart) values(?,?,?)',(d['id'],d['name'],d['box_art_url']));
+			retdict[d['id']] = d['name'];
+		DB.commit();
+	return retdict;
+
+async def AuthMe(session):
+	authURL = 'https://id.twitch.tv/oauth2/token';
+	
+	myjson = await posting(session,authURL,{'client_id':TwitchAPI,'client_secret':TwitchSECRET, 'grant_type':'client_credentials'});
+	myjson = json.loads(myjson);		
+	return setControlVal('token_oauth',myjson['access_token']);
+
 def setControlVal(mystring,val):
 	DBcursor.execute('update control set value = ? where key = ?',(val,mystring));
 	DB.commit();
+	return val;
 			
 def sendMail(title,inhalt):
 	try:
