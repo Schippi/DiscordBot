@@ -614,8 +614,7 @@ def getRoleID(context,rolename):
 			return role.id;
 	return None;
 
-@asyncio.coroutine                                       
-def exit():                                              
+async def exitx():                                              
 	loop = asyncio.get_event_loop()                      
 	loop.stop()
 	
@@ -623,15 +622,25 @@ def ask_exit():
 	print('recieved Keyboard interrupt, exiting..');
 	for task in asyncio.Task.all_tasks():
 		task.cancel();                    
-	asyncio.ensure_future(exit()); 
+	asyncio.ensure_future(exitx()); 
 	
+routes = web.RouteTableDef();
 
-async def handle(request):
-	name = request.match_info.get('name', "Anonymous")
-	text = "Hello, " + name+'\n\n'+str(await request.content.read());
+@routes.get('/webhook')
+async def handle_webhook(request):
+	text = str(await request.content.read());
 	text = text+'\n\n'+str(request.headers);
+	text = text+'\n\n'+str(request.rel_url.query);
 	print(text);
 	return web.Response(text=request.rel_url.query['hub.challenge'])
+
+@routes.post('/webhook')
+async def handle_notif(request):
+	text = str(await request.content.read());
+	text = text+'\n\n'+str(request.headers);
+	text = text+'\n\n'+str(request.rel_url.query);
+	print(text);
+	return web.Response(text='');
 		 
 	
 util.client = client;
@@ -646,11 +655,10 @@ client.add_cog(AdminCommand(client));
 client.add_cog(TTSJack(client));
 
 
-app = web.Application()
-app.router.add_get('/', handle)
-app.router.add_get('/{name}', handle)
+app = web.Application();
+app.add_routes(routes);
 
-runner = web.AppRunner(app)
+runner = web.AppRunner(app);
 
 client.loop.run_until_complete(runner.setup())
 site = web.TCPSite(runner, util.serverHost, util.serverPort)
