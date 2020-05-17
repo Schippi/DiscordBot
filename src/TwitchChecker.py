@@ -121,7 +121,7 @@ async def startChecking(client):
 					
 					if(oauthToken == ''):
 						print('Authorization for the first time');
-						await util.AuthMe(session);
+						oauthToken = await util.AuthMe(session);
 						
 					for row in util.DBcursor.execute('SELECT distinct lower(username) as username FROM twitch where userid is null'):
 						newpeople[row['username']] = [];
