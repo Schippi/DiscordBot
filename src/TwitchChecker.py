@@ -174,7 +174,7 @@ async def startChecking(client):
 																															'Accept':'application/vnd.twitchtv.v5+json',
 																															'Authorization':'Bearer '+oauthToken});
 							html = json.loads(html);
-							print(html);
+							#print(html);
 							streamArray = html['data'];
 						else:
 							streamArray = None;
