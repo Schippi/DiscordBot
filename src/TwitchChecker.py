@@ -329,6 +329,7 @@ async def startChecking(client):
 				twitMessage = str(cnt)+' | '+time.strftime('%X %x %Z')+' online: '+str(onlin)+' | '+str(llist);
 				ytMessage = 'no youtube ('+str(frequencyYT)+')';
 				llist = [];
+				ytWorks = True;
 				if EnableYT and (cnt % frequencyYT == 0):
 					ytentries = {}
 					ytCaseSensitive = {};
@@ -356,7 +357,7 @@ async def startChecking(client):
 								ytUsrs[yt].YTID = html['items'][0]['id'];
 								ytUsrs[yt].uploadID = html['items'][0].get('contentDetails').get('relatedPlaylists').get('uploads',None);
 								ytUsrs[yt].changed = True;
-								
+								ytWorks = True;
 								if usrused:
 									ytUsrs[yt].displayname = yt;
 								else:
