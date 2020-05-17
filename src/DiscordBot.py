@@ -631,7 +631,7 @@ async def handle(request):
 	text = "Hello, " + name+'\n\n'+str(await request.content.read());
 	text = text+'\n\n'+str(request.headers);
 	print(text);
-	return web.Response(text=request.headers['hub_challenge'])
+	return web.Response(text=request.rel_url.query['hub_challenge'])
 		 
 	
 util.client = client;
