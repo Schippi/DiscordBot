@@ -211,7 +211,7 @@ async def startChecking(client):
 							display_names = {};
 							gamesToFetch = set([k['game_id'] for k in streamArray]);
 							games = await util.getGames(gamesToFetch,session,oauthToken);
-							print(games);
+							#print(games);
 							
 							for streamjson in streamArray:
 								if streamjson:
