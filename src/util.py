@@ -265,7 +265,8 @@ async def getGames(ids,session,oauthToken):
 								'Authorization':'Bearer '+oauthToken});
 		myjson = json.loads(myjson);
 		for d in myjson['data']:
-			DBcursor.execute('insert into game(id,name,boxart) values(?,?,?)',(d['id'],d['name'],d['box_art_url']));
+			if not d['id'] in retdict.keys():
+				DBcursor.execute('insert into game(id,name,boxart) values(?,?,?)',(d['id'],d['name'],d['box_art_url']));
 			retdict[d['id']] = d['name'];
 		DB.commit();
 	return retdict;
