@@ -63,7 +63,7 @@ async def handle_data(request,data):
     
     
     
-    if len(myjson == 0):
+    if (len(myjson) == 0):
         streamonline[user_name] = False;
         util.DBcursor.execute('update twitch_person set last_check_status = ? , last_check = ? where userid = ?',('offline',util.dateToStr(datetime.datetime.now()),user_id) );
         util.DB.commit();
