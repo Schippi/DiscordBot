@@ -36,6 +36,14 @@ class TwitchEntry:
 			self.game = dic['game'].lower().strip();
 		else:
 			self.game = None;
+		if dic['last_check_status']:
+			self.last_check_status = dic['last_check_status'];
+		else:
+			self.last_check_status = None;
+		if dic['last_check']:
+			self.last_check_status = dic['last_check'];
+		else:
+			self.last_check_status = None;
 		if dic['embedmessage']:
 			self.embedmessage = dic['embedmessage'];
 		else:

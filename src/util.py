@@ -254,6 +254,9 @@ def getControlVal(mystring,dflt):
 async def getGames(ids,session,oauthToken):
 	placeholders= ', '.join(['?']*len(ids));
 	retdict = {};
+	if(len(ids)== 0):
+		return retdict;
+	
 	for row in DBcursor.execute('SELECT * FROM game where id in ({})'.format(placeholders),tuple(ids)):
 		retdict[str(row['id'])] = row['name'];
 																	

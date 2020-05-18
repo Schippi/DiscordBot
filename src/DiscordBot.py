@@ -12,8 +12,6 @@ import os;
 import asyncio;
 from asyncio import CancelledError;
 
-from aiohttp import web;
-
 import signal;
 
 from GuildSettings import GuildSetting;
@@ -91,6 +89,54 @@ except OSError as e:
 util.DB = sqlite3.connect(DBFile);
 util.DB.row_factory = util.dict_factory;
 util.DBcursor = util.DB.cursor();
+
+util.DBcursor.execute('''CREATE TABLE IF NOT EXISTS twitchstats (
+	'ID'	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+	'DATE'	TEXT,
+	'viewcount'	INTEGER,
+	'game'	TEXT,
+	'channel'	TEXT
+);''');
+util.DB.commit();
+
+
+util.DBcursor.execute('''CREATE TABLE IF NOT EXISTS  `control` (
+		`Key`	TEXT,
+		`value`	TEXT
+	);''');
+util.DB.commit();
+
+util.DBcursor.execute('''CREATE TABLE IF NOT EXISTS  `game` (
+		`id`	INTEGER,
+		`name`	TEXT,
+		`boxart`	TEXT
+	);''');
+util.DB.commit();
+
+util.DBcursor.execute('''CREATE TABLE IF NOT EXISTS  `twitch_person` (
+		`id`	TEXT,
+		`login`	TEXT,
+		`display_name`	TEXT,
+		`type`	TEXT,
+		`broadcaster_type`	TEXT,
+		`description`	TEXT,
+		`profile_image_url`	TEXT,
+		`offline_image_url`	TEXT,
+		`view_count`	INTEGER,
+		`last_check`	TEXT,
+		`last_check_status`	TEXT
+	);''');
+util.DB.commit();
+
+util.DBcursor.execute('''CREATE TABLE IF NOT EXISTS  `dual` (
+		`DUMMY`	TEXT
+	);''');
+	
+util.DBcursor.execute('''insert into dual(dummy)
+					select 'X' from sqlite_master 
+					where not exists (select * from dual)
+					limit 1''');
+util.DB.commit();
 
 LOGDB = sqlite3.connect(DBLOG);
 LOGDB.row_factory = util.dict_factory;
@@ -623,24 +669,6 @@ def ask_exit():
 	for task in asyncio.Task.all_tasks():
 		task.cancel();                    
 	asyncio.ensure_future(exitx()); 
-	
-routes = web.RouteTableDef();
-
-@routes.get('/webhook')
-async def handle_webhook(request):
-	text = str(await request.content.read());
-	text = text+'\n\n'+str(request.headers);
-	text = text+'\n\n'+str(request.rel_url.query);
-	print(text);
-	return web.Response(text=request.rel_url.query['hub.challenge'])
-
-@routes.post('/webhook')
-async def handle_notif(request):
-	text = str(await request.content.read());
-	text = text+'\n\n'+str(request.headers);
-	text = text+'\n\n'+str(request.rel_url.query);
-	print(text);
-	return web.Response(text='');
 		 
 	
 util.client = client;
@@ -654,17 +682,8 @@ client.add_cog(YoutubeCommand(client));
 client.add_cog(AdminCommand(client));
 client.add_cog(TTSJack(client));
 
-
-app = web.Application();
-app.add_routes(routes);
-
-runner = web.AppRunner(app);
-
-client.loop.run_until_complete(runner.setup())
-site = web.TCPSite(runner, util.serverHost, util.serverPort)
-client.loop.run_until_complete(site.start())
-
-
+from WebServer import setup;
+client.loop.run_until_complete(setup(client).start())
 
 for sig in (signal.SIGINT, signal.SIGTERM):
 	try:          

@@ -35,6 +35,8 @@ from util import fetch;
 from util import posting;
 from util import getControlVal;
 from util import setControlVal;
+from entities.TwitchAPI.TwitchAPI import TwitchUser;
+
 
 
 checkStatusOnStart = False;
@@ -44,7 +46,54 @@ frequencyYT = 2;
 itemCountYT = 10;
 frequencyTW = 1;
 stuff_lock = asyncio.Lock();
+streamonline = {};
 
+try:
+	fil = open(util.cfgPath+'/testing.cfg','r');
+	testing = True;
+	fil.close();
+except Exception:
+	testing = False;
+	pass;
+
+
+
+async def processTwitch(client,data,session,oauthToken,cnt):
+	
+				
+	pass;
+
+async def printEntry(client,entr,isRerun,sName,sGame,sURL,sTitle,sLogo):
+	global testing;
+	guild_id = entr.guild;
+	channel_id = entr.channel;
+	embed = entr.getEmbed(sName,sGame,sURL,sTitle,sLogo);
+	if testing:
+		guild_id = '196211645289201665';
+		channel_id = '196211645289201665';
+	try:
+		ttext = entr.text;
+		if isRerun:
+			ttext = entr.text.replace("@here","Rerun!").replace("@everyone","Rerun!");
+		messages = await client.get_guild(guild_id).get_channel(channel_id).history(limit=5).flatten();
+		today = datetime.utcnow().date();
+		start = datetime(today.year, today.month, today.day);
+		doit = True;
+		for mymsg in messages:
+			if mymsg.author == client.user:
+				if mymsg.created_at > start:
+					alle = False;
+					for tee in entr.text.split():
+						if not (tee in mymsg.content) and not (tee in '%%game%% %%name%% %%url%% %%img%% %%title%% %%time%%'):
+							alle = True;
+							print(tee)
+							break;
+					doit = doit and alle;
+					print("wanted but didnt: "+str(doit));
+		if doit:
+			await client.get_guild(guild_id).get_channel(channel_id).send(content = entr.getYString(ttext,sName,sGame,sURL,sTitle,sLogo),embed=embed);
+	except Exception as e:
+		print(e);
 		
 async def startChecking(client):
 	global EnableTwitch;
@@ -54,7 +103,8 @@ async def startChecking(client):
 	global frequencyYT;
 	global itemCountYT;
 	global frequencyTW;
-	
+	global testing;
+	global streamonline;
 	if not EnableTwitch and not EnableYT:
 		raise;
 	
@@ -64,48 +114,14 @@ async def startChecking(client):
 	if not util.YTAPI:
 		EnableYT = False;
 		print('WARNING: Youtube TOKEN not set');	
-		
-	try:
-		fil = open(util.cfgPath+'/testing.cfg','r');
-		testing = True;
-		fil.close();
-	except Exception:
-		testing = False;
-		pass;
 	
 	try:
 		await client.wait_until_ready();
 		session = aiohttp.ClientSession(); 
 		cnt = 0;
-		streamonline = {};
+				
 		streamprinted = {};
 		streams = {};
-		
-		util.DBcursor.execute('''CREATE TABLE IF NOT EXISTS twitchstats (
-			'ID'	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-			'DATE'	TEXT,
-			'viewcount'	INTEGER,
-			'game'	TEXT,
-			'channel'	TEXT
-		);''');
-		util.DB.commit();
-		
-		
-		util.DBcursor.execute('''CREATE TABLE IF NOT EXISTS  `control` (
-				`Key`	TEXT,
-				`value`	TEXT
-			);''');
-		util.DB.commit();
-		
-		#util.DBcursor.execute('''DROP TABLE  `game`;''');
-		
-		util.DBcursor.execute('''CREATE TABLE IF NOT EXISTS  `game` (
-				`id`	INTEGER,
-				`name`	TEXT,
-				`boxart`	TEXT
-			);''');
-		util.DB.commit();
-		
 		
 		for row in util.DBcursor.execute('SELECT * FROM twitch'):
 			streamonline[row['username'].lower()] = not checkStatusOnStart;
@@ -125,6 +141,13 @@ async def startChecking(client):
 						
 					for row in util.DBcursor.execute('SELECT distinct lower(username) as username FROM twitch where userid is null'):
 						newpeople[row['username']] = [];
+						
+					for row in util.DBcursor.execute('''SELECT lower(username) as username FROM twitch t
+															where t.userid is not null 
+															and not exists ( select * from twitch_person where id = t.userid )
+													'''):
+						newpeople[row['username']] = [];
+					print(newpeople)	
 					if len(newpeople.keys()) > 0:
 						lookURL = 'https://api.twitch.tv/helix/users?login='+'&login='.join(newpeople.keys())
 						myjson = await fetch(session,lookURL,{'client-id':util.TwitchAPI,
@@ -133,19 +156,27 @@ async def startChecking(client):
 						
 								
 						myjson = json.loads(myjson);
-						#print(myjson);
-						myArray = myjson["users"];
+						print(myjson);
+						myArray = myjson["data"];
 						if myArray:
 							for myEnt in myArray:
-								newpeople[myEnt["name"].lower()] = myEnt["_id"]; 
-						for p in newpeople:
-							util.DBcursor.execute('update twitch set userid = ? where username = ?',[newpeople[p],p]);
+								data_user = TwitchUser(myEnt);
+								newpeople[myEnt["display_name"].lower()] = myEnt["id"];
+								
+								util.DBcursor.execute('update twitch set userid = ? where lower(username) = ?',[data_user.id,data_user.display_name.lower()]);
+								util.DBcursor.execute('''insert into twitch_person(id,login,display_name,type,broadcaster_type,description,profile_image_url,offline_image_url,view_count)
+									 select ?,?,?,?,?,?,?,?,? from dual
+									 where not exists (select * from twitch_person where id = ?) 
+									 '''							 
+								 ,[data_user.id,data_user.login,data_user.display_name,data_user.type,data_user.broadcaster_type,data_user.description,data_user.profile_image_url,data_user.offline_image_url,data_user.view_count,data_user.id]);
+							
 						util.DB.commit();
-				except:
-					pass;	
+				except Exception as ex:
+					traceback.print_exc(file=sys.stdout);
+					logEx(ex);
 				streams = {};
 				ids = {};
-				for row in util.DBcursor.execute('SELECT * FROM twitch'):
+				for row in util.DBcursor.execute('SELECT t.*,p.id as pers_id,p.last_check,p.last_check_status FROM twitch t left join twitch_person p on t.userid = p.id'):
 					if not row['username'] in streams:
 						streams[row['username'].lower()] = [];
 					ent = entities.TwitchEntry.TwitchEntry(row);
@@ -188,27 +219,26 @@ async def startChecking(client):
 						for entr in streams['timer']:
 							if entr.shouldprint(entr.game):
 								n = '[timer]';
-								g = '[Ding Dong!]';
-								u = 'https://www.youtube.com/watch?v=oHg5SJYRHA0';
-								t = 'it has happened!';
-								l = None;
-								embed = entr.getEmbed(n,g,u,t,l);
+								sGame = '[Ding Dong!]';
+								sURL = 'https://www.youtube.com/watch?v=oHg5SJYRHA0';
+								sTitle = 'it has happened!';
+								sLogo = None;
+								embed = entr.getEmbed(n,sGame,sURL,sTitle,sLogo);
 								if not testing:
 									try:
-										await client.get_guild(entr.guild).get_channel(entr.channel).send(content = entr.getYString(entr.text,n,g,u,t,l),embed=embed);
+										await client.get_guild(entr.guild).get_channel(entr.channel).send(content = entr.getYString(entr.text,n,sGame,sURL,sTitle,sLogo),embed=embed);
 										print('timer {0} triggered entry: {1}:{2} - {3}'.format(entr.id, entr.fromtimeH, entr.fromtimeM, entr.days));
 									except:
 										print('timer broken');
 										pass;
 								else:
 									try:
-										await client.get_guild(196211645289201665).get_channel(196211645289201665).send(content = entr.getYString(entr.text,n,g,u,t,l),embed=embed);
+										await client.get_guild(196211645289201665).get_channel(196211645289201665).send(content = entr.getYString(entr.text,n,sGame,sURL,sTitle,sLogo),embed=embed);
 									except Exception as e:
 										print(e);
 					if streamArray:
 						try:
 							#fetch metadata in first loop
-							display_names = {};
 							gamesToFetch = set([k['game_id'] for k in streamArray]);
 							games = await util.getGames(gamesToFetch,session,oauthToken);
 							#print(games);
@@ -223,79 +253,33 @@ async def startChecking(client):
 									except:
 										pass;
 									streamername = streamjson['user_name'].lower();
-									n = streamjson['user_name'];
+									sName = streamjson['user_name'];
 									
-									g = games[streamjson['game_id']];
+									sGame = games[streamjson['game_id']];
 									
-									u = 'https://www.twitch.tv/'+streamername;
-									t = streamjson['title'];
-									l = streamjson['thumbnail_url'].replace('{width}','300').replace('{height}','300');
+									sURL = 'https://www.twitch.tv/'+streamername;
+									sTitle = streamjson['title'];
+									sLogo = streamjson['thumbnail_url'].replace('{width}','300').replace('{height}','300');
 									
 									if((streamername in ['nilesy','hybridpanda', 'ravs_'] ) and cnt%2 == 0):
 										try:
 											viewcount = int(streamjson['viewer_count']);
 											mydate = time.strftime('%Y-%m-%d %H:%M:%S');
-											util.DBcursor.execute('insert into twitchstats(channel,date,viewcount,game) values(?,?,?,?)',(streamername,mydate,viewcount,g));
+											util.DBcursor.execute('insert into twitchstats(channel,date,viewcount,game) values(?,?,?,?)',(streamername,mydate,viewcount,sGame));
 										except Exception as e:
 											print(e);
 									
 									llist.append(streamername);
 									if not streamonline[streamername]:
 										for entr in streams[streamername]:
-											#print(time.strftime('%X %x %Z ')+n+' print: '+str(entr.shouldprint(g)));
+											#print(time.strftime('%X %x %Z ')+n+' print: '+str(entr.shouldprint(sGame)));
 											try:
 												#print(streamprinted[entr]);
-												if (entr.shouldprint(g) and not streamprinted[entr]):
-													embed = entr.getEmbed(n,g,u,t,l);
-													if not testing:
-														ttext = entr.text;
-														if isRerun:
-															ttext = entr.text.replace("@here","Rerun!").replace("@everyone","Rerun!");
-														messages = await client.get_guild(entr.guild).get_channel(entr.channel).history(limit=5).flatten();
-														today = datetime.utcnow().date() - timedelta(hours = 3);
-														start = datetime(today.year, today.month, today.day);
-														doit = True;
-														for mymsg in messages:
-																if mymsg.author == client.user:
-																	if mymsg.created_at > today:
-																		alle = False;
-																		for tee in entr.text.split():
-																			if not (tee in mymsg.content) and not (tee in '%%game%% %%name%% %%url%% %%img%% %%title%% %%time%%'):
-																				alle = True;
-																				print(tee)
-																				break;
-																		doit = doit and alle;
-																		print("wanted but didnt: "+str(doit));
-														if doit:	
-															await client.get_guild(entr.guild).get_channel(entr.channel).send(content = entr.getYString(ttext,n,g,u,t,l),embed=embed);
-													else:
-														try:
-															ttext = entr.text;
-															if isRerun:
-																ttext = entr.text.replace("@here","Rerun!").replace("@everyone","Rerun!");
-															messages = await client.get_guild(196211645289201665).get_channel(196211645289201665).history(limit=5).flatten();
-															today = datetime.utcnow().date();
-															start = datetime(today.year, today.month, today.day);
-															doit = True;
-															for mymsg in messages:
-																if mymsg.author == client.user:
-																	if mymsg.created_at > start:
-																		alle = False;
-																		for tee in entr.text.split():
-																			if not (tee in mymsg.content) and not (tee in '%%game%% %%name%% %%url%% %%img%% %%title%% %%time%%'):
-																				alle = True;
-																				print(tee)
-																				break;
-																		doit = doit and alle;
-																		print("wanted but didnt: "+str(doit));
-															if doit:
-																await client.get_guild(196211645289201665).get_channel(196211645289201665).send(content = entr.getYString(ttext,n,g,u,t,l),embed=embed);
-															break;
-														except Exception as e:
-															print(e);
-													#sayWords(None, entr.getYString(n,g,u,l,t), entr.guild, entr.channel);
+												if (entr.shouldprint(sGame) and not streamprinted[entr]):
+													await printEntry(client,entr,isRerun,sName,sGame,sURL,sTitle,sLogo);
+													#sayWords(None, entr.getYString(n,sGame,sURL,sLogo,sTitle), entr.guild, entr.channel);
 													streamprinted[entr] = True;
-													logEx('sent Twitch message for '+n);
+													logEx('sent Twitch message for '+sName);
 													#print(10);
 											except Exception as e:
 												print(streamername)
@@ -309,6 +293,9 @@ async def startChecking(client):
 							except Exception as e:
 								traceback.print_exc(file=sys.stdout);
 								logEx(e);
+						except Exception as e:
+							logEx(e);
+							print('streamArray: '+str(streamArray));
 						finally:
 							#print(14);
 							onlin = onlin + 1 - 1;
@@ -418,7 +405,7 @@ async def startChecking(client):
 								else:
 									thumb = thumb['default'];
 								thumb = thumb['url'];	
-								t = newestItem['snippet']['title'];
+								sTitle = newestItem['snippet']['title'];
 								#print("");
 								newid = newestItem['snippet']['resourceId']['videoId'];
 								oldid = ytUsrs[yt].lastID;
@@ -428,20 +415,20 @@ async def startChecking(client):
 									ytUsrs[yt].lastID = newid;
 									ytUsrs[yt].lastprinted = newestTimeAsString;
 									ytUsrs[yt].save();
-								u = 'https://www.youtube.com/watch?v='+	newid;
+								sURL = 'https://www.youtube.com/watch?v='+	newid;
 								if(newid != oldid):
 									if oldid:
 										print(oldid + '  -->  '+newid);
 									for entr in ytentries[yt]:
 										try:
 											if (entr.shouldprint(newestTime)):
-												embed = entr.getEmbed(ytUsrs[yt].displayname,u,t,thumb);
-												print(entr.getYString(entr.text,ytUsrs[yt].displayname,u,t,thumb))
+												embed = entr.getEmbed(ytUsrs[yt].displayname,sURL,sTitle,thumb);
+												print(entr.getYString(entr.text,ytUsrs[yt].displayname,sURL,sTitle,thumb))
 												if not testing:
-													await client.get_guild(entr.guild).get_channel(entr.channel).send(content = entr.getYString(entr.text,ytUsrs[yt].displayname,u,t,thumb),embed=embed);
+													await client.get_guild(entr.guild).get_channel(entr.channel).send(content = entr.getYString(entr.text,ytUsrs[yt].displayname,sURL,sTitle,thumb),embed=embed);
 												else:
 													try:
-														await client.get_guild(196211645289201665).get_channel(196211645289201665).send(content = entr.getYString(entr.text,ytUsrs[yt].displayname,u,t,thumb),embed=embed);
+														await client.get_guild(196211645289201665).get_channel(196211645289201665).send(content = entr.getYString(entr.text,ytUsrs[yt].displayname,sURL,sTitle,thumb),embed=embed);
 													except Exception as e:
 														print(e);
 												logEx('sent Youtube message for '+yt);
