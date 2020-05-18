@@ -73,9 +73,11 @@ class TwitchCommand(commands.Cog):
 			return;
 		try:
 			async with aiohttp.ClientSession() as session:
-				html = await fetch(session,'https://api.twitch.tv/kraken/channels/'+tname,{'client-id':TwitchAPI});
+				html = await fetch(session,'https://api.twitch.tv/helix/users?login='+tname,{'client-id':TwitchAPI,
+																							'Accept':'application/vnd.twitchtv.v5+json',
+																							'Authorization':'Bearer '+util.getControlVal('token_oauth', '')});
 			html = json.loads(html);
-			if html['_id'] <= 0:
+			if len(html['data']) <= 0:
 				return await sayWords(context, 'could not find channel `'+tname+'`');
 		except:
 			return await sayWords(context, 'could not find channel `'+tname+'`');
