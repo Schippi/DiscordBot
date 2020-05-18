@@ -137,22 +137,24 @@ class AdminCommand(commands.Cog):
 	@youtubecontrol.command(name = 'frequency', hidden=True)
 	async def frequencyYT(self,context, msg : str):
 		if isAdmin(context):
-			msg = context.message.content[1:];
+			#msg = context.message.content[1:];
 			if len(msg) == 0:
 				return await sayWords(context,'need argument');
 			try:
 				util.setControlVal('frequencyYT',int(msg));
+				return await sayWords(context,'ok');
 			except Exception as e:
 				return await sayWords(context,str(e));
 			
 	@youtubecontrol.command(name = 'itemcount', hidden=True)
 	async def itemcountYT(self,context, msg : str):
 		if isAdmin(context):
-			msg = context.message.content[1:];
+			#msg = context.message.content[1:];
 			if len(msg) == 0:
 				return await sayWords(context,'need argument');
 			try:
 				util.setControlVal('itemCountYT',int(msg));
+				return await sayWords(context,'ok');
 			except Exception as e:
 				return await sayWords(context,str(e));
 			
@@ -164,11 +166,12 @@ class AdminCommand(commands.Cog):
 	@twitchcontrol.command(name = 'frequency', hidden=True)
 	async def frequencyTW(self,context, msg : str):
 		if isAdmin(context):
-			msg = context.message.content[1:];
+			#msg = context.message.content[1:];
 			if len(msg) == 0:
 				return await sayWords(context,'need argument');
 			try:
 				util.setControlVal('frequencyTW',int(msg));
+				return await sayWords(context,'ok');
 			except Exception as e:
 				return await sayWords(context,str(e));
 

@@ -229,6 +229,7 @@ async def startChecking(client):
 										await client.get_guild(entr.guild).get_channel(entr.channel).send(content = entr.getYString(entr.text,n,sGame,sURL,sTitle,sLogo),embed=embed);
 										print('timer {0} triggered entry: {1}:{2} - {3}'.format(entr.id, entr.fromtimeH, entr.fromtimeM, entr.days));
 									except:
+										traceback.print_exc(file=sys.stdout);
 										print('timer broken');
 										pass;
 								else:
