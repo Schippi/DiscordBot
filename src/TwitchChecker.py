@@ -147,7 +147,7 @@ async def startChecking(client):
 															and not exists ( select * from twitch_person where id = t.userid )
 													'''):
 						newpeople[row['username']] = [];
-					print(newpeople)	
+					#print(newpeople)	
 					if len(newpeople.keys()) > 0:
 						lookURL = 'https://api.twitch.tv/helix/users?login='+'&login='.join(newpeople.keys())
 						myjson = await fetch(session,lookURL,{'client-id':util.TwitchAPI,
