@@ -79,7 +79,7 @@ async def printEntry(client,entr,isRerun,sName,sGame,sURL,sTitle,sLogo, edit = F
 		guild_id = '196211645289201665';
 		channel_id = '196211645289201665';
 	try:
-		channel = await client.get_guild(guild_id).get_channel(channel_id);
+		channel = client.get_guild(guild_id).get_channel(channel_id);
 		
 		if not edit:
 			messages = await channel.history(limit=5).flatten();
