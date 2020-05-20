@@ -184,7 +184,7 @@ async def on_ready():
 	
 	for svr in client.guilds:
 		GuildSetting(svr);
-		print(svr.name);
+		print(svr.name+'\t'+str(svr.id));
 	await client.change_presence(activity=discord.Activity(name='Feel Good (Gorillaz)', type=0));
 	#TwitchChecker.client = client;
 	
