@@ -24,6 +24,8 @@ pip install aiodns
 
 pip install cchardet
 
+pip install py-dateutil
+
 ---------------------
 mv cfg/empty.db cfg/bot.db
 
