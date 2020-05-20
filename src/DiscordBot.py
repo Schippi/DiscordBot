@@ -186,6 +186,7 @@ async def on_ready():
 		GuildSetting(svr);
 		print(svr.name+'\t'+str(svr.id));
 	if not testing:
+		allguilds = [];
 		allguilds = set([g.id for g in client.guilds]);
 		guildcount = 0;
 		for row in util.DBcursor.execute('SELECT count(distinct id_guild) as guildcount FROM twitch'):
