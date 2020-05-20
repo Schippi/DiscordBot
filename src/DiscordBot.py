@@ -188,16 +188,16 @@ async def on_ready():
 	if not testing:
 		allguilds = set([g.id for g in client.guilds]);
 		guildcount = 0;
-		for row in util.DBcursor.execute('SELECT count(distinct guild_id) as guildcount FROM twitch'):
+		for row in util.DBcursor.execute('SELECT count(distinct id_guild) as guildcount FROM twitch'):
 			guildcount = int(row['guildcount']);
 			
 		placeholders= ', '.join(['?']*len(allguilds));	
 		
-		util.DBcursor.execute('delete FROM twitch where guild_id not in ({})'.format(placeholders),tuple(allguilds));
+		util.DBcursor.execute('delete FROM twitch where id_guild not in ({})'.format(placeholders),tuple(allguilds));
 		
 		util.DBcursor.execute('delete FROM guild where id not in ({})'.format(placeholders),tuple(allguilds));
 		
-		for row in util.DBcursor.execute('SELECT count(distinct guild_id) as guildcount FROM twitch'):
+		for row in util.DBcursor.execute('SELECT count(distinct id_guild) as guildcount FROM twitch'):
 			guildcount = guildcount - int(row['guildcount']);
 		if(guildcount == 0):
 			print('deleted '+int(guildcount)+' entries');
@@ -320,7 +320,7 @@ async def on_guild_join(guild):
 @client.event
 async def on_guild_remove(guild):
 	if not testing:
-		util.DBcursor.execute('delete FROM twitch where guild_id = ?',(guild.id,));
+		util.DBcursor.execute('delete FROM twitch where id_guild = ?',(guild.id,));
 		util.DBcursor.execute('delete FROM guild where id = ?',(guild.id,));
 		util.DB.commit();
 		print('left guild '+guild.name)
