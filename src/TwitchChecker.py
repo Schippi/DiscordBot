@@ -107,6 +107,7 @@ async def printEntry(client,entr,isRerun,sName,sGame,sURL,sTitle,sLogo, edit = F
 			
 			
 	except Exception as e:
+		traceback.print_exc(file=sys.stdout);
 		print(e);
 		
 async def startChecking(client):
