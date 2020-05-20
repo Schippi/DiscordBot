@@ -63,35 +63,49 @@ async def processTwitch(client,data,session,oauthToken,cnt):
 				
 	pass;
 
-async def printEntry(client,entr,isRerun,sName,sGame,sURL,sTitle,sLogo):
+async def printEntry(client,entr,isRerun,sName,sGame,sURL,sTitle,sLogo, edit = False):
 	global testing;
 	guild_id = entr.guild;
 	channel_id = entr.channel;
+	ttext = entr.text;
+	if isRerun:
+		ttext = entr.text.replace("@here","Rerun!").replace("@everyone","Rerun!");
+		
 	embed = entr.getEmbed(sName,sGame,sURL,sTitle,sLogo);
+	mycontent = entr.getYString(ttext,sName,sGame,sURL,sTitle,sLogo);
+		
+	doit = False;
 	if testing:
 		guild_id = '196211645289201665';
 		channel_id = '196211645289201665';
 	try:
-		ttext = entr.text;
-		if isRerun:
-			ttext = entr.text.replace("@here","Rerun!").replace("@everyone","Rerun!");
-		messages = await client.get_guild(guild_id).get_channel(channel_id).history(limit=5).flatten();
-		today = datetime.utcnow().date();
-		start = datetime(today.year, today.month, today.day);
-		doit = True;
-		for mymsg in messages:
-			if mymsg.author == client.user:
-				if mymsg.created_at > start:
-					alle = False;
-					for tee in entr.text.split():
-						if not (tee in mymsg.content) and not (tee in '%%game%% %%name%% %%url%% %%img%% %%title%% %%time%%'):
-							alle = True;
-							print(tee)
-							break;
-					doit = doit and alle;
-					print("wanted but didnt: "+str(doit));
-		if doit:
-			await client.get_guild(guild_id).get_channel(channel_id).send(content = entr.getYString(ttext,sName,sGame,sURL,sTitle,sLogo),embed=embed);
+		channel = await client.get_guild(guild_id).get_channel(channel_id);
+		
+		if not edit:
+			messages = await channel.history(limit=5).flatten();
+			today = datetime.utcnow().date();
+			start = datetime(today.year, today.month, today.day);
+			doit = True;
+			for mymsg in messages:
+				if mymsg.author == client.user:
+					if mymsg.created_at > start:
+						alle = False;
+						for tee in entr.text.split():
+							if not (tee in mymsg.content) and not (tee in '%%game%% %%name%% %%url%% %%img%% %%title%% %%time%%'):
+								alle = True;
+								print(tee)
+								break;
+						doit = doit and alle;
+						print("wanted but didnt: "+str(doit));
+		if doit or (not entr.last_msg_id):
+			msg = await channel.send(content = mycontent,embed=embed);
+			entr.last_msg_id = msg.id;
+			entr.save();
+		elif edit and entr.last_msg_id:
+			msg = await channel.fetch_message(entr.last_msg_id)
+			msg.edit(content = mycontent,embed=embed);
+			
+			
 	except Exception as e:
 		print(e);
 		

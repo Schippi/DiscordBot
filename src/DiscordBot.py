@@ -138,6 +138,20 @@ util.DBcursor.execute('''insert into dual(dummy)
 					limit 1''');
 util.DB.commit();
 
+for row in util.DBcursor.execute('''select * from twitch limit 1'''):
+	if('last_msg_id' in row.keys()):
+		pass;
+	else:
+		util.DBcursor.execute('''alter table twitch add last_msg_id text''');
+		util.DB.commit();
+	if('embedtitle' in row.keys()):
+		pass;
+	else:
+		util.DBcursor.execute('''alter table twitch add embedtitle text''');
+		util.DB.commit();
+		
+
+
 LOGDB = sqlite3.connect(DBLOG);
 LOGDB.row_factory = util.dict_factory;
 LOGDBcursor = LOGDB.cursor();

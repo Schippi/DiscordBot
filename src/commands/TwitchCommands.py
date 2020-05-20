@@ -53,6 +53,8 @@ class TwitchCommand(commands.Cog):
 		entryDict['color'] = None;
 		entryDict['game'] = None;
 		entryDict['embedmessage'] = None;
+		entryDict['embedtitle'] = None;
+		entryDict['last_msg_id'] = None;
 		if(tname.lower() == 'timer'):
 			entr = entities.TwitchEntry.TwitchEntry(entryDict);
 			entryDict['fromm'] = 23;
@@ -79,6 +81,12 @@ class TwitchCommand(commands.Cog):
 			html = json.loads(html);
 			if len(html['data']) <= 0:
 				return await sayWords(context, 'could not find channel `'+tname+'`');
+			else:
+				try:
+					entryDict['avatar'] = html['data'][0]['profile_image_url'];
+				except Exception as ex:
+					print('getting avatar URL failed: '+str(ex));
+					pass;
 		except:
 			return await sayWords(context, 'could not find channel `'+tname+'`');
 		
@@ -160,6 +168,7 @@ class TwitchCommand(commands.Cog):
 					+prefix+'ttime hh:mm-hh:mm-a,b,c : only trigger within timewindow UTC timezone, a,b,c = days on which to check 0= monday, 5 = saturday\n'
 					+prefix+'tchannel <id / name> : change the channel - must be on this guild\n'
 					+prefix+'tembed <message> : changes the Embed - , use %%name%%, %%game%%, %%title%% and %%url%% as placeholder\n'
+					+prefix+'ttitle <message> : changes the Embed Title - , use %%name%%, %%game%%, %%title%% and %%url%% as placeholder\n'
 					+prefix+'tshow : show current options\n'
 					+prefix+'tabort : cancel the process\n'
 					+prefix+'tfinish : complete the process\n'
@@ -180,6 +189,7 @@ class TwitchCommand(commands.Cog):
 						msg.content.startswith(prefix+'tgame') or 
 						msg.content.startswith(prefix+'timage') or 
 						msg.content.startswith(prefix+'tembed') or 
+						msg.content.startswith(prefix+'ttitle') or 
 						msg.content.startswith(prefix+'tcolor') or 
 						msg.content.startswith(prefix+'ttest') or 
 						msg.content.startswith(prefix+'thelp'));
@@ -218,10 +228,10 @@ class TwitchCommand(commands.Cog):
 							entryDict['id_channel'] = chan.id;
 							await sayWords(context,'channel set');
 						else:
-							await sayWords(context,'channel not found!\n'+quote('!tchannel <id or name>'));
+							await sayWords(context,'channel not found!\n'+quote(prefix+'tchannel <id or name>'));
 					except:
 						traceback.print_exc(file=sys.stdout);
-						await sayWords(context,'wrong format!\n'+quote('!tchannel <id or name>'));
+						await sayWords(context,'wrong format!\n'+quote(prefix+'tchannel <id or name>'));
 						
 				if(reply.content.startswith(prefix+'tcolor')):
 					ct = reply.content.split(' ');
@@ -251,8 +261,8 @@ class TwitchCommand(commands.Cog):
 						entryDict['message'] = ct[1];
 						await sayWords(context,'Message set');
 					else:
-						entryDict['message'] = None;
-						await sayWords(context,'wrong format!\n'+quote('!tmessage <message>'));
+						entryDict['message'] = '\n';
+						await sayWords(context,'message cleared');
 				if(reply.content.startswith(prefix+'tembed')):
 					ct = reply.content.split(' ',1);
 					if len(ct) == 2:
@@ -261,6 +271,14 @@ class TwitchCommand(commands.Cog):
 					else:
 						entryDict['embedmessage'] = None;
 						await sayWords(context,'Embed cleared');
+				if(reply.content.startswith(prefix+'ttitle')):
+					ct = reply.content.split(' ',1);
+					if len(ct) == 2:
+						entryDict['embedtitle'] = ct[1];
+						await sayWords(context,'Title set');
+					else:
+						entryDict['embedtitle'] = None;
+						await sayWords(context,'wrong format!\n'+quote(prefix+'ttitle <message>'));
 				if(reply.content.startswith(prefix+'tgame')):
 					if(entryDict['username'].lower() == 'timer'):
 						await sayWords(context,'option unavailable for timer');
@@ -315,9 +333,12 @@ class TwitchCommand(commands.Cog):
 						await sayWords(context,'time reset');
 				if(reply.content.startswith(prefix+'ttest')):
 					testx = entities.TwitchEntry.TwitchEntry(entryDict);
-					embedx = testx.getEmbed('Super Channel','Pong','http://google.com','welcome to the internet','image');
-					st = testx.getYString(testx.text,'[Super Channel]','[Pong]','http://google.com','[welcome to the internet]','[image]');
-					await context.message.channel.send(content = st,embed=embedx);
+					try:
+						embedx = testx.getEmbed('<ChannelName>','Minecraft','https://www.twitch.tv/'+entryDict['username'],'<StreamTitle>','https://static-cdn.jtvnw.net/previews-ttv/live_user_yogscast-200x100.jpg');
+						st = testx.getYString(testx.text,'<ChannelName>','Minecraft','https://www.twitch.tv/'+entryDict['username'],'<StreamTitle>','<image>');
+						await context.message.channel.send(content = st,embed=embedx);
+					except Exception as ex:
+						await sayWords(context,'something went wrong: \n'+str(ex));
 			else:
 				break;
 		if reply:

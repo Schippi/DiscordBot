@@ -274,6 +274,11 @@ async def getGames(ids,session,oauthToken):
 		DB.commit();
 	return retdict;
 
+def getGamesUrlbyName(name):
+	for row in DBcursor.execute('SELECT * FROM game where name = ?',(name,)):
+		return row['boxart'].replace('{width}','110').replace('{height}','150');
+	return None;
+
 async def AuthMe(session):
 	authURL = 'https://id.twitch.tv/oauth2/token';
 	

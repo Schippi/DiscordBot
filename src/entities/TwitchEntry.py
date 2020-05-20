@@ -2,6 +2,7 @@ import datetime
 import util;
 from util import updateOrInsert;
 import discord;
+from discord.embeds import EmptyEmbed
 import time;
 
 defaultStreamText = '@here```diff\n+ %%name%% just went live playing %%game%%!\n%%title%%```%%url%%';
@@ -48,9 +49,18 @@ class TwitchEntry:
 			self.embedmessage = dic['embedmessage'];
 		else:
 			self.embedmessage = None;
+		if dic['embedtitle']:
+			self.embedtitle = dic['embedtitle'];
+		else:
+			self.embedtitle = None;
 		if not self.text:
 			self.text = defaultStreamText;
-		self.username = dic['username'];			
+		self.username = dic['username'];
+		
+		if dic['last_msg_id']:
+			self.last_msg_id = dic['last_msg_id'];
+		else:
+			self.last_msg_id = None;	
 		try:
 			self.fromtimeH = int(dic['fromh']);
 			self.fromtimeM = int(dic['fromm']);
@@ -80,7 +90,9 @@ class TwitchEntry:
 			'color':self.color,
 			'embedmessage':self.embedmessage,
 			'game':self.game,
-			'avatar':self.avatar
+			'avatar':self.avatar,
+			'last_msg_id':self.last_msg_id,
+			'embedtitle':self.embedtitle
 			};
 		self.id = updateOrInsert('twitch',{'id':self.id},dic,False);
 		util.DB.commit();
@@ -107,10 +119,23 @@ class TwitchEntry:
 		embed = None;
 		if self.embedmessage and self.color:
 			ret = self.getYString(self.embedmessage,name,game,url,title, image);
-			embed = discord.Embed(colour=discord.Colour(self.color), 
-								url=url, 
-								description=ret);
-			if self.avatar:					
+			if self.embedtitle and '' != self.embedtitle.strip():
+				tit = self.getYString(self.embedtitle.strip(),name,game,url,title, image);
+			else:
+				tit = EmptyEmbed;
+			mdict = {'type':'rich','title':tit,'description':ret,'url':url,'color':self.color,'image':{'url':image}};
+			embed = discord.Embed.from_dict(mdict);
+			#embed = discord.Embed(colour=discord.Colour(self.color), 
+			#					url=url, 
+			#					description=ret);
+			#embed.set_thumbnail(url= image)		
+			if self.avatar:			
+				embed.set_author(name=self.username,url=url,icon_url=self.avatar);
+			
+			gameurl = util.getGamesUrlbyName(game);
+			if gameurl:
+				embed.set_thumbnail(url=gameurl);
+			elif self.avatar:
 				embed.set_thumbnail(url=self.avatar);
 		return embed;	
 		
