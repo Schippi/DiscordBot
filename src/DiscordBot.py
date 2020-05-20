@@ -203,7 +203,7 @@ async def on_ready():
 		for row in util.DBcursor.execute('SELECT count(distinct id_guild) as guildcount FROM twitch'):
 			guildcount = guildcount - int(row['guildcount']);
 		if(guildcount != 0):
-			print('deleted '+int(guildcount)+' entries');
+			print('deleted '+str(guildcount)+' entries');
 		util.DB.commit();
 	await client.change_presence(activity=discord.Activity(name='Feel Good (Gorillaz)', type=0));
 	#TwitchChecker.client = client;
