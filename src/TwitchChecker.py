@@ -103,7 +103,7 @@ async def printEntry(client,entr,isRerun,sName,sGame,sURL,sTitle,sLogo, edit = F
 			entr.save();
 		elif edit and entr.last_msg_id:
 			msg = await channel.fetch_message(entr.last_msg_id)
-			msg.edit(content = mycontent,embed=embed);
+			await msg.edit(content = mycontent,embed=embed);
 			
 			
 	except Exception as e:
