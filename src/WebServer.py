@@ -85,10 +85,10 @@ async def handle_data(request,data):
                     if (entr.shouldprint(stream.game)):
                         if user_name in streamonline:
                             #edit maybe
-                            await printEntry(bot_client,entr,stream.isRerun(),stream.user_name,stream.game,stream.url,'WEBHOOK TEST EDIT:'+stream.title,stream.thumbnail_url,True);
+                            await printEntry(bot_client,entr,stream.isRerun(),stream.user_name,stream.game,stream.url,''+stream.title,stream.thumbnail_url,True);
                             pass;
                         else:
-                            await printEntry(bot_client,entr,stream.isRerun(),stream.user_name,stream.game,stream.url,'WEBHOOK TEST:'+stream.title,stream.thumbnail_url);
+                            await printEntry(bot_client,entr,stream.isRerun(),stream.user_name,stream.game,stream.url,''+stream.title,stream.thumbnail_url);
                         #sayWords(None, entr.getYString(n,sGame,sURL,sLogo,sTitle), entr.guild, entr.channel);
                         logEx('WEB: sent Twitch message for '+stream.user_name);
                         #print(10);
