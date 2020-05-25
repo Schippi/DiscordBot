@@ -157,6 +157,7 @@ LOGDB.row_factory = util.dict_factory;
 LOGDBcursor = LOGDB.cursor();
 LOGCNT = 0;
 LOGDBCHANGES = 0;
+LOGTIME = datetime.utcnow();
 
 def checkPrefix(bot, disMessage):
 	try:
@@ -218,6 +219,7 @@ async def on_message(message):
 			try:
 				if util.pleaseLog:
 					global LOGCNT;
+					global LOGTIME;
 					LOGCNT = (LOGCNT + 1) % 10;
 					valdict = {};
 					valdict['GUILD_ID'] = message.guild.id;
@@ -236,9 +238,10 @@ async def on_message(message):
 					except sqlite3.OperationalError as e:
 						await asyncio.sleep(0.5);
 						LOGDBcursor.execute(q1,l1);
-					if(LOGCNT <= 0):
+					if(LOGCNT <= 0 or (LOGTIME + timedelta(minutes = 5) < datetime.utcnow())):
+						#print('commit')
 						LOGDB.commit();
-						
+					LOGTIME = datetime.utcnow();	
 				else:
 					global LOGDBCHANGES;
 					if(LOGDBCHANGES < LOGDB.total_changes):
