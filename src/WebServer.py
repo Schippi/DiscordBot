@@ -70,7 +70,6 @@ async def handle_data(request,data):
     else:
         util.DBcursor.execute('update twitch_person set last_check_status = ? , last_check = ? where id = ?',('online',util.dateToStr(datetime.datetime.now()),user_id) );
         util.DB.commit();
-        streamonline[user_name] = True;
         gamesToFetch = set([k['game_id'] for k in myjson]);
         oauthToken = util.getControlVal('token_oauth','');
         games = await util.getGames(gamesToFetch,web_srv_session,oauthToken);
@@ -96,7 +95,7 @@ async def handle_data(request,data):
                     print(stream.user_name)
                     traceback.print_exc(file=sys.stdout);
                     logEx(e);      
-    
+        streamonline[user_name] = True;
     pass;
 
 
