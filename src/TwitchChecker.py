@@ -103,7 +103,7 @@ async def printEntry(client,entr,isRerun,sName,sGame,sURL,sTitle,sLogo, edit = F
 		elif edit and entr.last_msg_id:
 			msg = await channel.fetch_message(entr.last_msg_id)
 			start = datetime.utcnow() - timedelta(hours = 3);
-			if mymsg.created_at < start:
+			if msg.created_at < start:
 				if (msg.content != mycontent) or embed:
 					await msg.edit(content = mycontent,embed=embed);
 			
