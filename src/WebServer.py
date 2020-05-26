@@ -82,7 +82,7 @@ async def handle_data(request,data):
                     entr = TwitchEntry.TwitchEntry(row);
                     try:                                       #print(streamprinted[entr]);
                         if (entr.shouldprint(stream.game)):
-                            if streamonline[user_name]:
+                            if (user_name in streamonline.keys()) and streamonline[user_name]:
                                 #edit maybe
                                 await printEntry(bot_client,entr,stream.isRerun(),stream.user_name,stream.game,stream.url,''+stream.title,stream.thumbnail_url,True);
                                 logEx('WEB EDIT: sent Twitch message for '+stream.user_name);
