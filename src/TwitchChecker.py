@@ -83,8 +83,7 @@ async def printEntry(client,entr,isRerun,sName,sGame,sURL,sTitle,sLogo, edit = F
 		
 		if not edit:
 			messages = await channel.history(limit=5).flatten();
-			today = datetime.utcnow().date();
-			start = datetime.utcnow().date() - timedelta(hours = 3);
+			start = datetime.utcnow() - timedelta(hours = 3);
 			doit = True;
 			for mymsg in messages:
 				if mymsg.author == client.user:
@@ -103,8 +102,10 @@ async def printEntry(client,entr,isRerun,sName,sGame,sURL,sTitle,sLogo, edit = F
 			entr.save();
 		elif edit and entr.last_msg_id:
 			msg = await channel.fetch_message(entr.last_msg_id)
-			if (msg.content != mycontent) or embed:
-				await msg.edit(content = mycontent,embed=embed);
+			start = datetime.utcnow() - timedelta(hours = 3);
+			if mymsg.created_at < start:
+				if (msg.content != mycontent) or embed:
+					await msg.edit(content = mycontent,embed=embed);
 			
 			
 	except Exception as e:

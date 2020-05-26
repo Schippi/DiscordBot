@@ -12,6 +12,7 @@ import json;
 from entities import TwitchEntry;
 from TwitchChecker import streamonline;
 from TwitchChecker import printEntry;
+from TwitchChecker import stuff_lock;
 from entities.TwitchAPI.TwitchAPI import TwitchUser;
 from entities.TwitchAPI.TwitchAPI import TwitchStream;
 from util import logEx;
@@ -60,43 +61,40 @@ async def handle_data(request,data):
     user_name = request.rel_url.query['user_name'].lower();
     
     global streamonline; 
-    
-    
-    
-    if (len(myjson) == 0):
-        streamonline[user_name] = False;
-        util.DBcursor.execute('update twitch_person set last_check_status = ? , last_check = ? where id = ?',('offline',util.dateToStr(datetime.datetime.now()),user_id) );
-        util.DB.commit();
-    else:
-        util.DBcursor.execute('update twitch_person set last_check_status = ? , last_check = ? where id = ?',('online',util.dateToStr(datetime.datetime.now()),user_id) );
-        util.DB.commit();
-        gamesToFetch = set([k['game_id'] for k in myjson]);
-        oauthToken = util.getControlVal('token_oauth','');
-        games = await util.getGames(gamesToFetch,web_srv_session,oauthToken);
-            
-        for item in myjson:
-            stream = TwitchStream(item);
-            stream.game = games[stream.game_id];
-            
-            for row in util.DBcursor.execute('SELECT * FROM twitch where userid = ? and lower(username) = ?',(user_id,user_name,)):
-                entr = TwitchEntry.TwitchEntry(row);
-                try:                                       #print(streamprinted[entr]);
-                    if (entr.shouldprint(stream.game)):
-                        if user_name in streamonline:
-                            #edit maybe
-                            await printEntry(bot_client,entr,stream.isRerun(),stream.user_name,stream.game,stream.url,''+stream.title,stream.thumbnail_url,True);
-                            pass;
-                        else:
-                            await printEntry(bot_client,entr,stream.isRerun(),stream.user_name,stream.game,stream.url,''+stream.title,stream.thumbnail_url);
-                        #sayWords(None, entr.getYString(n,sGame,sURL,sLogo,sTitle), entr.guild, entr.channel);
-                        logEx('WEB: sent Twitch message for '+stream.user_name);
-                        #print(10);
-                except Exception as e:
-                    print(stream.user_name)
-                    traceback.print_exc(file=sys.stdout);
-                    logEx(e);      
-        streamonline[user_name] = True;
-    pass;
-
+    global stuff_lock
+    with (await stuff_lock):
+        if (len(myjson) == 0):
+            streamonline[user_name] = False;
+            util.DBcursor.execute('update twitch_person set last_check_status = ? , last_check = ? where id = ?',('offline',util.dateToStr(datetime.datetime.now()),user_id) );
+            util.DB.commit();
+        else:
+            util.DBcursor.execute('update twitch_person set last_check_status = ? , last_check = ? where id = ?',('online',util.dateToStr(datetime.datetime.now()),user_id) );
+            util.DB.commit();
+            gamesToFetch = set([k['game_id'] for k in myjson]);
+            oauthToken = util.getControlVal('token_oauth','');
+            games = await util.getGames(gamesToFetch,web_srv_session,oauthToken);
+                
+            for item in myjson:
+                stream = TwitchStream(item);
+                stream.game = games[stream.game_id];
+                
+                for row in util.DBcursor.execute('SELECT * FROM twitch where userid = ? and lower(username) = ?',(user_id,user_name,)):
+                    entr = TwitchEntry.TwitchEntry(row);
+                    try:                                       #print(streamprinted[entr]);
+                        if (entr.shouldprint(stream.game)):
+                            if user_name in streamonline.keys():
+                                #edit maybe
+                                await printEntry(bot_client,entr,stream.isRerun(),stream.user_name,stream.game,stream.url,''+stream.title,stream.thumbnail_url,True);
+                                logEx('WEB EDIT: sent Twitch message for '+stream.user_name);
+                            else:
+                                await printEntry(bot_client,entr,stream.isRerun(),stream.user_name,stream.game,stream.url,''+stream.title,stream.thumbnail_url);
+                                logEx('WEB: sent Twitch message for '+stream.user_name);
+                            #sayWords(None, entr.getYString(n,sGame,sURL,sLogo,sTitle), entr.guild, entr.channel);
+                            #print(10);
+                    except Exception as e:
+                        print(stream.user_name)
+                        traceback.print_exc(file=sys.stdout);
+                        logEx(e);      
+            streamonline[user_name] = True;
 
 
