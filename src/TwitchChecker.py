@@ -90,9 +90,13 @@ async def printEntry(client,entr,isRerun,sName,sGame,sURL,sTitle,sLogo, edit = F
 					if mymsg.created_at > start:
 						alle = False;
 						for tee in entr.text.split():
-							if not (tee in mymsg.content) and not (tee in '%%game%% %%name%% %%url%% %%img%% %%title%% %%time%%'):
+							teststring = '';
+							for ka in tee:
+								if ka.isalnum():
+									teststring = teststring + ka;
+							if not (teststring in mymsg.content) and not (teststring in '%%game%% %%name%% %%url%% %%img%% %%title%% %%time%%'):
 								alle = True;
-								print(tee)
+								print(teststring)
 								break;
 						doit = doit and alle;
 						print("wanted but didnt: "+str(doit));
