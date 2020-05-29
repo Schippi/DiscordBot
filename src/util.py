@@ -8,7 +8,7 @@ import sys;
 import base64;
 import yagmail;
 import json;
-from _ast import Await
+import traceback;
 
 DBcursor = None;
 DB = None;
@@ -174,6 +174,7 @@ def logEx(ex):
 		fil.write(err+'\n')
 		fil.close();
 	except Exception:
+		traceback.print_exc(file=sys.stdout);
 		pass
 	
 client = '';

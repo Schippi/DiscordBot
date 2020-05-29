@@ -4,21 +4,21 @@ first setup:
 
 install with pip
 
-yagmail==0.11.220
+pip install yagmail
 
 async_timeout==3.0.1
 
-aiohttp==3.5.4
+pip install aiohttp
 
-pytz==2019.1
+pip install pytz
 
-discord.py==1.2.5
+pip install discord.py
 
-pyzbar==0.1.8
+pip install pyzbar
 
-discord==1.0.1
+pip install discord
 
-Pillow==7.0.0
+pip install Pillow
 
 pip install aiodns
 
@@ -47,6 +47,8 @@ echo "YOUR EMAIL APPPLICATION PASSWORD" >> tokens/mail.token
 
 cd src
 
+https://certbot.eff.org/
+or
 openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -keyout ../cfg/domain_srv.key -out ../cfg/domain_srv.crt
 
 python3 -u DiscordBot.py ../tokens/dicord.token ../cfg example.com 8080

@@ -89,15 +89,15 @@ async def printEntry(client,entr,isRerun,sName,sGame,sURL,sTitle,sLogo, edit = F
 				if mymsg.author == client.user:
 					if mymsg.created_at > start:
 						alle = False;
-						for tee in entr.text.split():
-							teststring = '';
-							for ka in tee:
-								if ka.isalnum():
-									teststring = teststring + ka;
-							if not (teststring in mymsg.content) and not (teststring in '%%game%% %%name%% %%url%% %%img%% %%title%% %%time%%'):
-								alle = True;
-								print(teststring)
-								break;
+						#for tee in entr.text.split():
+						#	teststring = '';
+						#	for ka in tee:
+						#		if ka.isalnum():
+						#			teststring = teststring + ka;
+						#	if not (teststring in mymsg.content) and not (teststring in '%%game%% %%name%% %%url%% %%img%% %%title%% %%time%%'):
+						#		alle = True;
+						#		print(teststring)
+						#		break;
 						doit = doit and alle;
 						print("wanted but didnt: "+str(doit));
 		if doit or (not entr.last_msg_id):
@@ -316,6 +316,7 @@ async def startChecking(client):
 								traceback.print_exc(file=sys.stdout);
 								logEx(e);
 						except Exception as e:
+							traceback.print_exc(file=sys.stdout);
 							logEx(e);
 							print('streamArray: '+str(streamArray));
 						finally:
