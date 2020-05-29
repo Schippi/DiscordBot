@@ -73,7 +73,7 @@ except Exception:
 	pass;
 
 util.serverFull = util.serverHost;
-if(util.serverPort != 80):
+if(util.serverPort != 80 and util.serverPort != 443 ):
 	util.serverFull = util.serverFull + ':'+str(util.serverPort);
 	
 	
