@@ -133,6 +133,7 @@ async def subs(request):
                 #                                                                                'Authorization':'Bearer '+userAuth});
                 print(html);
             except util.AuthFailed as aex:
+                print(util.serverFull)
                 auth_url = 'https://id.twitch.tv/oauth2/authorize?client_id='+util.TwitchAPI+'&redirect_uri='+util.serverFull+'/subs&response_type=token&scope=channel:read:subscriptions';
                 raise web.HTTPFound(location=auth_url);
                 pass;
