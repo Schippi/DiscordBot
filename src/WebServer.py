@@ -78,7 +78,7 @@ async def subs_main(request):
                                                                     +'&client_secret='+util.TwitchSECRET
                                                                     +'&code='+request.rel_url.query['code']
                                                                     +'&grant_type=authorization_code'
-                                                                    +'&redirect_uri=https://'+util.serverFull
+                                                                    +'&redirect_uri=https://'+util.serverFull+'/subs'
                                                                     , None, None);
         print(html);
         myjson = json.loads(html);
