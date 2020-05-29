@@ -8,7 +8,7 @@ test
 </div>
 
  <script>
- var myVar = setInterval(myTimer, 1000);
+ var myVar = setInterval(myTimer, 10000);
 
 function myTimer() {
   var d = new Date();
@@ -19,7 +19,7 @@ function myTimer() {
    // xmlHttp.open( "GET", "https://localhost:8081/robots.txt", false ); // false for synchronous request
    // xmlHttp.send( null );
    $.ajax({
-		url: "https://localhost:8081/subcounter/{REPLACE_ME}",
+		url: "/subcounter/{REPLACE_ME}",
 		type: "GET",
 		success: function(result){
 			document.getElementById("demo").innerHTML = result;
