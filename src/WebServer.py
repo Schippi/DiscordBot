@@ -68,6 +68,7 @@ async def subs_main(request):
         return str(request.rel_url.query);
     
     session = await get_session(request);
+    access_token = None;
     
     if 'code' in request.rel_url.query.keys():
         html = await util.posting(clientsession, 'https://id.twitch.tv/oauth2/token?'
