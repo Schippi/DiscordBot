@@ -83,7 +83,6 @@ async def subs_main(request):
         mydata = myjson['data'][0]; 
         
         session['last_page'] = mydata['display_name'].lower();
-        session.
         print('saved last page: '+session['last_page'])
         html = await util.fetchUser(clientsession,HELIX+'subscriptions',{'client-id':util.TwitchAPI,
                                                                                 'Accept':'application/vnd.twitchtv.v5+json',
