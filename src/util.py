@@ -261,7 +261,7 @@ def getControlVal(mystring,dflt):
 
 async def getGames(ids,session,oauthToken):
 	placeholders= ', '.join(['?']*len(ids));
-	retdict = {};
+	retdict = {'':'Something'};
 	if(len(ids)== 0):
 		return retdict;
 	
