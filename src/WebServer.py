@@ -70,10 +70,22 @@ async def subs_main(request):
     print("subs  "+str(request.rel_url.query.keys()))
     session = await get_session(request);
     
-    print(request.rel_url.fragment);
+    print(request.url);
     
-    if 'access_token' in request.rel_url.query.keys():
-        access_token = request.rel_url.query['access_token'];
+    if 'code' in request.rel_url.query.keys():
+        html = util.posting(clientsession, 'https://id.twitch.tv/oauth2/token?'
+                                                                    +'client_id='+util.TwitchAPI
+                                                                    +'&client_secret='+util.TwitchSECRET
+                                                                    +'&code='+request.rel_url.query['code']
+                                                                    +'&grant_type=authorization_code'
+                                                                    +'&redirect_uri=https://'+util.serverFull
+                                                                    , None, None);
+        print(html);
+        myjson = json.loads(html);
+        access_token = myjson['access_token'];
+        refresh_token = myjson['refresh_token'];
+    
+    if access_token:
         html = await util.fetchUser(clientsession,HELIX+'users',{'client-id':util.TwitchAPI,
                                                                                 'Accept':'application/vnd.twitchtv.v5+json',
                                                                                 'Authorization':'Bearer '+access_token});
@@ -90,12 +102,13 @@ async def subs_main(request):
         print(html)                                                                        
         
         
-        util.DBcursor.execute('update twitch_person set subs_auth_token = ? where id = ?',(access_token,mydata['id']));
+        util.DBcursor.execute('update twitch_person set subs_auth_token = ? , refresh_token = ? where id = ?',(access_token,refresh_token,mydata['id']));
         util.DB.commit();
     
     if not ('last_page' in session.keys()):
         session['last_page'] = 'Dalai_Lama'
-    raise web.HTTPFound(location='/subs/'+session['last_page']);
+    #raise web.HTTPFound(location='/subs/'+session['last_page']);
+    return web.Response(text=str(request));
     
 
 @routes.get('/subs/{name}')
@@ -141,7 +154,7 @@ async def subs(request):
                 #                                                                                'Authorization':'Bearer '+userAuth});
                 print(html);
             except util.AuthFailed as aex:
-                auth_url = 'https://id.twitch.tv/oauth2/authorize?client_id='+util.TwitchAPI+'&redirect_uri=https://'+util.serverFull+'/subs&response_type=token&scope=channel:read:subscriptions';
+                auth_url = 'https://id.twitch.tv/oauth2/authorize?client_id='+util.TwitchAPI+'&redirect_uri=https://'+util.serverFull+'/subs&response_type=code&scope=channel:read:subscriptions';
                 raise web.HTTPFound(location=auth_url);
                 pass;
             #subscribe to webhook

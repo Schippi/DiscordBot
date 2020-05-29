@@ -166,6 +166,11 @@ for row in util.DBcursor.execute('''select * from twitch_person limit 1'''):
 	else:
 		util.DBcursor.execute('''alter table twitch_person add subs_auth_token text''');
 		util.DB.commit();
+	if('refresh_token' in row.keys()):
+		pass;
+	else:
+		util.DBcursor.execute('''alter table twitch_person add refresh_token text''');
+		util.DB.commit();
 
 LOGDB = sqlite3.connect(DBLOG);
 LOGDB.row_factory = util.dict_factory;
