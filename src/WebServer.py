@@ -64,6 +64,9 @@ def setup(my_client):
 
 @routes.get('/subs')
 async def subs_main(request):
+    if 'error' in request.rel_url.query.keys():
+        return str(request.rel_url.query);
+    
     print("subs  "+str(request.rel_url.query.keys()))
     session = await get_session(request);
     
@@ -136,7 +139,7 @@ async def subs(request):
                 #                                                                                'Authorization':'Bearer '+userAuth});
                 print(html);
             except util.AuthFailed as aex:
-                auth_url = 'https://id.twitch.tv/oauth2/authorize?client_id='+util.TwitchAPI+'&redirect_uri='+util.serverFull+'/subs&response_type=token&scope=channel:read:subscriptions';
+                auth_url = 'https://id.twitch.tv/oauth2/authorize?client_id='+util.TwitchAPI+'&redirect_uri=https://'+util.serverFull+'/subs&response_type=token&scope=channel:read:subscriptions';
                 raise web.HTTPFound(location=auth_url);
                 pass;
             #subscribe to webhook
