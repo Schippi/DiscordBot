@@ -1,0 +1,41 @@
+<html>
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+</head>
+<body>
+<div id="demo">
+test
+</div>
+
+ <script>
+ var myVar = setInterval(myTimer, 1000);
+
+function myTimer() {
+  var d = new Date();
+  var t = d.toLocaleTimeString();
+  
+  
+  //var xmlHttp = new XMLHttpRequest();
+   // xmlHttp.open( "GET", "https://localhost:8081/robots.txt", false ); // false for synchronous request
+   // xmlHttp.send( null );
+   $.ajax({
+		url: "https://localhost:8081/subcounter/{REPLACE_ME}",
+		type: "GET",
+		success: function(result){
+			document.getElementById("demo").innerHTML = result;
+		},
+		error:function(error){
+			console.log(error)
+			clearInterval(myVar);
+			document.getElementById("demo").innerHTML = "error";
+		}
+   }
+   )
+	
+} 
+
+</script> 
+
+</body>
+
+</html>

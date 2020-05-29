@@ -15,6 +15,10 @@ DB = None;
 cfgPath = None;
 serverPort = 8081;
 serverHost = 'localhost'
+serverFull = 'localhost:8081';
+
+HELIX = 'https://api.twitch.tv/helix/';
+
 timeStr= '%Y-%m-%dT%H:%M:%S.%fZ';
 backupStr = '%Y-%m-%dT%H:%M:%SZ'
 lock = threading.Lock();
@@ -230,11 +234,14 @@ async def fetch(session, url, headers,secondTime=False):
 					return await response.text()
 			except asyncio.TimeoutError:
 				return '';
+			
+async def fetchUser(session, url, headers):
+	return await fetch(session,url,headers,True);
 
 			
-async def posting(session, url, payload):
+async def posting(session, url, payload, headers = None):
 	with async_timeout.timeout(10):
-		async with session.post(url, data = payload) as response:
+		async with session.post(url, data = payload,headers = headers) as response:
 			try:
 				return await response.text()
 			except asyncio.TimeoutError:
@@ -290,6 +297,11 @@ def setControlVal(mystring,val):
 	DBcursor.execute('update control set value = ? where key = ?',(val,mystring));
 	DB.commit();
 	return val;
+
+def getSubs(name):
+	for row in DBcursor.execute('select subs from twitch_person where lower(display_name) = ?',(name,)):
+		return 2; #row['subs']
+	return 'not tracking';
 			
 def sendMail(title,inhalt):
 	try:

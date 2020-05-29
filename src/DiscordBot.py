@@ -71,6 +71,11 @@ try:
 except Exception:
 	testing = False;
 	pass;
+
+util.serverFull = util.serverHost;
+if(util.serverPort != 80):
+	util.serverFull = util.serverFull + ':'+str(util.serverPort);
+	
 	
 DBFile = util.cfgPath+'/bot.db';
 DBJournal = util.cfgPath+'/bot.db-journal';
@@ -150,7 +155,17 @@ for row in util.DBcursor.execute('''select * from twitch limit 1'''):
 		util.DBcursor.execute('''alter table twitch add embedtitle text''');
 		util.DB.commit();
 		
-
+for row in util.DBcursor.execute('''select * from twitch_person limit 1'''):
+	if('subs' in row.keys()):
+		pass;
+	else:
+		util.DBcursor.execute('''alter table twitch_person add subs integer''');
+		util.DB.commit();
+	if('subs_auth_token' in row.keys()):
+		pass;
+	else:
+		util.DBcursor.execute('''alter table twitch_person add subs_auth_token text''');
+		util.DB.commit();
 
 LOGDB = sqlite3.connect(DBLOG);
 LOGDB.row_factory = util.dict_factory;

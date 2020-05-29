@@ -6,6 +6,9 @@ Created on 17 May 2020
 
 from aiohttp import web;
 import aiohttp;
+import aiohttp_session;
+from aiohttp_session import setup, get_session;
+from aiohttp_session.cookie_storage import EncryptedCookieStorage;
 import asyncio;
 import util;
 import json;
@@ -19,24 +22,137 @@ from util import logEx;
 import traceback;
 import sys;
 import datetime;
+import base64;
+from cryptography import fernet;
+from util import HELIX;
+import ssl;
 
 routes = web.RouteTableDef();
+routes.static('/blubb', "./ressources", show_index=True);
 
 web_srv_session = aiohttp.ClientSession(); 
 
 bot_client = None;
 
+clientsession = aiohttp.ClientSession(); 
+
 def setup(my_client):
     global bot_client;
     bot_client = my_client;
     app = web.Application();
+    fernet_key = fernet.Fernet.generate_key()
+    secret_key = base64.urlsafe_b64decode(fernet_key)
+    storage = EncryptedCookieStorage(secret_key);
+    #print(storage.cookie_params)
+    #storage.cookie_params['samesite']='strict';
+    #storage.save_cookie(response, cookie_data)
+    aiohttp_session.setup(app, storage);
+    
+    
     app.add_routes(routes);
     
     runner = web.AppRunner(app);
+   
     
     asyncio.get_event_loop().run_until_complete(runner.setup())
-    website = web.TCPSite(runner, util.serverHost, util.serverPort)
+    
+    ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+    ssl_context.load_cert_chain(util.cfgPath+'/domain_srv.crt', util.cfgPath+'/domain_srv.key');
+
+    website = web.TCPSite(runner, util.serverHost, util.serverPort,ssl_context = ssl_context)
     return website;
+
+@routes.get('/subs')
+async def subs_main(request):
+    session = await get_session(request);
+    
+    if 'access_token' in request.rel_url.query.keys():
+        access_token = request.rel_url.query['access_token'];
+        html = await util.fetchUser(clientsession,HELIX+'users',{'client-id':util.TwitchAPI,
+                                                                                'Accept':'application/vnd.twitchtv.v5+json',
+                                                                                'Authorization':'Bearer '+access_token});
+        print(html)       
+        
+        myjson = json.loads(html);
+        mydata = myjson['data'][0]; 
+        
+        session['last_page'] = mydata['display_name'].lower();
+        
+        html = await util.fetchUser(clientsession,HELIX+'subscriptions',{'client-id':util.TwitchAPI,
+                                                                                'Accept':'application/vnd.twitchtv.v5+json',
+                                                                                'Authorization':'Bearer '+access_token});
+        print(html)                                                                        
+        
+        
+        util.DBcursor.execute('update twitch_person set subs_auth_token = ? where id = ?',(access_token,mydata['id']));
+        util.DB.commit();
+    
+    if not ('last_page' in session.keys()):
+        session['last_page'] = 'Dalai_Lama'
+    raise web.HTTPFound(location='/subs/'+session['last_page']);
+    
+
+@routes.get('/subs/{name}')
+async def subs(request):
+    name = request.match_info['name'].lower();
+    session = await get_session(request);
+    session['last_page'] = name;
+    
+    for row in util.DBcursor.execute('select id,subs_auth_token,subs from twitch_person where lower(display_name) = ?',(name,)):
+        hookvalid = False;
+        userAuth = row['subs_auth_token'];
+        user_id = row['id'];
+        if userAuth and (userAuth != ''):
+            
+            oauthToken = util.getControlVal('token_oauth','');
+            #look if webhook still valid
+            html = await util.fetch(clientsession,HELIX+'webhooks/subscriptions',{'client-id':util.TwitchAPI,
+                                                                                                'Accept':'application/vnd.twitchtv.v5+json',
+                                                                                                'Authorization':'Bearer '+oauthToken});
+            #check time of hook
+            
+        if not hookvalid:
+            try:
+                if not userAuth:
+                    raise util.AuthFailed;
+                payload = {'hub.callback':('https://'+util.serverFull+'/subhook?user_name='+name+'&user_id='+user_id),
+                           "hub.mode":"subscribe",
+                           "hub.topic":HELIX+'subscriptions/events?first=1&broadcaster_id='+str(user_id),
+                           "hub.lease_seconds":120
+                           };
+                print(str(payload))
+                html = await util.posting(clientsession, HELIX+'webhooks/hub', str(payload).replace('\'','"'),headers = {'client-id':util.TwitchAPI,
+                                                                                                'Accept':'application/vnd.twitchtv.v5+json',
+                                                                                                'Authorization':'Bearer '+userAuth,
+                                                                                                'Content-Type': 'application/json'
+                                                                                            })
+                #create webhook
+                print(html);
+                #html = await util.fetchUser(clientsession,HELIX+'subscriptions/events?first=1&broadcaster_id='+str(user_id),{'client-id':util.TwitchAPI,
+                #                                                                                'Accept':'application/vnd.twitchtv.v5+json',
+                #                                                                                'Authorization':'Bearer '+userAuth});
+                print(html);
+            except util.AuthFailed as aex:
+                auth_url = 'https://id.twitch.tv/oauth2/authorize?client_id='+util.TwitchAPI+'&redirect_uri='+util.serverFull+'/subs&response_type=token&scope=channel:read:subscriptions';
+                raise web.HTTPFound(location=auth_url);
+                pass;
+            #subscribe to webhook
+    
+    with open("ressources/subs.html", "r") as f: 
+        es = f.read().replace('{REPLACE_ME}',name);
+    return web.Response(text=es,content_type = 'text/html');
+
+@routes.get('/subcounter/{name}')
+async def subcount(request):
+    su = util.getSubs(request.match_info['name'].lower())
+    return web.Response(text=str(su));
+
+@routes.get('/robots.txt')
+async def robots(_):  
+    return web.Response(text='''User-agent: *\n\rDisallow: /''');
+
+
+
         
 @routes.get('/webhook')
 async def handle_webhook(request):  
