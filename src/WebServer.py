@@ -64,6 +64,7 @@ def setup(my_client):
 
 @routes.get('/subs')
 async def subs_main(request):
+    print("subs  "+str(request.rel_url.query.keys()))
     session = await get_session(request);
     
     if 'access_token' in request.rel_url.query.keys():
@@ -77,7 +78,7 @@ async def subs_main(request):
         mydata = myjson['data'][0]; 
         
         session['last_page'] = mydata['display_name'].lower();
-        
+        print('saved last page: '+session['last_page'])
         html = await util.fetchUser(clientsession,HELIX+'subscriptions',{'client-id':util.TwitchAPI,
                                                                                 'Accept':'application/vnd.twitchtv.v5+json',
                                                                                 'Authorization':'Bearer '+access_token});
@@ -94,7 +95,9 @@ async def subs_main(request):
 
 @routes.get('/subs/{name}')
 async def subs(request):
+    
     name = request.match_info['name'].lower();
+    print("subs/"+name+"   "+str(request.rel_url.query.keys()))
     session = await get_session(request);
     session['last_page'] = name;
     
@@ -133,7 +136,6 @@ async def subs(request):
                 #                                                                                'Authorization':'Bearer '+userAuth});
                 print(html);
             except util.AuthFailed as aex:
-                print(util.serverFull)
                 auth_url = 'https://id.twitch.tv/oauth2/authorize?client_id='+util.TwitchAPI+'&redirect_uri='+util.serverFull+'/subs&response_type=token&scope=channel:read:subscriptions';
                 raise web.HTTPFound(location=auth_url);
                 pass;
