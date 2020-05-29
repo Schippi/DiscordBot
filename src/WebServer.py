@@ -70,6 +70,8 @@ async def subs_main(request):
     print("subs  "+str(request.rel_url.query.keys()))
     session = await get_session(request);
     
+    print(request.rel_url.fragment);
+    
     if 'access_token' in request.rel_url.query.keys():
         access_token = request.rel_url.query['access_token'];
         html = await util.fetchUser(clientsession,HELIX+'users',{'client-id':util.TwitchAPI,
@@ -81,6 +83,7 @@ async def subs_main(request):
         mydata = myjson['data'][0]; 
         
         session['last_page'] = mydata['display_name'].lower();
+        session.
         print('saved last page: '+session['last_page'])
         html = await util.fetchUser(clientsession,HELIX+'subscriptions',{'client-id':util.TwitchAPI,
                                                                                 'Accept':'application/vnd.twitchtv.v5+json',
