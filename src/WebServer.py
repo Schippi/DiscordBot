@@ -96,7 +96,8 @@ async def subs_main(request):
         
         session['last_page'] = mydata['display_name'].lower();
         print('saved last page: '+session['last_page'])
-        html = await util.fetchUser(clientsession,HELIX+'subscriptions',{'client-id':util.TwitchAPI,
+        b = True;
+        html = await util.fetchUser(clientsession,HELIX+'subscriptions?broadcaster_id='+mydata['id'],{'client-id':util.TwitchAPI,
                                                                                 'Accept':'application/vnd.twitchtv.v5+json',
                                                                                 'Authorization':'Bearer '+access_token});
         print(html)                                                                        
