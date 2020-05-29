@@ -26,6 +26,10 @@ pip install cchardet
 
 pip install py-dateutil
 
+pip install aiohttp_session
+
+pip install cryptography
+ 
 ---------------------
 mv cfg/empty.db cfg/bot.db
 
@@ -42,5 +46,7 @@ echo "YOUR EMAIL ADDRESS" > tokens/mail.token
 echo "YOUR EMAIL APPPLICATION PASSWORD" >> tokens/mail.token
 
 cd src
+
+openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -keyout ../cfg/domain_srv.key -out ../cfg/domain_srv.crt
 
 python3 -u DiscordBot.py ../tokens/dicord.token ../cfg example.com 8080
