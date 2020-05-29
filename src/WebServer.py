@@ -67,10 +67,7 @@ async def subs_main(request):
     if 'error' in request.rel_url.query.keys():
         return str(request.rel_url.query);
     
-    print("subs  "+str(request.rel_url.query.keys()))
     session = await get_session(request);
-    
-    print(request.url);
     
     if 'code' in request.rel_url.query.keys():
         html = await util.posting(clientsession, 'https://id.twitch.tv/oauth2/token?'
@@ -97,19 +94,28 @@ async def subs_main(request):
         session['last_page'] = mydata['display_name'].lower();
         print('saved last page: '+session['last_page'])
         b = True;
-        html = await util.fetchUser(clientsession,HELIX+'subscriptions?broadcaster_id='+mydata['id'],{'client-id':util.TwitchAPI,
-                                                                                'Accept':'application/vnd.twitchtv.v5+json',
-                                                                                'Authorization':'Bearer '+access_token});
+        cursor = '';
+        cnt = 0;
+        while b: 
+            html = await util.fetchUser(clientsession,HELIX+'subscriptions?broadcaster_id='+mydata['id']+cursor,{'client-id':util.TwitchAPI,
+                                                                                    'Accept':'application/vnd.twitchtv.v5+json',
+                                                                                    'Authorization':'Bearer '+access_token});
+            myjson = json.loads(html);
+            cursor = '&after='+myjson['pagination']['cursor'];
+            cnt = cnt+ len(myjson['data']);
+            b = len(myjson['data']) > 0;
+                
         print(html)                                                                        
         
         
-        util.DBcursor.execute('update twitch_person set subs_auth_token = ? , refresh_token = ? where id = ?',(access_token,refresh_token,mydata['id']));
+        util.DBcursor.execute('update twitch_person set subs = ? , subs_auth_token = ? , refresh_token = ? where id = ?',(cnt,access_token,refresh_token,mydata['id']));
         util.DB.commit();
     
     if not ('last_page' in session.keys()):
         session['last_page'] = 'Dalai_Lama'
-    #raise web.HTTPFound(location='/subs/'+session['last_page']);
-    return web.Response(text=str(request));
+        
+    raise web.HTTPFound(location='/subs/'+session['last_page']);
+    #return web.Response(text=str(request));
     
 
 @routes.get('/subs/{name}')
