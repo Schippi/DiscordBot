@@ -101,12 +101,14 @@ async def subs_main(request):
             html = await util.fetchUser(clientsession,HELIX+'subscriptions?broadcaster_id='+mydata['id']+cursor,{'client-id':util.TwitchAPI,
                                                                                     'Accept':'application/vnd.twitchtv.v5+json',
                                                                                     'Authorization':'Bearer '+access_token});
+            print(html)
             myjson = json.loads(html);
             cursor = '&after='+myjson['pagination']['cursor'];
             cnt = cnt+ len(myjson['data']);
             b = len(myjson['data']) > 0;
+            
                 
-        print(html)                                                                        
+                                                                                
         
         
         util.DBcursor.execute('update twitch_person set subs = ? , subs_auth_token = ? , refresh_token = ? where id = ?',(cnt,access_token,refresh_token,mydata['id']));
