@@ -261,7 +261,6 @@ def getControlVal(mystring,dflt):
 
 async def getGames(ids,session,oauthToken):
 	placeholders= ', '.join(['?']*len(ids));
-	retdict = {'':'Something'};
 	if(len(ids)== 0):
 		return retdict;
 	
@@ -280,6 +279,7 @@ async def getGames(ids,session,oauthToken):
 				DBcursor.execute('insert into game(id,name,boxart) values(?,?,?)',(d['id'],d['name'],d['box_art_url']));
 			retdict[d['id']] = d['name'];
 		DB.commit();
+	retdict = {'':'Something'};	
 	return retdict;
 
 def getGamesUrlbyName(name):
@@ -301,7 +301,7 @@ def setControlVal(mystring,val):
 
 def getSubs(name):
 	for row in DBcursor.execute('select subs from twitch_person where lower(display_name) = ?',(name,)):
-		return 2; #row['subs']
+		return row['subs'];
 	return 'not tracking';
 			
 def sendMail(title,inhalt):
