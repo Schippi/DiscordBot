@@ -261,8 +261,9 @@ def getControlVal(mystring,dflt):
 
 async def getGames(ids,session,oauthToken):
 	placeholders= ', '.join(['?']*len(ids));
+	retdict = {};	
 	if(len(ids)== 0):
-		return retdict;
+		return {'':'Something'};
 	
 	for row in DBcursor.execute('SELECT * FROM game where id in ({})'.format(placeholders),tuple(ids)):
 		retdict[str(row['id'])] = row['name'];
@@ -279,7 +280,7 @@ async def getGames(ids,session,oauthToken):
 				DBcursor.execute('insert into game(id,name,boxart) values(?,?,?)',(d['id'],d['name'],d['box_art_url']));
 			retdict[d['id']] = d['name'];
 		DB.commit();
-	retdict = {'':'Something'};	
+	retdict[''] = 'Something';	
 	return retdict;
 
 def getGamesUrlbyName(name):
