@@ -57,7 +57,7 @@ def setup(my_client):
     asyncio.get_event_loop().run_until_complete(runner.setup())
     
     ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-    ssl_context.load_cert_chain(util.cfgPath+'/domain_srv.crt', util.cfgPath+'/domain_srv.key');
+    ssl_context.load_cert_chain(util.cfgPath+'/fullchain.pem', util.cfgPath+'/privkey.pem');
 
     website = web.TCPSite(runner, util.serverHost, util.serverPort,ssl_context = ssl_context)
     return website;
