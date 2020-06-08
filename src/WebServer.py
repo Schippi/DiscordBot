@@ -84,7 +84,7 @@ def setuphttp():
 
 @routes.get('/u/{shorthand}')
 async def urlredirector(request):
-    shorthand = request.match_info['shorthand'].lower();
+    shorthand = request.match_info['shorthand'];
     c = util.DB.cursor();
     for row in c.execute('select * from urlmap where short = ?',(shorthand,)):
         raise web.HTTPFound(location=row['long']);
