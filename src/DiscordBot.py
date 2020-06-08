@@ -172,6 +172,13 @@ for row in util.DBcursor.execute('''select * from twitch_person limit 1'''):
 		util.DBcursor.execute('''alter table twitch_person add refresh_token text''');
 		util.DB.commit();
 
+util.DBcursor.execute('''CREATE TABLE IF NOT EXISTS  `urlmap` (
+		'ID'	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+		`short`	TEXT,
+		`long`	TEXT
+	);''');
+util.DB.commit();
+
 LOGDB = sqlite3.connect(DBLOG);
 LOGDB.row_factory = util.dict_factory;
 LOGDBcursor = LOGDB.cursor();

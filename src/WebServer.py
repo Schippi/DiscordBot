@@ -82,11 +82,17 @@ def setuphttp():
     
     return website;
 
-
+@routes.get('/u/{shorthand}')
+async def urlredirector(request):
+    shorthand = request.match_info['shorthand'].lower();
+    c = util.DB.cursor();
+    for row in c.execute('select * from urlmap where short = ?',(shorthand,)):
+        raise web.HTTPFound(location=row['long']);
+    raise web.HTTPNotFound();
 
 @routes.get('/nilesy/paintings')
 async def paintings(request):
-    raise web.HTTPFound(location='https://imgur.com/a/YhwmRnQ');
+    raise web.HTTPFound(location='https://imgur.com/a/BZTW5gr');
 
 @routes.get('/subs')
 async def subs_main(request):
