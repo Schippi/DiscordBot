@@ -62,9 +62,36 @@ def setup(my_client):
     website = web.TCPSite(runner, util.serverHost, util.serverPort,ssl_context = ssl_context)
     return website;
 
+async def handle_http(request):
+    u = str(request.url)
+    if(u.startswith('http:')):
+        print('redirecting')
+        raise web.HTTPFound(location=('https:'+u[5:]));
+    else:
+        raise web.HTTPBadGateway();
+
+def setuphttp():
+    apphttp = web.Application();
+    apphttp.router.add_route('GET', '/{tail:.*}', handle_http)
+    
+    runner = web.AppRunner(apphttp);
+       
+    asyncio.get_event_loop().run_until_complete(runner.setup())
+    
+    website = web.TCPSite(runner, util.serverHost, 80);
+    
+    return website;
+
+
+
+@routes.get('/nilesy/paintings')
+async def paintings(request):
+    raise web.HTTPFound(location='https://imgur.com/a/YhwmRnQ');
+
 @routes.get('/subs')
 async def subs_main(request):
     if 'error' in request.rel_url.query.keys():
+        print(request.rel_url.query)
         return str(request.rel_url.query);
     
     session = await get_session(request);
@@ -87,12 +114,20 @@ async def subs_main(request):
         html = await util.fetchUser(clientsession,HELIX+'users',{'client-id':util.TwitchAPI,
                                                                                 'Accept':'application/vnd.twitchtv.v5+json',
                                                                                 'Authorization':'Bearer '+access_token});
-        print(html)       
+        print(html)
         
         myjson = json.loads(html);
+        if('error' in myjson.keys()):
+            if not 'last_page' in session.keys():
+                raise web.HTTPNotAcceptable;
+            util.DBcursor.execute('update twitch_person set subs_auth_token = null , refresh_token = null where login = ? or lower(display_name) = ?',(session['last_page'].lower(),session['last_page'].lower()));
+            util.DB.commit();
+            return authUserPage();
+            
         mydata = myjson['data'][0]; 
         
         session['last_page'] = mydata['display_name'].lower();
+        
         print('saved last page: '+session['last_page'])
         b = True;
         cursor = '';
@@ -136,7 +171,10 @@ async def subs(request):
         if userAuth and (userAuth != ''):
             
             oauthToken = util.getControlVal('token_oauth','');
+            #look if user is still authed..
+            #TODO
             #look if webhook still valid
+            #TODO
             html = await util.fetch(clientsession,HELIX+'webhooks/subscriptions',{'client-id':util.TwitchAPI,
                                                                                                 'Accept':'application/vnd.twitchtv.v5+json',
                                                                                                 'Authorization':'Bearer '+oauthToken});
@@ -164,9 +202,8 @@ async def subs(request):
                 #                                                                                'Authorization':'Bearer '+userAuth});
                 print(html);
             except util.AuthFailed as aex:
-                auth_url = 'https://id.twitch.tv/oauth2/authorize?client_id='+util.TwitchAPI+'&redirect_uri=https://'+util.serverFull+'/subs&response_type=code&scope=channel:read:subscriptions';
-                raise web.HTTPFound(location=auth_url);
-                pass;
+                return authUserPage();
+                #raise web.HTTPFound(location=auth_url);
             #subscribe to webhook
     
     with open("ressources/subs.html", "r") as f: 
@@ -182,8 +219,11 @@ async def subcount(request):
 async def robots(_):  
     return web.Response(text='''User-agent: *\n\rDisallow: /''');
 
-
-
+def authUserPage():
+    with open("ressources/authuser.html", "r") as f:
+        auth_url = 'https://id.twitch.tv/oauth2/authorize?client_id='+util.TwitchAPI+'&redirect_uri=https://'+util.serverFull+'/subs&response_type=code&scope=channel:read:subscriptions'; 
+        es = f.read().replace('{REPLACE_URL}',auth_url);
+    return web.Response(text=es,content_type = 'text/html');
         
 @routes.get('/webhook')
 async def handle_webhook(request):  

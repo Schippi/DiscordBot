@@ -747,8 +747,9 @@ client.add_cog(YoutubeCommand(client));
 client.add_cog(AdminCommand(client));
 client.add_cog(TTSJack(client));
 
-from WebServer import setup;
+from WebServer import setup,setuphttp;
 client.loop.run_until_complete(setup(client).start())
+client.loop.run_until_complete(setuphttp().start())
 
 for sig in (signal.SIGINT, signal.SIGTERM):
 	try:          
