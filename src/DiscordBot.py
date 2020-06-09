@@ -102,24 +102,20 @@ util.DBcursor.execute('''CREATE TABLE IF NOT EXISTS twitchstats (
 	'game'	TEXT,
 	'channel'	TEXT
 );''');
-util.DB.commit();
-
 
 util.DBcursor.execute('''CREATE TABLE IF NOT EXISTS  `control` (
-		`Key`	TEXT,
+		`Key`	TEXT UNIQUE,
 		`value`	TEXT
 	);''');
-util.DB.commit();
 
 util.DBcursor.execute('''CREATE TABLE IF NOT EXISTS  `game` (
-		`id`	INTEGER,
+		`id`	INTEGER UNIQUE,
 		`name`	TEXT,
 		`boxart`	TEXT
 	);''');
-util.DB.commit();
 
 util.DBcursor.execute('''CREATE TABLE IF NOT EXISTS  `twitch_person` (
-		`id`	TEXT,
+		`id`	TEXT UNIQUE,
 		`login`	TEXT,
 		`display_name`	TEXT,
 		`type`	TEXT,
@@ -131,7 +127,6 @@ util.DBcursor.execute('''CREATE TABLE IF NOT EXISTS  `twitch_person` (
 		`last_check`	TEXT,
 		`last_check_status`	TEXT
 	);''');
-util.DB.commit();
 
 util.DBcursor.execute('''CREATE TABLE IF NOT EXISTS  `dual` (
 		`DUMMY`	TEXT
@@ -141,42 +136,43 @@ util.DBcursor.execute('''insert into dual(dummy)
 					select 'X' from sqlite_master 
 					where not exists (select * from dual)
 					limit 1''');
-util.DB.commit();
 
 for row in util.DBcursor.execute('''select * from twitch limit 1'''):
 	if('last_msg_id' in row.keys()):
 		pass;
 	else:
 		util.DBcursor.execute('''alter table twitch add last_msg_id text''');
-		util.DB.commit();
 	if('embedtitle' in row.keys()):
 		pass;
 	else:
 		util.DBcursor.execute('''alter table twitch add embedtitle text''');
-		util.DB.commit();
 		
 for row in util.DBcursor.execute('''select * from twitch_person limit 1'''):
 	if('subs' in row.keys()):
 		pass;
 	else:
 		util.DBcursor.execute('''alter table twitch_person add subs integer''');
-		util.DB.commit();
 	if('subs_auth_token' in row.keys()):
 		pass;
 	else:
 		util.DBcursor.execute('''alter table twitch_person add subs_auth_token text''');
-		util.DB.commit();
 	if('refresh_token' in row.keys()):
 		pass;
 	else:
 		util.DBcursor.execute('''alter table twitch_person add refresh_token text''');
-		util.DB.commit();
 
 util.DBcursor.execute('''CREATE TABLE IF NOT EXISTS  `urlmap` (
 		'ID'	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-		`short`	TEXT,
+		`short`	TEXT UNIQUE,
 		`long`	TEXT
 	);''');
+    
+for row in util.DBcursor.execute('''select * from urlmap limit 1'''):
+	if('used' in row.keys()):
+		pass;
+	else:
+		util.DBcursor.execute('''alter table urlmap add used INTEGER DEFAULT 0''');
+	
 util.DB.commit();
 
 LOGDB = sqlite3.connect(DBLOG);

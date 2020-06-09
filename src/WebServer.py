@@ -87,6 +87,7 @@ async def urlredirector(request):
     shorthand = request.match_info['shorthand'];
     c = util.DB.cursor();
     for row in c.execute('select * from urlmap where short = ?',(shorthand,)):
+        c.execute('update urlmap set used = used +1 where short = ?',(shorthand,));
         raise web.HTTPFound(location=row['long']);
     raise web.HTTPNotFound();
 
