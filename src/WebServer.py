@@ -26,7 +26,9 @@ import base64;
 from cryptography import fernet;
 from util import HELIX;
 import ssl;
+import logging;
 
+log = logging.getLogger(__name__);
 routes = web.RouteTableDef();
 routes.static('/blubb', "./ressources", show_index=True);
 
@@ -65,7 +67,7 @@ def setup(my_client):
 async def handle_http(request):
     u = str(request.url)
     if(u.startswith('http:')):
-        print('redirecting')
+        log.debug('redirecting')
         raise web.HTTPFound(location=('https:'+u[5:]));
     else:
         raise web.HTTPBadGateway();
@@ -98,7 +100,7 @@ async def paintings(request):
 @routes.get('/subs')
 async def subs_main(request):
     if 'error' in request.rel_url.query.keys():
-        print(request.rel_url.query)
+        log.debug(request.rel_url.query)
         return str(request.rel_url.query);
     
     session = await get_session(request);
@@ -112,7 +114,7 @@ async def subs_main(request):
                                                                     +'&grant_type=authorization_code'
                                                                     +'&redirect_uri=https://'+util.serverFull+'/subs'
                                                                     , None, None);
-        print(html);
+        log.debug(html);
         myjson = json.loads(html);
         access_token = myjson['access_token'];
         refresh_token = myjson['refresh_token'];
@@ -121,7 +123,7 @@ async def subs_main(request):
         html = await util.fetchUser(clientsession,HELIX+'users',{'client-id':util.TwitchAPI,
                                                                                 'Accept':'application/vnd.twitchtv.v5+json',
                                                                                 'Authorization':'Bearer '+access_token});
-        print(html)
+        log.debug(html)
         
         myjson = json.loads(html);
         if('error' in myjson.keys()):
@@ -135,23 +137,8 @@ async def subs_main(request):
         
         session['last_page'] = mydata['display_name'].lower();
         
-        print('saved last page: '+session['last_page'])
-        b = True;
-        cursor = '';
-        cnt = 0;
-        while b: 
-            html = await util.fetchUser(clientsession,HELIX+'subscriptions?broadcaster_id='+mydata['id']+cursor,{'client-id':util.TwitchAPI,
-                                                                                    'Accept':'application/vnd.twitchtv.v5+json',
-                                                                                    'Authorization':'Bearer '+access_token});
-            print(html)
-            myjson = json.loads(html);
-            cursor = '&after='+myjson['pagination']['cursor'];
-            cnt = cnt+ len(myjson['data']);
-            b = len(myjson['data']) > 0;
-            
-                
-                                                                                
-        
+        log.debug('saved last page: '+session['last_page'])
+        cnt = await pullSubCount(mydata['id'],access_token);
         
         util.DBcursor.execute('update twitch_person set subs = ? , subs_auth_token = ? , refresh_token = ? where id = ?',(cnt,access_token,refresh_token,mydata['id']));
         util.DB.commit();
@@ -161,6 +148,24 @@ async def subs_main(request):
         
     raise web.HTTPFound(location='/subs/'+session['last_page']);
     #return web.Response(text=str(request));
+    
+async def pullSubCount(broadcaster_id,user_access_token):
+    b = True;
+    cursor = '';
+    cnt = 0;
+    while b: 
+        html = await util.fetchUser(clientsession,HELIX+'subscriptions?broadcaster_id='+broadcaster_id+cursor,{'client-id':util.TwitchAPI,
+                                                                                'Accept':'application/vnd.twitchtv.v5+json',
+                                                                                'Authorization':'Bearer '+user_access_token});
+        log.debug(html)
+        myjson = json.loads(html);
+        cnt = cnt+ len(myjson['data']);
+        if 'cursor' in myjson['pagination']:
+            cursor = '&after='+myjson['pagination']['cursor'];
+        else:
+            b = False;
+        b = b and (len(myjson['data']) > 0);
+    return cnt;
     
 
 @routes.get('/subs/{name}')
@@ -175,6 +180,8 @@ async def subs(request):
         hookvalid = False;
         userAuth = row['subs_auth_token'];
         user_id = row['id'];
+        topic = HELIX+'subscriptions/events?first=1&broadcaster_id='+str(user_id);
+        
         if userAuth and (userAuth != ''):
             
             oauthToken = util.getControlVal('token_oauth','');
@@ -182,48 +189,96 @@ async def subs(request):
             html = await util.fetchUser(clientsession,HELIX+'users',{'client-id':util.TwitchAPI,
                                                                                 'Accept':'application/vnd.twitchtv.v5+json',
                                                                                 'Authorization':'Bearer '+userAuth});
+            myjson = json.loads(html);                                                                    
+            if not ('data' in myjson):
+                return authUserPage(user_id);
             #look if webhook still valid
-            #TODO
-            print('looking for hook');
-            html = await util.fetch(clientsession,HELIX+'webhooks/subscriptions',{'client-id':util.TwitchAPI,
+            goon = True;
+            webcursor = '';
+            log.debug('looking for hook');
+            while goon and not hookvalid:
+                html = await util.fetch(clientsession,HELIX+'webhooks/subscriptions'+webcursor,{'client-id':util.TwitchAPI,
                                                                                                 'Accept':'application/vnd.twitchtv.v5+json',
                                                                                                 'Authorization':'Bearer '+oauthToken});
-            print(html);                                                                                    
-            #check time of hook
+                log.debug(html);
+                myjson = json.loads(html);
+                for d in myjson['data']:
+                    if d['topic'] == topic:
+                        hookvalid = True;
+                        #check time of hook maybe
+                if('cursor' in myjson['pagination']):
+                    webcursor = '?after='+myjson['pagination']['cursor'];
+                else:
+                    goon = False;
             
+            
+            #renew the hook anyway...
+            payload = {'hub.callback':('https://'+util.serverFull+'/subhook?user_name='+name+'&user_id='+user_id),
+                               "hub.mode":"subscribe",
+                               "hub.topic":topic,
+                               "hub.lease_seconds":864000 #864000 = 10 days = maximum
+                               };
+            log.debug('renew hook:'+str(payload))
+            html = await util.posting(clientsession, HELIX+'webhooks/hub', str(payload).replace('\'','"'),headers = {'client-id':util.TwitchAPI,
+                                                                                            'Accept':'application/vnd.twitchtv.v5+json',
+                                                                                            'Authorization':'Bearer '+userAuth,
+                                                                                            'Content-Type': 'application/json'
+                                                                                        })
         if not hookvalid:
             try:
-                if not userAuth:
+                if (not userAuth) or (userAuth == ''):
                     raise util.AuthFailed;
                 
                 #fetch current sub count
-                
-                payload = {'hub.callback':('https://'+util.serverFull+'/webhook?user_name='+name+'&user_id='+user_id),
-                           "hub.mode":"subscribe",
-                           "hub.topic":HELIX+'subscriptions/events?first=1&broadcaster_id='+str(user_id),
-                           "hub.lease_seconds":3600
-                           };
-                print(str(payload))
-                html = await util.posting(clientsession, HELIX+'webhooks/hub', str(payload).replace('\'','"'),headers = {'client-id':util.TwitchAPI,
-                                                                                                'Accept':'application/vnd.twitchtv.v5+json',
-                                                                                                'Authorization':'Bearer '+userAuth,
-                                                                                                'Content-Type': 'application/json'
-                                                                                            })
-                #create webhook
-                print(html);
-                #html = await util.fetchUser(clientsession,HELIX+'subscriptions/events?first=1&broadcaster_id='+str(user_id),{'client-id':util.TwitchAPI,
-                #                                                                                'Accept':'application/vnd.twitchtv.v5+json',
-                #                                                                                'Authorization':'Bearer '+userAuth});
-                print(html);
+                cnt = await pullSubCount(user_id,userAuth);
+                util.DBcursor.execute('update twitch_person set subs = ? where id = ?',(cnt,user_id));
+                util.DB.commit();
+
             except util.AuthFailed as aex:
-                return authUserPage();
+                return authUserPage(user_id);
                 #raise web.HTTPFound(location=auth_url);
-            #subscribe to webhook
     
     with open("ressources/subs.html", "r") as f: 
         es = f.read().replace('{REPLACE_ME}',name);
     return web.Response(text=es,content_type = 'text/html');
 
+@routes.get('/subhook')
+async def handle_webhook_sub(request):  
+    log.info('webhook (sub) was accepted ('+str(request.rel_url.query)+')');
+    if not 'hub.challenge' in request.rel_url.query.keys():
+        return web.HTTPExpectationFailed();
+    return web.Response(text=request.rel_url.query['hub.challenge'])
+
+@routes.post('/subhook')
+async def handle_notif_sub(request):
+    try:
+        data = (await request.content.read()).decode("utf-8");
+        asyncio.get_event_loop().create_task(handle_data_sub(request,data));
+    except:
+        return web.HTTPInternalServerError();
+    return web.Response(text='OK');
+
+async def handle_data_sub(request,data):
+    global bot_client;
+    log.debug('sub webhook data:');
+    log.debug(str(data));
+    myjson = json.loads(data)['data'];
+    user_id = request.rel_url.query['user_id'];
+    user_name = request.rel_url.query['user_name'].lower();
+    plusminus = {};
+    for d in myjson:
+        broadcaster = d['eventdata']['broadcaster_id'];
+        if not broadcaster in plusminus:
+            plusminus[broadcaster] = 0;
+        if d['event_type'] == 'subscriptions.subscribe':
+            plusminus[broadcaster] = plusminus[broadcaster] + 1;
+        elif d['event_type'] == 'subscriptions.unsubscribe':
+            plusminus[broadcaster] = plusminus[broadcaster] - 1;
+    for k,v in plusminus.values():
+        if v != 0:
+            util.DBcursor.execute('update twitch_person set subs = subs + ? where id = ?',(v,k));
+    util.DB.commit();
+        
 @routes.get('/subcounter/{name}')
 async def subcount(request):
     su = util.getSubs(request.match_info['name'].lower())
@@ -233,7 +288,7 @@ async def subcount(request):
 async def robots(_):  
     return web.Response(text='''User-agent: *\n\rDisallow: /''');
 
-def authUserPage():
+def authUserPage(user_id):
     with open("ressources/authuser.html", "r") as f:
         auth_url = 'https://id.twitch.tv/oauth2/authorize?client_id='+util.TwitchAPI+'&redirect_uri=https://'+util.serverFull+'/subs&response_type=code&scope=channel:read:subscriptions'; 
         es = f.read().replace('{REPLACE_URL}',auth_url);
