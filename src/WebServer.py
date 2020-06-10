@@ -179,22 +179,28 @@ async def subs(request):
             
             oauthToken = util.getControlVal('token_oauth','');
             #look if user is still authed..
-            #TODO
+            html = await util.fetchUser(clientsession,HELIX+'users',{'client-id':util.TwitchAPI,
+                                                                                'Accept':'application/vnd.twitchtv.v5+json',
+                                                                                'Authorization':'Bearer '+userAuth});
             #look if webhook still valid
             #TODO
             html = await util.fetch(clientsession,HELIX+'webhooks/subscriptions',{'client-id':util.TwitchAPI,
                                                                                                 'Accept':'application/vnd.twitchtv.v5+json',
                                                                                                 'Authorization':'Bearer '+oauthToken});
+            print(html);                                                                                    
             #check time of hook
             
         if not hookvalid:
             try:
                 if not userAuth:
                     raise util.AuthFailed;
+                
+                #fetch current sub count
+                
                 payload = {'hub.callback':('https://'+util.serverFull+'/subhook?user_name='+name+'&user_id='+user_id),
                            "hub.mode":"subscribe",
                            "hub.topic":HELIX+'subscriptions/events?first=1&broadcaster_id='+str(user_id),
-                           "hub.lease_seconds":120
+                           "hub.lease_seconds":3600
                            };
                 print(str(payload))
                 html = await util.posting(clientsession, HELIX+'webhooks/hub', str(payload).replace('\'','"'),headers = {'client-id':util.TwitchAPI,
