@@ -184,6 +184,7 @@ async def subs(request):
                                                                                 'Authorization':'Bearer '+userAuth});
             #look if webhook still valid
             #TODO
+            print('looking for hook');
             html = await util.fetch(clientsession,HELIX+'webhooks/subscriptions',{'client-id':util.TwitchAPI,
                                                                                                 'Accept':'application/vnd.twitchtv.v5+json',
                                                                                                 'Authorization':'Bearer '+oauthToken});
@@ -197,7 +198,7 @@ async def subs(request):
                 
                 #fetch current sub count
                 
-                payload = {'hub.callback':('https://'+util.serverFull+'/subhook?user_name='+name+'&user_id='+user_id),
+                payload = {'hub.callback':('https://'+util.serverFull+'/webhook?user_name='+name+'&user_id='+user_id),
                            "hub.mode":"subscribe",
                            "hub.topic":HELIX+'subscriptions/events?first=1&broadcaster_id='+str(user_id),
                            "hub.lease_seconds":3600
