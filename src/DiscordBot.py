@@ -39,7 +39,7 @@ from util import askYesNoReaction;
 from util import sendMail;
 from util import pleaseLog;
 
-logging.basicConfig(level=logging.INFO);
+logging.basicConfig(level=logging.DEBUG);
 NOT_ALLOWED = 'You are not allowed to call this command!';
 UTC = pytz.utc;
 TIMEZONE = pytz.timezone('Europe/London');
@@ -166,7 +166,6 @@ util.DBcursor.execute('''CREATE TABLE IF NOT EXISTS  `urlmap` (
 		`short`	TEXT UNIQUE,
 		`long`	TEXT
 	);''');
-    
 for row in util.DBcursor.execute('''select * from urlmap limit 1'''):
 	if('used' in row.keys()):
 		pass;
@@ -750,6 +749,10 @@ client.add_cog(YoutubeCommand(client));
 client.add_cog(AdminCommand(client));
 client.add_cog(TTSJack(client));
 
+import ircStart;
+
+ircTask = client.loop.create_task(ircStart.main().start());
+
 from WebServer import setup,setuphttp;
 client.loop.run_until_complete(setup(client).start())
 client.loop.run_until_complete(setuphttp().start())
@@ -783,6 +786,7 @@ except Exception as ex:
 		sendMail('Guild Crash Report',msg);
 try:
 	checkingTask.cancel();
+	ircTask.cancel();
 	asyncio.ensure_future(exit())
 except:
 	pass;

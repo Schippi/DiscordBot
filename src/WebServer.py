@@ -165,6 +165,7 @@ async def pullSubCount(broadcaster_id,user_access_token):
         else:
             b = False;
         b = b and (len(myjson['data']) > 0);
+    log.debug('fetched subs for '+broadcaster_id+', they have '+str(cnt)+' subs');
     return cnt;
     
 
@@ -282,6 +283,10 @@ async def handle_data_sub(request,data):
 @routes.get('/subcounter/{name}')
 async def subcount(request):
     su = util.getSubs(request.match_info['name'].lower())
+    try:
+        int(su)
+    except:
+        raise web.HTTPError();
     return web.Response(text=str(su));
 
 @routes.get('/robots.txt')

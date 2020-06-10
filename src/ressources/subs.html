@@ -24,11 +24,14 @@ function myTimer() {
 		type: "GET",
 		success: function(result){
 			document.getElementById("demo").innerHTML = result;
+			if (result.localeCompare("not tracking") == 0) {
+				clearInterval(myVar);
+			}
 		},
 		error:function(error){
 			console.log(error)
 			clearInterval(myVar);
-			document.getElementById("demo").innerHTML = "error";
+			document.getElementById("demo").innerHTML = "error ( probably not tracking the account - we did not save any information)";
 		}
    }
    )
