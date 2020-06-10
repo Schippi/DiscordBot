@@ -166,7 +166,10 @@ def logEx(ex):
 			if type(ex) == type(str()):
 				err = time.strftime('%X %x %Z') + ': ' + ex;
 			else:
-				err = time.strftime('%X %x %Z') + ': ' + 'Exception : {0}: {1}\n\t{2}'.format(ex.errno, ex.strerror,str(ex))
+				try:
+				                err = time.strftime('%X %x %Z') + ': ' + 'Exception : {0}: {1}\n\t{2}'.format(ex.errno, ex.strerror,str(ex))
+				except:
+					err = str(ex);
 		else:
 			return;
 		print(err)
@@ -238,6 +241,32 @@ async def fetch(session, url, headers,secondTime=False):
 			
 async def fetchUser(session, url, headers):
 	return await fetch(session,url,headers,True);
+
+#TODO refresh Token
+async def fetchUserXXX(session, url, headers,secondTime=False):
+	with async_timeout.timeout(10):
+		async with session.get(url, headers = headers) as response:
+			try:
+				if (response.status == 401):
+					print(await response.text())
+					print(url)
+					print(headers)
+					if 'WWW-Authenticate' in response.headers.keys():
+						if secondTime:
+							raise AuthFailed;
+						else:
+							headers['Authorization'] = 'Bearer '+(await refresh_User_Auth(session,'user_id'));
+							return await fetch(session,url,headers,True);
+				else:
+					return await response.text()
+			except asyncio.TimeoutError:
+				return '';
+			
+async def refresh_User_Auth(session,user_id):
+	#TODO
+	#fetch user from db, use refresh token
+	#https://dev.twitch.tv/docs/authentication#refreshing-access-tokens
+	pass;			
 
 			
 async def posting(session, url, payload, headers = None):
