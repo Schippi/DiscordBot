@@ -25,6 +25,8 @@ lock = threading.Lock();
 #your Client-ID - go to https://blog.twitch.tv/client-id-required-for-kraken-api-calls-afbb8e95f843 and follow the instructions
 TwitchAPI = '';
 TwitchSECRET = '';
+TwitchIRCNICK = '';
+TwitchIRCAUTH = '';
 YTAPI = '';
 pleaseLog=True;
 
@@ -44,6 +46,11 @@ except:
 	TwitchSECRET = '';
 	pass;
 file.close();
+
+with open(cfgPath+"/../tokens/irc.token","r") as file:
+	contents =file.read().splitlines(); 
+	TwitchIRCNICK = contents[0];
+	TwitchIRCAUTH = contents[1];
 
 file = open(cfgPath+"/../tokens/youtube.token","r");
 try:
@@ -167,7 +174,7 @@ def logEx(ex):
 				err = time.strftime('%X %x %Z') + ': ' + ex;
 			else:
 				try:
-				                err = time.strftime('%X %x %Z') + ': ' + 'Exception : {0}: {1}\n\t{2}'.format(ex.errno, ex.strerror,str(ex))
+					err = time.strftime('%X %x %Z') + ': ' + 'Exception : {0}: {1}\n\t{2}'.format(ex.errno, ex.strerror,str(ex))
 				except:
 					err = str(ex);
 		else:
