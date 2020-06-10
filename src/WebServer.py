@@ -67,7 +67,7 @@ def setup(my_client):
 async def handle_http(request):
     u = str(request.url)
     if(u.startswith('http:')):
-        log.debug('redirecting')
+        log.info('redirecting')
         raise web.HTTPFound(location=('https:'+u[5:]));
     else:
         raise web.HTTPBadGateway();
@@ -100,7 +100,7 @@ async def paintings(request):
 @routes.get('/subs')
 async def subs_main(request):
     if 'error' in request.rel_url.query.keys():
-        log.debug(request.rel_url.query)
+        log.info('error in /subs'+request.rel_url.query)
         return str(request.rel_url.query);
     
     session = await get_session(request);
@@ -114,7 +114,7 @@ async def subs_main(request):
                                                                     +'&grant_type=authorization_code'
                                                                     +'&redirect_uri=https://'+util.serverFull+'/subs'
                                                                     , None, None);
-        log.debug(html);
+        log.info('code:'+html);
         myjson = json.loads(html);
         access_token = myjson['access_token'];
         refresh_token = myjson['refresh_token'];
@@ -123,7 +123,7 @@ async def subs_main(request):
         html = await util.fetchUser(clientsession,HELIX+'users',{'client-id':util.TwitchAPI,
                                                                                 'Accept':'application/vnd.twitchtv.v5+json',
                                                                                 'Authorization':'Bearer '+access_token});
-        log.debug(html)
+        log.info('access_token:' + html)
         
         myjson = json.loads(html);
         if('error' in myjson.keys()):
@@ -137,7 +137,7 @@ async def subs_main(request):
         
         session['last_page'] = mydata['display_name'].lower();
         
-        log.debug('saved last page: '+session['last_page'])
+        log.info('saved last page: '+session['last_page'])
         cnt = await pullSubCount(mydata['id'],access_token);
         
         util.DBcursor.execute('update twitch_person set subs = ? , subs_auth_token = ? , refresh_token = ? where id = ?',(cnt,access_token,refresh_token,mydata['id']));
@@ -157,7 +157,7 @@ async def pullSubCount(broadcaster_id,user_access_token):
         html = await util.fetchUser(clientsession,HELIX+'subscriptions?broadcaster_id='+broadcaster_id+cursor,{'client-id':util.TwitchAPI,
                                                                                 'Accept':'application/vnd.twitchtv.v5+json',
                                                                                 'Authorization':'Bearer '+user_access_token});
-        log.debug(html)
+        log.info(html)
         myjson = json.loads(html);
         cnt = cnt+ len(myjson['data']);
         if 'cursor' in myjson['pagination']:
@@ -165,7 +165,7 @@ async def pullSubCount(broadcaster_id,user_access_token):
         else:
             b = False;
         b = b and (len(myjson['data']) > 0);
-    log.debug('fetched subs for '+broadcaster_id+', they have '+str(cnt)+' subs');
+    log.info('fetched subs for '+broadcaster_id+', they have '+str(cnt)+' subs');
     return cnt;
     
 
@@ -196,12 +196,12 @@ async def subs(request):
             #look if webhook still valid
             goon = True;
             webcursor = '';
-            log.debug('looking for hook');
+            log.info('looking for hook');
             while goon and not hookvalid:
                 html = await util.fetch(clientsession,HELIX+'webhooks/subscriptions'+webcursor,{'client-id':util.TwitchAPI,
                                                                                                 'Accept':'application/vnd.twitchtv.v5+json',
                                                                                                 'Authorization':'Bearer '+oauthToken});
-                log.debug(html);
+                log.info(html);
                 myjson = json.loads(html);
                 for d in myjson['data']:
                     if d['topic'] == topic:
@@ -219,7 +219,7 @@ async def subs(request):
                                "hub.topic":topic,
                                "hub.lease_seconds":864000 #864000 = 10 days = maximum
                                };
-            log.debug('renew hook:'+str(payload))
+            log.info('renew hook:'+str(payload))
             html = await util.posting(clientsession, HELIX+'webhooks/hub', str(payload).replace('\'','"'),headers = {'client-id':util.TwitchAPI,
                                                                                             'Accept':'application/vnd.twitchtv.v5+json',
                                                                                             'Authorization':'Bearer '+userAuth,
@@ -261,8 +261,8 @@ async def handle_notif_sub(request):
 
 async def handle_data_sub(request,data):
     global bot_client;
-    log.debug('sub webhook data:');
-    log.debug(str(data));
+    log.info('sub webhook data:');
+    log.info(str(data));
     myjson = json.loads(data)['data'];
     user_id = request.rel_url.query['user_id'];
     user_name = request.rel_url.query['user_name'].lower();

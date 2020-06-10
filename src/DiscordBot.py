@@ -39,7 +39,7 @@ from util import askYesNoReaction;
 from util import sendMail;
 from util import pleaseLog;
 
-logging.basicConfig(level=logging.DEBUG);
+logging.basicConfig(level=logging.INFO);
 NOT_ALLOWED = 'You are not allowed to call this command!';
 UTC = pytz.utc;
 TIMEZONE = pytz.timezone('Europe/London');
