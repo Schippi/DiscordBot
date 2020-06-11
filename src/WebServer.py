@@ -294,7 +294,7 @@ async def handle_data_sub(request,data):
         elif d['event_type'] == 'subscriptions.unsubscribe':
             plusminus[broadcaster] = plusminus[broadcaster] - 1;
             util.DBcursor.execute('''delete from twitch_sub where broadcaster_id = ? and user_id = ?''',(broadcaster,sub_user));
-    for k,v in plusminus.values():
+    for k,v in plusminus.items():
         if v != 0:
             util.DBcursor.execute('update twitch_person set subs = subs + ? where id = ?',(v,k));
     util.DB.commit();
