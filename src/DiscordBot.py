@@ -127,6 +127,18 @@ util.DBcursor.execute('''CREATE TABLE IF NOT EXISTS  `twitch_person` (
 		`last_check`	TEXT,
 		`last_check_status`	TEXT
 	);''');
+	
+util.DBcursor.execute('''CREATE TABLE IF NOT EXISTS  `twitch_sub` (
+		`broadcaster_id`	TEXT UNIQUE,
+		`broadcaster_name`	TEXT,
+		`gifter_id`	TEXT,
+		`gifter_name`	TEXT,
+		`is_gift`	TEXT,
+		`plan_name`	TEXT,
+		`tier`	TEXT,
+		`user_id`	TEXT,
+		`user_name`	INTEGER
+	);''');
 
 util.DBcursor.execute('''CREATE TABLE IF NOT EXISTS  `dual` (
 		`DUMMY`	TEXT

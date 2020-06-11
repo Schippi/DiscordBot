@@ -140,7 +140,7 @@ async def subs_main(request):
         log.info('saved last page: '+session['last_page'])
         cnt = await pullSubCount(mydata['id'],access_token);
         
-        util.DBcursor.execute('update twitch_person set subs = ? , subs_auth_token = ? , refresh_token = ? where id = ?',(cnt,access_token,refresh_token,mydata['id']));
+        util.DBcursor.execute('update twitch_person set subs_auth_token = ? , refresh_token = ? where id = ?',(access_token,refresh_token,mydata['id']));
         util.DB.commit();
     
     if not ('last_page' in session.keys()):
@@ -153,12 +153,16 @@ async def pullSubCount(broadcaster_id,user_access_token):
     b = True;
     cursor = '';
     cnt = 0;
+    data = [];
+    
     while b: 
         html = await util.fetchUser(clientsession,HELIX+'subscriptions?broadcaster_id='+broadcaster_id+cursor,{'client-id':util.TwitchAPI,
                                                                                 'Accept':'application/vnd.twitchtv.v5+json',
                                                                                 'Authorization':'Bearer '+user_access_token});
         log.info(html)
         myjson = json.loads(html);
+        for d in myjson['data']:
+            data.append(d)
         cnt = cnt+ len(myjson['data']);
         if 'cursor' in myjson['pagination']:
             cursor = '&after='+myjson['pagination']['cursor'];
@@ -166,6 +170,17 @@ async def pullSubCount(broadcaster_id,user_access_token):
             b = False;
         b = b and (len(myjson['data']) > 0);
     log.info('fetched subs for '+broadcaster_id+', they have '+str(cnt)+' subs');
+    try:
+        util.DBcursor.execute('delete from twitch_sub where broadcaster_id = ?',(broadcaster_id,));
+        for d in data:
+            util.DBcursor.execute('''insert into twitch_sub(broadcaster_id,broadcaster_name,gifter_id,gifter_name,is_gift,plan_name,tier,user_id,user_name)
+                                    values(?,?,?,?,?,?,?,?,?)''',(d['broadcaster_id'],d['broadcaster_name'],d['gifter_id'],d['gifter_name'],d['is_gift'],d['plan_name'],d['tier'],d['user_id'],d['user_name']));
+    except:
+        print('sub except')
+        pass;
+    util.DBcursor.execute('update twitch_person set subs = ? where id = ?',(cnt,broadcaster_id));
+    util.DB.commit();
+    
     return cnt;
     
 
@@ -232,8 +247,6 @@ async def subs(request):
                 
                 #fetch current sub count
                 cnt = await pullSubCount(user_id,userAuth);
-                util.DBcursor.execute('update twitch_person set subs = ? where id = ?',(cnt,user_id));
-                util.DB.commit();
 
             except util.AuthFailed as aex:
                 return authUserPage(user_id);
@@ -269,12 +282,18 @@ async def handle_data_sub(request,data):
     plusminus = {};
     for d in myjson:
         broadcaster = d['event_data']['broadcaster_id'];
+        sub_user = d['event_data']['user_id'];
         if not broadcaster in plusminus:
             plusminus[broadcaster] = 0;
         if d['event_type'] == 'subscriptions.subscribe':
+            f = d['event_data'];
             plusminus[broadcaster] = plusminus[broadcaster] + 1;
+            util.DBcursor.execute('''insert into twitch_sub(broadcaster_id,broadcaster_name,gifter_id,gifter_name,is_gift,plan_name,tier,user_id,user_name)
+                                    values(?,?,?,?,?,?,?,?,?)''',(f['broadcaster_id'],f['broadcaster_name'],f['gifter_id'],f['gifter_name'],f['is_gift'],f['plan_name'],f['tier'],f['user_id'],f['user_name']));
+                                    
         elif d['event_type'] == 'subscriptions.unsubscribe':
             plusminus[broadcaster] = plusminus[broadcaster] - 1;
+            util.DBcursor.execute('''delete from twitch_sub where broadcaster_id = ? and user_id = ?''',(broadcaster,sub_user));
     for k,v in plusminus.values():
         if v != 0:
             util.DBcursor.execute('update twitch_person set subs = subs + ? where id = ?',(v,k));
