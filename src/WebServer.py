@@ -268,7 +268,7 @@ async def handle_data_sub(request,data):
     user_name = request.rel_url.query['user_name'].lower();
     plusminus = {};
     for d in myjson:
-        broadcaster = d['eventdata']['broadcaster_id'];
+        broadcaster = d['event_data']['broadcaster_id'];
         if not broadcaster in plusminus:
             plusminus[broadcaster] = 0;
         if d['event_type'] == 'subscriptions.subscribe':
