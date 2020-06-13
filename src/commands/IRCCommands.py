@@ -27,17 +27,18 @@ class IRCCommand(commands.Cog):
 			return;
 		if not name or name == '':
 			return await sayWords(context,'need arguments');
-		
 		name = name.lower();
+		try:
+			await ircStart.ircBot.join_channels((name,));
+			
+			mydate = time.strftime('%Y-%m-%d %H:%M:%S');
+			util.DBcursor.execute('''insert into irc_channel(channel,joined) 
+										select ?,? from dual where not exists (select * from irc_channel where channel = ? and left is null)
+										''',(name,mydate,name));
 		
-		await ircStart.ircBot.join_channels((name,));
-		
-		mydate = time.strftime('%Y-%m-%d %H:%M:%S');
-		util.DBcursor.execute('''insert into irc_channel(channel,joined) 
-									select ?,? from dual where not exists (select * from irc_channel where channel = ? and left is null)
-									''',(name,mydate,name));
-	
-		return await sayWords(context,'ok');
+			return await sayWords(context,'ok');
+		except:
+			return await sayWords(context,'failed');
 		
 	@irc.command(name='part')
 	async def part(self, context, name : str = None):
@@ -46,20 +47,20 @@ class IRCCommand(commands.Cog):
 			return;
 		if not name or name == '':
 			return await sayWords(context,'need arguments');
-		
 		name = name.lower();
-		
-		await ircStart.ircBot.part_channels((name,));
-		
-		mydate = time.strftime('%Y-%m-%d %H:%M:%S');
-		util.DBcursor.execute('''update irc_channel 
-									set left = ?
-									where left is null
-									and channel = ?
-									''',(mydate,name));
-									
-		return await sayWords(context,'ok');
-	
+		try:
+			await ircStart.ircBot.part_channels((name,));
+			
+			mydate = time.strftime('%Y-%m-%d %H:%M:%S');
+			util.DBcursor.execute('''update irc_channel 
+										set left = ?
+										where left is null
+										and channel = ?
+										''',(mydate,name));
+										
+			return await sayWords(context,'ok');
+		except:
+			return await sayWords(context,'failed');
 
 
 
