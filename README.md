@@ -37,7 +37,25 @@ change twitchio.websocket.py:
 	 edit the if clause:
 	 	if self._pending_joins and channel in self._pending_joins.keys():
  
- 
+
+---------------------
+accounts and such: 
+	TWITCH API KEY
+	TWITCH API SECRET
+		https://dev.twitch.tv/console/apps
+	YOUR TWITCH BOT NAME
+		normal twitch account
+	YOUR TWITCH BOT OAUTH TOKEN
+		https://twitchapps.com/tmi/
+ 	YOUTUBE API KEY
+ 		https://console.developers.google.com/?pli=1
+ 	YOUR DISCORD API KEY
+ 		https://discord.com/developers
+ 	YOUR EMAIL ADDRESS
+ 		example@gmail.com
+ 	YOUR EMAIL APPPLICATION PASSWORD
+ 		https://myaccount.google.com/apppasswords
+ 			
 ---------------------
 mv cfg/empty.db cfg/bot.db
 
