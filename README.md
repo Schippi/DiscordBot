@@ -2,9 +2,10 @@
 
 first setup:
 
-install with pip
 
-async_timeout==3.0.1
+sudo apt-get install libzbar-dev
+
+pip install zbar-py
 
 pip install yagmail
 
@@ -40,22 +41,23 @@ change twitchio.websocket.py:
 
 ---------------------
 accounts and such: 
-	TWITCH API KEY
-	TWITCH API SECRET
-		https://dev.twitch.tv/console/apps
-	YOUR TWITCH BOT NAME
-		normal twitch account
-	YOUR TWITCH BOT OAUTH TOKEN
-		https://twitchapps.com/tmi/
- 	YOUTUBE API KEY
- 		https://console.developers.google.com/?pli=1
- 	YOUR DISCORD API KEY
- 		https://discord.com/developers
- 	YOUR EMAIL ADDRESS
- 		example@gmail.com
- 	YOUR EMAIL APPPLICATION PASSWORD
- 		https://myaccount.google.com/apppasswords
- 			
+<ul>
+	<li>TWITCH API KEY</li>
+	<li>TWITCH API SECRET</li>
+		<ul><li>https://dev.twitch.tv/console/apps</li></ul>
+	<li>YOUR TWITCH BOT NAME</li>
+		<ul><li>normal twitch account</li></ul>
+	<li>YOUR TWITCH BOT OAUTH TOKEN</li>
+		<ul><li>https://twitchapps.com/tmi/</li></ul>
+ 	<li>YOUTUBE API KEY</li>
+ 		<ul><li>https://console.developers.google.com/?pli=1</li></ul>
+ 	<li>YOUR DISCORD API KEY</li>
+ 		<ul><li>https://discord.com/developers</li></ul>
+ 	<li>YOUR EMAIL ADDRESS</li>
+ 		<ul><li>example@gmail.com</li></ul>
+ 	<li>YOUR EMAIL APPPLICATION PASSWORD</li>
+ 		<ul><li>https://myaccount.google.com/apppasswords</li></ul>
+ </ul>		
 ---------------------
 mv cfg/empty.db cfg/bot.db
 
