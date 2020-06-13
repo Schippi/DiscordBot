@@ -22,6 +22,7 @@ from commands.TwitchCommands import TwitchCommand;
 from commands.TimerCommands import TimerCommand;
 from commands.AdminCommands import AdminCommand;
 from commands.YoutubeCommands import YoutubeCommand;
+from commands.IRCCommands import IRCCommand;
 from commands.JackCommands import TTSJack;
 from RunnerGame import playgame;
 import traceback;
@@ -142,6 +143,12 @@ util.DBcursor.execute('''CREATE TABLE IF NOT EXISTS  `twitch_sub` (
 
 util.DBcursor.execute('''CREATE TABLE IF NOT EXISTS  `dual` (
 		`DUMMY`	TEXT
+	);''');
+	
+util.DBcursor.execute('''CREATE TABLE IF NOT EXISTS  `irc_channel` (
+		`channel`	TEXT,
+		`joined`	TEXT,
+		`left`	TEXT
 	);''');
 	
 util.DBcursor.execute('''insert into dual(dummy)
@@ -760,7 +767,7 @@ client.add_cog(YoutubeCommand(client));
 #client.add_cog(TimerCommand(client));
 client.add_cog(AdminCommand(client));
 client.add_cog(TTSJack(client));
-
+client.add_cog(IRCCommand(client));
 import ircStart;
 
 ircTask = client.loop.create_task(ircStart.main().start());

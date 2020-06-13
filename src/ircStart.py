@@ -42,8 +42,8 @@ def main():
 		irc_token=TwitchIRCAUTH,
 		api_token=TwitchAPI,
 		nick=TwitchIRCNICK,
-		prefix=myprefix,
-		initial_channels=['nilesy','ravs_','theschippi','hybridpanda']
+		prefix=myprefix
+		#,initial_channels=['nilesy','ravs_','theschippi','hybridpanda']
 	);
 	ircBot.msgcnt = 0;
 	ircBot.offset = 0;
@@ -53,7 +53,10 @@ def main():
 
 	@ircBot.event
 	async def event_ready():
-		print('Ready | {}'.format('schippirc'));
+		print('Ready | {}'.format(TwitchIRCNICK));
+		for row in util.DBcursor.execute('''select * from irc_channel where left is null'''):
+			await ircBot.join_channels((row['channel'],));
+			print('joined irc: '+row['channel']);
 		print(ircBot.prefixes);
 		
 
