@@ -28,6 +28,7 @@ class IRCCommand(commands.Cog):
 		if not name or name == '':
 			return await sayWords(context,'need arguments');
 		
+		name = name.lower();
 		
 		await ircStart.ircBot.join_channels((name,));
 		
@@ -45,6 +46,8 @@ class IRCCommand(commands.Cog):
 			return;
 		if not name or name == '':
 			return await sayWords(context,'need arguments');
+		
+		name = name.lower();
 		
 		await ircStart.ircBot.part_channels((name,));
 		
