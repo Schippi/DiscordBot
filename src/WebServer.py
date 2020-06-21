@@ -93,6 +93,21 @@ async def urlredirector(request):
         raise web.HTTPFound(location=row['long']);
     raise web.HTTPNotFound();
 
+@routes.get('/beatsaber/{shorthand}')
+async def beatsaber(request):
+    shorthand = request.match_info['shorthand'];
+    async with aiohttp.ClientSession() as session:
+        async with session.get("https://beatsaver.com/api/download/key/"+shorthand,headers={"user-agent":"curl/7.68.0"                                                                                            
+                                                                                            }) as resp:
+            if resp.status == 200:
+                print(resp)
+                result = await resp.read();
+                return web.Response(body=result,content_type='application/zip',headers={'Content-Disposition': 'attachment; filename="'+shorthand+'.zip"'});
+            else:
+                return web.Response(text=(str(resp.status)+'\n'+str(resp)));
+    
+    raise web.HTTPNotFound();
+
 @routes.get('/nilesy/paintings')
 async def paintings(request):
     raise web.HTTPFound(location='https://imgur.com/a/BZTW5gr');
