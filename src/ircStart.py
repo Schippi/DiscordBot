@@ -53,7 +53,7 @@ def main():
 
 	@ircBot.event
 	async def event_ready():
-		print('Ready | {}'.format(TwitchIRCNICK));
+		print('IRC Ready | {}'.format(TwitchIRCNICK));
 		for row in util.DBcursor.execute('''select * from irc_channel where left is null'''):
 			await ircBot.join_channels((row['channel'],));
 			print('joined irc: '+row['channel']);
@@ -66,7 +66,6 @@ def main():
 		if(ircBot.nick == message.author.name):
 			return;
 		try:
-			print(message.content)
 			st = time.strftime('%Y-%m-%d %H:%M:%S');
 			#print(message.content);
 			mlist = [st,message.channel.name,message.author.name,message.content];
@@ -89,18 +88,7 @@ def main():
 			traceback.print_exc();
 			
 		channel = message.channel;
-		
-		if(channel.name.lower() in ('nilesy')):
-			if not lastmsgtime:
-				lastmsgtime = datetime.now();
-			else:
-				currenttime = datetime.now();
-				#if(lastmsgtime + timedelta(hours=4) < currenttime):
-				#	await channel.send('.followers 10m');
-				lastmsgtime = datetime.now();
-		
-		
-		
+				
 		if( channel.name in polls):
 			mypoll = polls[channel.name];
 			if(time.time() < mypoll['time']):
