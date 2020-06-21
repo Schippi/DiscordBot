@@ -59,6 +59,7 @@ accounts and such:
  		<ul><li>https://myaccount.google.com/apppasswords</li></ul>
  </ul>		
 ---------------------
+
 mv cfg/empty.db cfg/bot.db
 
 echo "YOUR TWITCH API KEY" > tokens/twitch.token
