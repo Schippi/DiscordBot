@@ -313,13 +313,18 @@ async def handle_data_sub(request,data):
             plusminus[broadcaster] = plusminus[broadcaster] + 1;
             util.DBcursor.execute('''insert into twitch_sub(broadcaster_id,broadcaster_name,gifter_id,gifter_name,is_gift,plan_name,tier,user_id,user_name)
                                     values(?,?,?,?,?,?,?,?,?)''',(f['broadcaster_id'],f['broadcaster_name'],f['gifter_id'],f['gifter_name'],f['is_gift'],f['plan_name'],f['tier'],f['user_id'],f['user_name']));
+            print("inserted sub")
                                     
         elif d['event_type'] == 'subscriptions.unsubscribe':
             plusminus[broadcaster] = plusminus[broadcaster] - 1;
             util.DBcursor.execute('''delete from twitch_sub where broadcaster_id = ? and user_id = ?''',(broadcaster,sub_user));
+            print("deleted sub")
     for k,v in plusminus.items():
-        if v != 0:
+        if v > 0:
             util.DBcursor.execute('update twitch_person set subs = subs + ? where id = ?',(v,k));
+        elif v < 0:
+            v = -v;
+            util.DBcursor.execute('update twitch_person set subs = subs - ? where id = ?',(v,k));
     util.DB.commit();
         
 @routes.get('/subcounter/{name}')
