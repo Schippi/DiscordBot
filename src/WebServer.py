@@ -35,13 +35,16 @@ routes.static('/blubb', "./ressources", show_index=True);
 web_srv_session = aiohttp.ClientSession(); 
 
 bot_client = None;
+httpsapp = None;
 
 clientsession = aiohttp.ClientSession(); 
 
 def setup(my_client):
     global bot_client;
+    global httpsapp;
     bot_client = my_client;
     app = web.Application();
+    httpsapp = app;
     fernet_key = fernet.Fernet.generate_key()
     secret_key = base64.urlsafe_b64decode(fernet_key)
     storage = EncryptedCookieStorage(secret_key);
@@ -67,10 +70,15 @@ def setup(my_client):
 async def handle_http(request):
     u = str(request.url)
     if(u.startswith('http:')):
-        log.info('redirecting')
-        raise web.HTTPFound(location=('https:'+u[5:]));
+        global httpsapp;
+        x = await httpsapp.router.resolve(request); 
+        if not isinstance(x,aiohttp.web_urldispatcher.MatchInfoError):
+            log.info('redirecting')
+            raise web.HTTPFound(location=('https:'+u[5:]));
+        else:
+            raise web.HTTPNotFound();
     else:
-        raise web.HTTPBadGateway();
+        raise web.HTTPNotFound();
 
 def setuphttp():
     apphttp = web.Application();
