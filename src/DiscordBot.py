@@ -128,9 +128,19 @@ util.DBcursor.execute('''CREATE TABLE IF NOT EXISTS  `twitch_person` (
 		`last_check`	TEXT,
 		`last_check_status`	TEXT
 	);''');
+
+try:
+	print(1)
+	util.DBcursor.execute("select sql from sqlite_master where type='table' and name='twitch_sub'")
+	schema = util.DBcursor.fetchone();
+	if ("unique" in schema['sql'].lower()):
+		util.DBcursor.execute('''DROP TABLE `twitch_sub`''');
+except Exception as e:
+	traceback.print_exc(file=sys.stdout)
+	pass;
 	
 util.DBcursor.execute('''CREATE TABLE IF NOT EXISTS  `twitch_sub` (
-		`broadcaster_id`	TEXT UNIQUE,
+		`broadcaster_id`	TEXT,
 		`broadcaster_name`	TEXT,
 		`gifter_id`	TEXT,
 		`gifter_name`	TEXT,

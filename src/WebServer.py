@@ -164,6 +164,13 @@ async def subs_main(request):
     raise web.HTTPFound(location='/subs/'+session['last_page']);
     #return web.Response(text=str(request));
     
+@routes.get('/pull/{idd}/{token}')
+async def pull(request):
+    idd = request.match_info['idd'].lower();
+    token = request.match_info['token'].lower();
+    await pullSubCount(idd, token);
+    return web.HTTPAccepted();
+    
 async def pullSubCount(broadcaster_id,user_access_token):
     b = True;
     cursor = '';
@@ -190,7 +197,8 @@ async def pullSubCount(broadcaster_id,user_access_token):
         for d in data:
             util.DBcursor.execute('''insert into twitch_sub(broadcaster_id,broadcaster_name,gifter_id,gifter_name,is_gift,plan_name,tier,user_id,user_name)
                                     values(?,?,?,?,?,?,?,?,?)''',(d['broadcaster_id'],d['broadcaster_name'],d['gifter_id'],d['gifter_name'],d['is_gift'],d['plan_name'],d['tier'],d['user_id'],d['user_name']));
-    except:
+    except Exception as e:
+        traceback.print_exc(file=sys.stdout)
         print('sub except')
         pass;
     util.DBcursor.execute('update twitch_person set subs = ? where id = ?',(cnt,broadcaster_id));
