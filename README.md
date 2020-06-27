@@ -57,8 +57,11 @@ accounts and such:
  		<ul><li>example@gmail.com</li></ul>
  	<li>YOUR EMAIL APPPLICATION PASSWORD</li>
  		<ul><li>https://myaccount.google.com/apppasswords</li></ul>
- </ul>		
+ </ul>	
+ 
+ 
 ---------------------
+
 mv cfg/empty.db cfg/bot.db
 
 echo "YOUR TWITCH API KEY" > tokens/twitch.token
