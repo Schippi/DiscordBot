@@ -381,10 +381,10 @@ async def handle_data(request,data):
     with (await stuff_lock):
         if (len(myjson) == 0):
             streamonline[user_name] = False;
-            util.DBcursor.execute('update twitch_person set last_check_status = ? , last_check = ? where id = ?',('offline',util.dateToStr(datetime.datetime.now()),user_id) );
+            util.DBcursor.execute('update twitch_person set last_check_status = ? , last_check = ? where id = ?',('offline',util.dateToStr(datetime.datetime.utcnow()),user_id) );
             util.DB.commit();
         else:
-            util.DBcursor.execute('update twitch_person set last_check_status = ? , last_check = ? where id = ?',('online',util.dateToStr(datetime.datetime.now()),user_id) );
+            util.DBcursor.execute('update twitch_person set last_check_status = ? , last_check = ? where id = ?',('online',util.dateToStr(datetime.datetime.utcnow()),user_id) );
             util.DB.commit();
             gamesToFetch = set([k['game_id'] for k in myjson]);
             oauthToken = util.getControlVal('token_oauth','');

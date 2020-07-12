@@ -144,8 +144,18 @@ async def startChecking(client):
 		streamprinted = {};
 		streams = {};
 		
-		for row in util.DBcursor.execute('SELECT * FROM twitch'):
+		for row in util.DBcursor.execute('''SELECT t.username,tp.last_check,tp.last_check_status FROM twitch t 
+											left outer join twitch_person tp 
+											on t.username = lower(tp.display_name)
+										'''):
 			streamonline[row['username'].lower()] = not checkStatusOnStart;
+			if(row['last_check']):
+				da = util.toDateTime(row['last_check']) + timedelta(minutes = 15);
+				if ( da > datetime.utcnow()):
+					if row['last_check_status'] == 'online':
+						streamonline[row['username'].lower()] = True;
+					else:
+						streamonline[row['username'].lower()] = False
 		while not client.is_closed():
 			try:
 				try:
@@ -333,6 +343,20 @@ async def startChecking(client):
 							streamprinted[entr] = False;
 						for removed in (set(streamprinted.keys()) - set(streams.keys())):
 							streamprinted.pop(removed,None);
+						try: 
+							alls = ','.join('\'{!s}\''.format(k) for k in streamonline.keys() if streamonline[k])
+							util.DBcursor.execute('''update twitch_person 
+													 set last_check = ?,
+													 	last_check_status = ?
+													 	where lower(display_name) in ''' + '('+alls+')',(util.dateToStr(datetime.utcnow()),'online'));
+							util.DBcursor.execute('''update twitch_person 
+													 set last_check = ?,
+													 	last_check_status = ?
+													 	where lower(display_name) not in ''' + '('+alls+')',(util.dateToStr(datetime.utcnow()),'offline'));
+							util.DB.commit();
+						except Exception as e:
+							traceback.print_exc(file=sys.stdout);
+							logEx(e);
 					else:
 						onlin = 0;
 						
