@@ -293,13 +293,13 @@ async def startChecking(client):
 									sTitle = streamjson['title'];
 									sLogo = streamjson['thumbnail_url'].replace('{width}','300').replace('{height}','300');
 									
-									if((streamername in ['nilesy','hybridpanda', 'ravs_'] ) and cnt%2 == 0):
-										try:
-											viewcount = int(streamjson['viewer_count']);
-											mydate = time.strftime('%Y-%m-%d %H:%M:%S');
-											util.DBcursor.execute('insert into twitchstats(channel,date,viewcount,game) values(?,?,?,?)',(streamername,mydate,viewcount,sGame));
-										except Exception as e:
-											print(e);
+									#if((streamername in ['nilesy','hybridpanda', 'ravs_'] ) and cnt%2 == 0):
+									try:
+										viewcount = int(streamjson['viewer_count']);
+										mydate = time.strftime('%Y-%m-%d %H:%M:%S');
+										util.DBcursor.execute('insert into twitchstats(channel,date,viewcount,game) values(?,?,?,?)',(streamername,mydate,viewcount,sGame));
+									except Exception as e:
+										print(e);
 									
 									llist.append(streamername);
 									if not streamonline[streamername]:
