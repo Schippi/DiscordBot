@@ -22,6 +22,7 @@ from commands.TwitchCommands import TwitchCommand;
 from commands.TimerCommands import TimerCommand;
 from commands.AdminCommands import AdminCommand;
 from commands.YoutubeCommands import YoutubeCommand;
+from commands.GraphCommands import GraphCommand;
 from commands.IRCCommands import IRCCommand;
 from commands.JackCommands import TTSJack;
 from RunnerGame import playgame;
@@ -774,6 +775,7 @@ checkingTask = client.loop.create_task(startChecking(client));
 
 client.add_cog(TwitchCommand(client));
 client.add_cog(YoutubeCommand(client));
+client.add_cog(GraphCommand(client));
 #client.add_cog(TimerCommand(client));
 client.add_cog(AdminCommand(client));
 client.add_cog(TTSJack(client));

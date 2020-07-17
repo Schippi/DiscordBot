@@ -189,7 +189,7 @@ def logEx(ex):
 	
 client = '';
 from GuildSettings import getSetting;	
-async def sayWords(context = None,message = None,sett = None, chan = None):
+async def sayWords(context = None,message = None,sett = None, chan = None,file=None):
 	#message.encode('utf-8')
 	for m in message.split('\n'):
 		print(m);
@@ -200,13 +200,13 @@ async def sayWords(context = None,message = None,sett = None, chan = None):
 		chan = context.message.channel;
 	if not sett:
 		if context.message:
-			return await context.author.send(message);
+			return await context.author.send(message,file=file);
 	else:
 		if (sett.logLevel == 'mute'):
 			return None;
 		if (sett.logLevel == 'whisper' and context.message):
-			return await context.author.send(message);
-		return await chan.send(message);
+			return await context.author.send(message,file=file);
+		return await chan.send(message,file=file);
 
 async def askYesNoReaction(context, question):
 	msg = await sayWords(context, question);
