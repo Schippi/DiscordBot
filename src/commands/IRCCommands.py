@@ -16,7 +16,7 @@ class IRCCommand(commands.Cog):
 
 	@commands.group()
 	async def irc(self, ctx):
-		"""Youtube Control"""
+		"""IRC Control"""
 		if ctx.invoked_subcommand is None and isAllowed(ctx):
 			await util.sayWords(ctx,'irc commands are join & part')
 			
@@ -35,7 +35,7 @@ class IRCCommand(commands.Cog):
 			util.DBcursor.execute('''insert into irc_channel(channel,joined) 
 										select ?,? from dual where not exists (select * from irc_channel where channel = ? and left is null)
 										''',(name,mydate,name));
-		
+			util.DB.commit();
 			return await sayWords(context,'ok');
 		except:
 			return await sayWords(context,'failed');
@@ -57,11 +57,20 @@ class IRCCommand(commands.Cog):
 										where left is null
 										and channel = ?
 										''',(mydate,name));
-										
+			util.DB.commit();							
 			return await sayWords(context,'ok');
 		except:
 			return await sayWords(context,'failed');
-
+		
+	@irc.command(name='limmy')
+	async def limmy(self, context):
+		"""toggle limmy alert"""
+		if(not isAdmin(context)):
+			return;
+		print(ircStart.ircBot.enableLimmy);
+		ircStart.ircBot.enableLimmy = not ircStart.ircBot.enableLimmy;
+		util.setControlVal("Limmy",str(ircStart.ircBot.enableLimmy));
+		return await sayWords(context,'Limmy-Cake control now '+str(ircStart.ircBot.enableLimmy));
 
 
 

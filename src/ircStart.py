@@ -18,6 +18,7 @@ myprefix = '#'
 lastmsgtime = None;
 raidauto = True;
 ircBot = None;
+initialized = False;
 
 
 class MyBot(commands.Bot):
@@ -28,7 +29,7 @@ class MyBot(commands.Bot):
 		else:
 			traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
-def main():
+def main(client,testing):
 	DBLOG = util.cfgPath+'/irc.db';
 	DBLOGJournal = util.cfgPath+'/irc.db-journal';
 	try:
@@ -45,6 +46,7 @@ def main():
 		prefix=myprefix
 		#,initial_channels=['nilesy','ravs_','theschippi','hybridpanda']
 	);
+	ircBot.enableLimmy = (util.getControlVal("Limmy", "True") == "True");
 	ircBot.msgcnt = 0;
 	ircBot.offset = 0;
 
@@ -59,7 +61,15 @@ def main():
 			print('joined irc: '+row['channel']);
 		print(ircBot.prefixes);
 		
-
+		client.loop.create_task(waitForInit(testing));
+		
+		
+	async def waitForInit(testing):
+		await asyncio.sleep(5)
+		global initialized;
+		initialized = True;
+		print("irc waiting over")
+			
 	@ircBot.event
 	async def event_message( message):
 		#print(message.content);
@@ -132,12 +142,30 @@ def main():
 					#await asyncio.sleep(2);
 					#await channel.send("@nilesy i'd turn on followers-only mode on again but im not a mod");
 		pass;
-
+	
+	@ircBot.event
+	async def event_join(user = None):
+		global initialized;
+		if initialized:
+			if(user.channel.name.lower() == 'katercakes' and user.name.lower() == 'limmy'):
+				print('joined cakes '+user.name);
+				if(ircBot.enableLimmy and not testing):
+					user.channel.send('Hey '+user.name)
+	
+	@ircBot.event
+	async def event_part(user = None):
+		global initialized;
+		if initialized:
+			if(user.channel.name.lower() == 'katercakes' and user.name.lower() == 'limmy'):
+				print('parted cakes '+user.name);
+				if(ircBot.enableLimmy and not testing):
+					user.channel.send('Bye '+user.name)
+		
 	@ircBot.event	
 	async def event_raw_data(data):
 		try:
 			st = time.strftime('%Y-%m-%d %H:%M:%S: ');
-			fil = open('traffic.log','a')
+			fil = open('traffic.log','a', encoding="utf-8")
 			fil.write((st+data.strip()+'\n'))
 			fil.close();
 		except Exception:

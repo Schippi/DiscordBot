@@ -1,4 +1,4 @@
-CSARversion = '0.4.0'
+CSARversion = '0.4.0' 
 
 import GuildSettings;
 import sys;
@@ -782,7 +782,7 @@ client.add_cog(TTSJack(client));
 client.add_cog(IRCCommand(client));
 import ircStart;
 
-ircTask = client.loop.create_task(ircStart.main().start());
+ircTask = client.loop.create_task(ircStart.main(client,testing).start());
 
 from WebServer import setup,setuphttp;
 client.loop.run_until_complete(setup(client).start())
