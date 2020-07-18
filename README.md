@@ -32,6 +32,8 @@ pip install aiohttp_session
 pip install cryptography
 
 pip install twitchio
+
+pip install matplotlib
  
 change twitchio.websocket.py:
 	in join action:
