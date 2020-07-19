@@ -233,16 +233,25 @@ async def fetch(session, url, headers,secondTime=False):
 			try:
 				if (response.status == 401):
 					print(await response.text())
+					print(response.headers)
 					print(url)
 					print(headers)
-					if (('twitch' in url) and ('WWW-Authenticate' in response.headers.keys())):
+					if ('twitch' in url):
 						if secondTime:
 							raise AuthFailed;
 						else:
 							headers['Authorization'] = 'Bearer '+(await AuthMe(session));
 							return await fetch(session,url,headers,True);
 				else:
-					return await response.text()
+					txt = await response.text();
+					#if ('twitch' in url):
+					#	js = json.loads(txt);
+					#	if ("error" in js.keys()):
+					#		if("status" in js.keys()):
+					#			if(js["status"] == 401):
+					#				headers['Authorization'] = 'Bearer '+(await AuthMe(session));
+					#				return await fetch(session,url,headers,True);
+					return txt;
 			except asyncio.TimeoutError:
 				return '';
 			
