@@ -75,7 +75,7 @@ class GraphCommand(commands.Cog):
 		plt.ylim(top=1000);
 		#for overrow in util.DB.cursor().execute('SELECT distinct game FROM twitchstats where channel = ?',(message,)):
 			#gamez.append(overrow['game']);
-		
+		ymax = 0;
 		try:
 			for game in gamez:
 				x[game] = [];
@@ -97,10 +97,13 @@ class GraphCommand(commands.Cog):
 					x[game].append(rowdate);
 					cnt = cnt+1;
 					#x[game].append(cnt);
+					ymax = max(int(row['viewcount']),ymax);
 					y[game].append(int(row['viewcount']));
 					#start = start + timedelta(minutes = 1);
 		except Exception as e:
 			print(e);
+		ymax = ymax +10;
+		plt.ylim(top=ymax);
 		if progress > 0:
 			cnt = 1;	
 			for k in x.keys():
