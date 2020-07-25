@@ -91,6 +91,8 @@ class GraphCommand(commands.Cog):
 					#	print(progress)
 					if rowdate < start:
 						continue;
+					if int(row['id']) < 75500:
+						print(rowdate)
 					progress = progress + 1;
 					rowdate = rowdate.replace(year=2020, month=1,day=1)
 					#while (cnt > 1) and (start < rowdate):
