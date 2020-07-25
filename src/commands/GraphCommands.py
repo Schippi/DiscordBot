@@ -46,14 +46,19 @@ class GraphCommand(commands.Cog):
 		argsx = context.message.content.split(' ', 4);
 		gamez = [];
 		print(argsx)
-		offset = 0;
+		offsetStart = 0;
+		offsetEnd = 0;
 		try:
-			offset = float(argsx[3]);
+			time = argsx[3].split('-');
+			if len(time) > 1:
+				offsetEnd = float(time[1]);
+			offsetStart = float(time[0]);
 		except:
 			if(len(argsx) > 3):
 				return await sayWords(context,'argument error: !graph do <channel> <days to look back> <game>');
 		
-		start = today - timedelta(days=offset);
+		start = today - timedelta(days=offsetStart);
+		enddate = today - timedelta(days=offsetEnd);
 		
 		#if(len(argsx) == 3):
 		#	return await sayWords(context,'argument error: !graph do <channel> <days to look back> <game>');
@@ -68,7 +73,7 @@ class GraphCommand(commands.Cog):
 		progress= 0;
 		y = {};
 		print(gamez)
-		print(offset)
+		print(offsetStart)
 		print(start)
 		fig_size = plt.gcf().get_size_inches() #Get current size
 		sizefactor = 4 #Set a zoom factor
@@ -91,7 +96,7 @@ class GraphCommand(commands.Cog):
 					
 					#if(progress % 1000 == 0):
 					#	print(progress)
-					if rowdate < start:
+					if rowdate < start or rowdate > enddate:
 						continue;
 					progress = progress + 1;
 					rowdate = rowdate.replace(year=2020, month=1,day=1)
