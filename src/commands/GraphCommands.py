@@ -55,8 +55,9 @@ class GraphCommand(commands.Cog):
 		
 		start = today - timedelta(days=offset);
 		
-		if(len(argsx) == 3):
-			return await sayWords(context,'argument error: !graph do <channel> <days to look back> <game>');
+		#if(len(argsx) == 3):
+		#	return await sayWords(context,'argument error: !graph do <channel> <days to look back> <game>');
+		
 		if(len(argsx) > 4):
 			gamez.append(argsx[4]);
 		else:
