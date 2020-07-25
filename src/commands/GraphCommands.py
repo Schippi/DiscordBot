@@ -75,6 +75,7 @@ class GraphCommand(commands.Cog):
 		plt.gcf().set_size_inches(sizefactor * fig_size);
 		plt.ylim(top=1000);
 		ax = plt.gca();
+		ax.set(xlabel="time in UTC")
 		formatter = DateFormatter("%H:%M")
 		ax.xaxis.set_major_formatter(formatter)
 		#for overrow in util.DB.cursor().execute('SELECT distinct game FROM twitchstats where channel = ?',(message,)):
@@ -91,8 +92,6 @@ class GraphCommand(commands.Cog):
 					#	print(progress)
 					if rowdate < start:
 						continue;
-					if int(row['id']) < 75500:
-						print(rowdate)
 					progress = progress + 1;
 					rowdate = rowdate.replace(year=2020, month=1,day=1)
 					#while (cnt > 1) and (start < rowdate):
