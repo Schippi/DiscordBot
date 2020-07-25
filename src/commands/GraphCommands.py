@@ -48,7 +48,7 @@ class GraphCommand(commands.Cog):
 		print(argsx)
 		offset = 0;
 		try:
-			offset = int(argsx[3]);
+			offset = float(argsx[3]);
 		except:
 			if(len(argsx) > 3):
 				return await sayWords(context,'argument error: !graph do <channel> <days to look back> <game>');
