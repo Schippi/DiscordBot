@@ -75,7 +75,7 @@ class GraphCommand(commands.Cog):
 		plt.gcf().set_size_inches(sizefactor * fig_size);
 		plt.ylim(top=1000);
 		ax = plt.gca();
-		ax.set(xlabel="time in UTC")
+		ax.set(xlabel="time in UTC",ylabel="viewers")
 		formatter = DateFormatter("%H:%M")
 		ax.xaxis.set_major_formatter(formatter)
 		#for overrow in util.DB.cursor().execute('SELECT distinct game FROM twitchstats where channel = ?',(message,)):
