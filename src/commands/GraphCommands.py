@@ -13,6 +13,7 @@ from matplotlib import pyplot as plt
 from datetime import datetime;
 from datetime import timedelta;
 from datetime import timezone;
+from matplotlib.dates import DateFormatter;
 import os;
 
 class GraphCommand(commands.Cog):
@@ -73,6 +74,9 @@ class GraphCommand(commands.Cog):
 		# Modify the current size by the factor
 		plt.gcf().set_size_inches(sizefactor * fig_size);
 		plt.ylim(top=1000);
+		ax = plt.gca();
+		formatter = DateFormatter("%H:%M")
+		ax.xaxis.set_major_formatter(formatter)
 		#for overrow in util.DB.cursor().execute('SELECT distinct game FROM twitchstats where channel = ?',(message,)):
 			#gamez.append(overrow['game']);
 		ymax = 0;
