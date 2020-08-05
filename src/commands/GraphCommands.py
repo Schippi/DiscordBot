@@ -69,6 +69,8 @@ class GraphCommand(commands.Cog):
 			#2020-08-05 14:33:56
 			startstr = start.strftime("%y-%m-%d")
 			endstr = (enddate + timedelta(days=1)).strftime("%y-%m-%d")
+			print(startstr)
+			print(endstr)
 			for overrow in util.DB.cursor().execute('select game,c from (SELECT game, count(*) as c FROM twitchstats where channel = ? and date between ? and ? group by game) order by c desc limit 5',(message,startstr,endstr)):
 				gamez.append(overrow['game']);
 				print(overrow['game']+': '+str(overrow['c']))	
