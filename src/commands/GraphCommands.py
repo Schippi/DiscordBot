@@ -66,7 +66,10 @@ class GraphCommand(commands.Cog):
 		if(len(argsx) > 4):
 			gamez.append(argsx[4]);
 		else:
-			for overrow in util.DB.cursor().execute('select game,c from (SELECT game, count(*) as c FROM twitchstats where channel = ? group by game) order by c desc limit 3',(message,)):
+			#2020-08-05 14:33:56
+			startstr = start.strftime("%y-%m-%d")
+			endstr = (enddate - timedelta(days=1)).strftime("%y-%m-%d")
+			for overrow in util.DB.cursor().execute('select game,c from (SELECT game, count(*) as c FROM twitchstats where channel = ? and date between ? and ? group by game) order by c desc limit 5',(message,startstr,endstr)):
 				gamez.append(overrow['game']);
 				print(overrow['game']+': '+str(overrow['c']))	
 		x = {};
@@ -75,6 +78,7 @@ class GraphCommand(commands.Cog):
 		print(gamez)
 		print(offsetStart)
 		print(start)
+		print(enddate)
 		fig_size = plt.gcf().get_size_inches() #Get current size
 		sizefactor = 4 #Set a zoom factor
 		# Modify the current size by the factor
