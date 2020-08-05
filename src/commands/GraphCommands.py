@@ -137,6 +137,9 @@ class GraphCommand(commands.Cog):
 				pass;
 			return;
 		else:
+			plt.close()
+			plt.clf()
+			plt.cla()
 			return await sayWords(context,'no data in designated time');
 
 
