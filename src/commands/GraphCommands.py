@@ -127,7 +127,7 @@ class GraphCommand(commands.Cog):
 				mc = 'C'+str(cnt);
 				cnt = cnt + 1;
 				if(len(x[k]) > 0):
-					plt.scatter(x[k], y[k], c=mc,label = k);
+					plt.scatter(x[k], y[k], c=mc,label = k, s = 1, marker=',');
 			plt.legend();
 			#plt.axis([0, 6, 0, 20]);
 			fname = util.cfgPath+'/graph_'+str(context.message.id)+'.png';
