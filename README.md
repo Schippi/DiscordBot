@@ -84,6 +84,7 @@ echo "YOUR EMAIL APPPLICATION PASSWORD" >> tokens/mail.token
 
 
 https://certbot.eff.org/
+sudo certbot renew
 or
 openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -keyout cfg/privkey.pem -out cfg/fullchain.pem
 
