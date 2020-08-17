@@ -158,6 +158,13 @@ async def startChecking(client):
 						streamonline[row['username'].lower()] = False
 		while not client.is_closed():
 			try:
+				html = await fetch(session,'https://bmbf.dev/stable',{});
+				print(html)
+				if '1.11' in html:
+					client.get_guild(196211645289201665).get_channel(196211645289201665).send(content = '@everyone BMBF 1.11 updated: https://bmbf.dev/stable');
+			except:
+				pass;
+			try:
 				try:
 					newpeople ={};
 					frequencyYT = int(getControlVal('frequencyYT',frequencyYT));
