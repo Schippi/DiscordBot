@@ -459,13 +459,13 @@ async def startChecking(client):
 								oldTime = toDateTime(ytUsrs[yt].lastprinted);
 								
 								if(newid != ytUsrs[yt].lastID and (oldTime == 1 or oldTime < newestTime or ytUsrs[yt].changed == True)):
+									if oldid:
+										print(oldid + '  -->  '+newid);
 									ytUsrs[yt].lastID = newid;
 									ytUsrs[yt].lastprinted = newestTimeAsString;
 									ytUsrs[yt].save();
 								sURL = 'https://www.youtube.com/watch?v='+	newid;
 								if(newid != oldid):
-									if oldid:
-										print(oldid + '  -->  '+newid);
 									for entr in ytentries[yt]:
 										try:
 											if (entr.shouldprint(newestTime)):
