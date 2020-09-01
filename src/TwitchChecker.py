@@ -248,6 +248,10 @@ async def startChecking(client):
 						print(html)
 						traceback.print_exc(file=sys.stdout);
 						logEx(ex);
+					except Exception as ex:
+						print(html)
+						traceback.print_exc(file=sys.stdout);
+						logEx(ex);
 					if 'timer' in streams.keys():	
 						for entr in streams['timer']:
 							if entr.shouldprint(entr.game):
