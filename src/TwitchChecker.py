@@ -235,6 +235,7 @@ async def startChecking(client):
 							html = await fetch(session,'https://api.twitch.tv/helix/streams?user_id='+'&user_id='.join(ids.values()),{'client-id':util.TwitchAPI,
 																															'Accept':'application/vnd.twitchtv.v5+json',
 																															'Authorization':'Bearer '+oauthToken});
+							print(html)
 							html = json.loads(html);
 							#print(html);
 							streamArray = html['data'];
