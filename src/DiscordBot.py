@@ -1,4 +1,4 @@
-CSARversion = '0.4.0' 
+CSARversion = '1.3.0' 
 
 import GuildSettings;
 import sys;
@@ -161,6 +161,14 @@ util.DBcursor.execute('''CREATE TABLE IF NOT EXISTS  `irc_channel` (
 		`joined`	TEXT,
 		`left`	TEXT
 	);''');
+
+	
+for row in util.DBcursor.execute('''select * from dual inner join irc_channel on 1 = 1 limit 1'''):
+	if('raid_auto' in row.keys()):
+		pass;
+	else:
+		util.DBcursor.execute('''alter table irc_channel add raid_auto integer''');
+		util.DBcursor.execute('''update irc_channel set raid_auto = 0''');
 	
 util.DBcursor.execute('''insert into dual(dummy)
 					select 'X' from sqlite_master 

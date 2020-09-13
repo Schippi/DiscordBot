@@ -32,9 +32,9 @@ class IRCCommand(commands.Cog):
 			await ircStart.ircBot.join_channels((name,));
 			
 			mydate = time.strftime('%Y-%m-%d %H:%M:%S');
-			util.DBcursor.execute('''insert into irc_channel(channel,joined) 
-										select ?,? from dual where not exists (select * from irc_channel where channel = ? and left is null)
-										''',(name,mydate,name));
+			util.DBcursor.execute('''insert into irc_channel(channel,joined,raid_auto) 
+										select ?,?,? from dual where not exists (select * from irc_channel where channel = ? and left is null)
+										''',(name,mydate,0,name));
 			util.DB.commit();
 			return await sayWords(context,'ok');
 		except:
@@ -59,6 +59,35 @@ class IRCCommand(commands.Cog):
 										''',(mydate,name));
 			util.DB.commit();							
 			return await sayWords(context,'ok');
+		except:
+			return await sayWords(context,'failed');
+		
+	@irc.command(name='raid')
+	async def raid(self, context, name : str = None):
+		"""turn raid on and off for channel <name>"""
+		if(not isAdmin(context)):
+			return;
+		if not name or name == '':
+			return await sayWords(context,'need arguments');
+		name = name.lower();
+		try:
+			for row in util.DBcursor.execute('''select * from irc_channel 	
+										where left is null
+										and channel = ?
+										''',(name,)):
+				a = row['raid_auto'];
+				if a and a > 0:
+					a = 'OFF';
+				else:
+					a = 'ON'
+				util.DBcursor.execute('''update irc_channel 
+											set raid_auto = 1 - raid_auto
+											where left is null
+											and channel = ?
+											''',(name,));
+				util.DB.commit();							
+				return await sayWords(context,'ok - status now '+a);
+			return await sayWords(context,'not in channel, join it first');
 		except:
 			return await sayWords(context,'failed');
 		

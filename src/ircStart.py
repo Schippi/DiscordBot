@@ -14,7 +14,7 @@ import os;
 
 starttime = {};
 polls = {};
-myprefix = '#'
+myprefix = '~'
 lastmsgtime = None;
 raidauto = True;
 ircBot = None;
@@ -55,6 +55,8 @@ def main(client,testing):
 
 	@ircBot.event
 	async def event_ready():
+		global initialized;
+		initialized = False;
 		print('IRC Ready | {}'.format(TwitchIRCNICK));
 		for row in util.DBcursor.execute('''select * from irc_channel where left is null'''):
 			await ircBot.join_channels((row['channel'],));
@@ -76,8 +78,13 @@ def main(client,testing):
 		if(ircBot.nick == message.author.name):
 			return;
 		try:
+			await ircBot.handle_commands(message);
+		except Exception:
+			print(datetime.now().strftime("%d.%m.%Y, %H:%M:%S"));
+			traceback.print_exc();
+			
+		try:
 			st = time.strftime('%Y-%m-%d %H:%M:%S');
-			#print(message.content);
 			mlist = [st,message.channel.name,message.author.name,message.content];
 			cur.execute("INSERT INTO words(date,channel,usr,msg) VALUES (?,?,?,?)",mlist);
 			ircBot.msgcnt = ircBot.msgcnt + 1;
@@ -98,6 +105,7 @@ def main(client,testing):
 			traceback.print_exc();
 			
 		channel = message.channel;
+		#print(message.content);
 				
 		if( channel.name in polls):
 			mypoll = polls[channel.name];
@@ -114,14 +122,17 @@ def main(client,testing):
 				mypoll['done'] = True;
 				if not message.content.startswith(myprefix+'poll'):
 					await channel.send('the poll has closed! For results MODS can do '+myprefix+'poll (without asking a new question)')
-		await ircBot.handle_commands(message);
 
 	@ircBot.event
 	async def event_raw_usernotice( channel, tags: dict):
 		global raidauto;
 		if tags:
+			shoulddo = False;
+			for row in util.DBcursor.execute('''select * from irc_channel where left is null and channel = ?''',(channel,)):
+				if row['raid_auto'] and row['raid_auto'] > 0:
+					shoulddo = True;
 			#print('usernotice tags'+str(tags));
-			if tags['msg-id'] == 'raid' and channel.name.lower() in ['nilesy','theschippi'] and raidauto:
+			if tags['msg-id'] == 'raid' and raidauto and shoulddo:
 				#global starttime;
 				
 				starttime[channel.name] = time.time() + 900;
@@ -176,20 +187,32 @@ def main(client,testing):
 			if ircBot.get_channel('theschippi'):
 				await ircBot.get_channel('theschippi').send('detecting host');
 	
-	@ircBot.command(name='raidauto')
+	@ircBot.command(name='raid')
 	async def raidauto_command(ctx):
 		if ctx.message.author.is_mod:
 			channel = ctx.message.channel;
-			global raidauto;
-			raidauto = not raidauto;
-			if raidauto:
-				await channel.send('i will disable followermode on raids');
-			else:
-				await channel.send('i will do nothing on raids');
+			channelname = channel.name.lower();
+			for row in util.DBcursor.execute('''select * from irc_channel 	
+										where left is null
+										and channel = ?
+										''',(channelname,)):
+				a = row['raid_auto'];
+				if a and a > 0:
+					a = 'OFF';
+				else:
+					a = 'ON'
+				util.DBcursor.execute('''update irc_channel 
+											set raid_auto = 1 - raid_auto
+											where left is null
+											and channel = ?
+											''',(channelname,));
+				util.DB.commit();							
+				return await channel.send('ok - status now '+a);
 	
 	# Commands use a different decorator
 	@ircBot.command(name='test')
 	async def test_command(ctx):
+		print('mod'+str(ircBot._ws._mod_token))
 		#print(ctx.message.author.name + str(ctx.message.tags));
 		#print(ctx.message.author.name + str(ctx.message.author.badges));
 		if ctx.message.author.is_mod:
