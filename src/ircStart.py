@@ -82,7 +82,27 @@ def main(client,testing):
 		except Exception:
 			print(datetime.now().strftime("%d.%m.%Y, %H:%M:%S"));
 			traceback.print_exc();
-			
+		
+		
+		channel = message.channel;
+		#print(message.content);
+				
+		if( channel.name in polls):
+			mypoll = polls[channel.name];
+			if(time.time() < mypoll['time']):
+				if 'VoteYea' in message.content:
+					if not message.author.name in mypoll['users']:
+						mypoll['users'].append(message.author.name);
+						mypoll['yea']= mypoll['yea']+1;
+				elif 'VoteNay' in message.content:
+					if not message.author.name in mypoll['users']:
+						mypoll['users'].append(message.author.name);
+						mypoll['nay']= mypoll['nay']+1;
+			elif not mypoll['done']:
+				mypoll['done'] = True;
+				if not message.content.startswith(myprefix+'poll'):
+					await channel.send('the poll has closed! For results MODS can do '+myprefix+'poll (without asking a new question)')
+						
 		try:
 			st = time.strftime('%Y-%m-%d %H:%M:%S');
 			mlist = [st,message.channel.name,message.author.name,message.content];
@@ -104,24 +124,7 @@ def main(client,testing):
 			print(datetime.now().strftime("%d.%m.%Y, %H:%M:%S"));
 			traceback.print_exc();
 			
-		channel = message.channel;
-		#print(message.content);
-				
-		if( channel.name in polls):
-			mypoll = polls[channel.name];
-			if(time.time() < mypoll['time']):
-				if 'VoteYea' in message.content:
-					if not message.author.name in mypoll['users']:
-						mypoll['users'].append(message.author.name);
-						mypoll['yea']= mypoll['yea']+1;
-				elif 'VoteNay' in message.content:
-					if not message.author.name in mypoll['users']:
-						mypoll['users'].append(message.author.name);
-						mypoll['nay']= mypoll['nay']+1;
-			elif not mypoll['done']:
-				mypoll['done'] = True;
-				if not message.content.startswith(myprefix+'poll'):
-					await channel.send('the poll has closed! For results MODS can do '+myprefix+'poll (without asking a new question)')
+		
 
 	@ircBot.event
 	async def event_raw_usernotice( channel, tags: dict):
