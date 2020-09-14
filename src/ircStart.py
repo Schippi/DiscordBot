@@ -131,7 +131,7 @@ def main(client,testing):
 		global raidauto;
 		if tags:
 			shoulddo = False;
-			for row in util.DBcursor.execute('''select * from irc_channel where left is null and channel = ?''',(channel,)):
+			for row in util.DBcursor.execute('''select * from irc_channel where left is null and channel = ?''',(channel.name,)):
 				if row['raid_auto'] and row['raid_auto'] > 0:
 					shoulddo = True;
 			#print('usernotice tags'+str(tags));
