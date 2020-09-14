@@ -137,26 +137,26 @@ def main(client,testing):
 				for row in util.DBcursor.execute('''select * from irc_channel where left is null and channel = ?''',(channel.name,)):
 					if row['raid_auto'] and row['raid_auto'] > 0:
 						shoulddo = True;
+				if shoulddo:	
+					#global starttime;
 					
-				#global starttime;
-				
-				starttime[channel.name] = time.time() + 900;
-				chnl= tags['msg-param-displayName'];
-				
-				#await channel.send("@nilesy i'd disable followers-only mode, but im not a mod");
-				#await asyncio.sleep(2);
-				await channel.send('.followersoff');
-				await asyncio.sleep(30);
-				if chnl:
-					await channel.send('Hello Raiders of '+chnl+'! This channel is usually in followers only mode, but i''ve disabled it for now. Be sure to follow to continue to be able to chat when we turn it back on!');
-				else:
-					await channel.send('Hello Raiders! This channel is usually in followers only mode, but i''ve disabled it for now. Be sure to follow to continue to be able to chat when we turn it back on!');
-				await asyncio.sleep(900);
-				endtime = time.time();
-				if starttime[channel.name] < endtime and raidauto:
-					await channel.send('.followers 10m');
+					starttime[channel.name] = time.time() + 900;
+					chnl= tags['msg-param-displayName'];
+					
+					#await channel.send("@nilesy i'd disable followers-only mode, but im not a mod");
 					#await asyncio.sleep(2);
-					#await channel.send("@nilesy i'd turn on followers-only mode on again but im not a mod");
+					await channel.send('.followersoff');
+					await asyncio.sleep(30);
+					if chnl:
+						await channel.send('Hello Raiders of '+chnl+'! This channel is usually in followers only mode, but i''ve disabled it for now. Be sure to follow to continue to be able to chat when we turn it back on!');
+					else:
+						await channel.send('Hello Raiders! This channel is usually in followers only mode, but i''ve disabled it for now. Be sure to follow to continue to be able to chat when we turn it back on!');
+					await asyncio.sleep(900);
+					endtime = time.time();
+					if starttime[channel.name] < endtime and raidauto:
+						await channel.send('.followers 10m');
+						#await asyncio.sleep(2);
+						#await channel.send("@nilesy i'd turn on followers-only mode on again but im not a mod");
 		pass;
 	
 	@ircBot.event
