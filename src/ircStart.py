@@ -131,12 +131,13 @@ def main(client,testing):
 		global raidauto;
 		if tags:
 			shoulddo = False;
-			#print('usernotice tags'+str(tags));
-			if tags['msg-id'] == 'raid' and raidauto and shoulddo:
+			print('raid incomming in '+channel.name);
+			if tags['msg-id'] == 'raid' and raidauto:
 				
 				for row in util.DBcursor.execute('''select * from irc_channel where left is null and channel = ?''',(channel.name,)):
 					if row['raid_auto'] and row['raid_auto'] > 0:
 						shoulddo = True;
+				print('raid shoulddo '+str(shoulddo));		
 				if shoulddo:	
 					#global starttime;
 					
