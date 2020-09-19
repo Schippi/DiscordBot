@@ -75,10 +75,10 @@ def main(client,testing):
 	@ircBot.event
 	async def event_message( message):
 		#print(message.content);
-		if(ircBot.nick == message.author.name):
-			return;
+		
 		try:
-			await ircBot.handle_commands(message);
+			if(ircBot.nick != message.author.name):
+				await ircBot.handle_commands(message);
 		except Exception:
 			print(datetime.now().strftime("%d.%m.%Y, %H:%M:%S"));
 			traceback.print_exc();
@@ -181,9 +181,9 @@ def main(client,testing):
 	async def event_raw_data(data):
 		try:
 			st = time.strftime('%Y-%m-%d %H:%M:%S: ');
-			fil = open('traffic.log','a', encoding="utf-8")
-			fil.write((st+data.strip()+'\n'))
-			fil.close();
+			#fil = open('traffic.log','a', encoding="utf-8")
+			#fil.write((st+data.strip()+'\n'))
+			#fil.close();
 		except Exception:
 			traceback.print_exc();
 		msg = data.strip().lower();
