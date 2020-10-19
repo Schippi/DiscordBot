@@ -133,15 +133,17 @@ def main(client,testing):
 			shoulddo = False;
 			if tags['msg-id'] == 'raid' and raidauto:
 				print('raid incomming in '+channel.name);
-				
+				mtime = 10;
 				for row in util.DBcursor.execute('''select * from irc_channel where left is null and channel = ?''',(channel.name,)):
 					if row['raid_auto'] and row['raid_auto'] > 0:
 						shoulddo = True;
-				print('raid shoulddo '+str(shoulddo));		
+					if row['raid_time'] and int(row['raid_time']) > 0:
+						mtime = int(row['raid_time']);
+				print('raid shoulddo '+str(shoulddo)+ "time: "+str(mtime));		
 				if shoulddo:	
 					#global starttime;
 					
-					starttime[channel.name] = time.time() + 900;
+					starttime[channel.name] = time.time() + (90*mtime);
 					chnl= tags['msg-param-displayName'];
 					
 					#await channel.send("@nilesy i'd disable followers-only mode, but im not a mod");
@@ -152,10 +154,10 @@ def main(client,testing):
 						await channel.send('Hello Raiders of '+chnl+'! This channel is usually in followers only mode, but i''ve disabled it for now. Be sure to follow to continue to be able to chat when we turn it back on!');
 					else:
 						await channel.send('Hello Raiders! This channel is usually in followers only mode, but i''ve disabled it for now. Be sure to follow to continue to be able to chat when we turn it back on!');
-					await asyncio.sleep(900);
+					await asyncio.sleep(mtime * 90);
 					endtime = time.time();
 					if starttime[channel.name] < endtime and raidauto:
-						await channel.send('.followers 10m');
+						await channel.send('.followers '+str(mtime)+'m');
 						#await asyncio.sleep(2);
 						#await channel.send("@nilesy i'd turn on followers-only mode on again but im not a mod");
 		pass;
@@ -214,6 +216,31 @@ def main(client,testing):
 											''',(channelname,));
 				util.DB.commit();							
 				return await channel.send('ok - status now '+a);
+			
+	@ircBot.command(name='raidtime')
+	async def raidtime(ctx, mtime : int = None):
+		"""change the amout of time for follower mode after a raid"""
+		if ctx.message.author.is_mod:
+			channel = ctx.message.channel;
+			channelname = channel.name.lower();
+			if not mtime or (mtime == 0):
+				return await channel.send('time missing or 0');
+			try:
+				for row in util.DBcursor.execute('''select * from irc_channel 	
+											where left is null
+											and channel = ?
+											''',(channelname,)):
+					a = row['raid_time'];
+					util.DBcursor.execute('''update irc_channel 
+												set raid_time = ?
+												where left is null
+												and channel = ?
+												''',(mtime,channelname,));
+					util.DB.commit();							
+					return await channel.send('ok - time now '+str(mtime)+", was "+str(a));
+				return await channel.send('not in channel, join it first');
+			except:
+				return await channel.send('failed :(');	
 	
 	# Commands use a different decorator
 	@ircBot.command(name='test')

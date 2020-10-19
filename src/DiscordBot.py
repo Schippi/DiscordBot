@@ -169,6 +169,11 @@ for row in util.DBcursor.execute('''select * from dual inner join irc_channel on
 	else:
 		util.DBcursor.execute('''alter table irc_channel add raid_auto integer''');
 		util.DBcursor.execute('''update irc_channel set raid_auto = 0''');
+	if('raid_time' in row.keys()):
+		pass;
+	else:
+		util.DBcursor.execute('''alter table irc_channel add raid_time integer''');
+		util.DBcursor.execute('''update irc_channel set raid_auto = 10''');
 	
 util.DBcursor.execute('''insert into dual(dummy)
 					select 'X' from sqlite_master 

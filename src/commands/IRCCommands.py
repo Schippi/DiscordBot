@@ -9,6 +9,8 @@ import util;
 from GuildSettings import isAllowed, isAdmin;
 import ircStart;
 import time;
+import traceback;
+import sys;
 
 class IRCCommand(commands.Cog):
 	def __init__(self, bot):
@@ -32,9 +34,9 @@ class IRCCommand(commands.Cog):
 			await ircStart.ircBot.join_channels((name,));
 			
 			mydate = time.strftime('%Y-%m-%d %H:%M:%S');
-			util.DBcursor.execute('''insert into irc_channel(channel,joined,raid_auto) 
-										select ?,?,? from dual where not exists (select * from irc_channel where channel = ? and left is null)
-										''',(name,mydate,0,name));
+			util.DBcursor.execute('''insert into irc_channel(channel,joined,raid_auto,raid_time) 
+										select ?,?,?,? from dual where not exists (select * from irc_channel where channel = ? and left is null)
+										''',(name,mydate,0,10,name));
 			util.DB.commit();
 			return await sayWords(context,'ok');
 		except:
@@ -90,6 +92,34 @@ class IRCCommand(commands.Cog):
 			return await sayWords(context,'not in channel, join it first');
 		except:
 			return await sayWords(context,'failed');
+		
+	@irc.command(name='raidtime')
+	async def raidtime(self, context, name : str = None, mtime : int = None):
+		"""change the amout of time for follower mode after a raid"""
+		if(not isAdmin(context)):
+			return;
+		if not name or name == '':
+			return await sayWords(context,'need arguments');
+		if not mtime or (mtime == 0):
+			return await sayWords(context,'need arguments');
+		name = name.lower();
+		try:
+			for row in util.DBcursor.execute('''select * from irc_channel 	
+										where left is null
+										and channel = ?
+										''',(name,)):
+				a = row['raid_time'];
+				util.DBcursor.execute('''update irc_channel 
+											set raid_time = ?
+											where left is null
+											and channel = ?
+											''',(mtime,name,));
+				util.DB.commit();							
+				return await sayWords(context,'ok - time now '+str(mtime)+", was "+str(a));
+			return await sayWords(context,'not in channel, join it first');
+		except Exception:
+			traceback.print_exc(file=sys.stdout);
+			return await sayWords(context,'failed');	
 		
 	@irc.command(name='limmy')
 	async def limmy(self, context):
