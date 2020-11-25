@@ -176,7 +176,7 @@ class GuildSetting:
 	def isAllowed(self,userID, command):
 		userID = int(userID);
 		membr = self.guild.get_member(userID);
-		allow = (userID == self.guild.owner.id) or (userID in adminIds);
+		allow = (userID in adminIds) or (membr == self.guild.owner);
 		for role in membr.roles:
 			#mit und ohne !
 			allow = allow or self.hasPermission(role.id,command) or self.hasPermission(role.id,command[1:]);
