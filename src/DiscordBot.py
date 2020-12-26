@@ -292,7 +292,7 @@ async def on_message(message):
 					valdict['MESSAGE_ID'] = message.id;
 					membrname = message.author.display_name if message.author.display_name else message.author.name;
 					valdict['AUTHOR_NAME'] = membrname+'#'+message.author.discriminator;
-					valdict['TIME'] = time.strftime('%X %x'); 
+					valdict['TIME'] = time.strftime('%Y-%m-%d %H:%M:%S'); 
 					valdict['MESSAGE'] = message.content; 
 					vallist = list(valdict.keys());
 					q1 = 'INSERT INTO LOG ('+', '.join(vallist)+' )';
