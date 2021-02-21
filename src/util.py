@@ -12,6 +12,7 @@ import traceback;
 
 DBcursor = None;
 DB = None;
+DBLOG = None;
 cfgPath = None;
 serverPort = 8081;
 serverHost = 'localhost'

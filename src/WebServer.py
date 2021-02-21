@@ -101,6 +101,20 @@ async def urlredirector(request):
         raise web.HTTPFound(location=row['long']);
     raise web.HTTPNotFound();
 
+@routes.get('/d/{shorthand}')
+async def discorddisplay(request):
+    shorthand = request.match_info['shorthand'];
+    c = util.DBLOG.cursor();
+    for row in c.execute('select * from token where token=?',(shorthand,)):
+        nowish = datetime.datetime.now() - datetime.timedelta(seconds=60);
+        nowish = nowish.strftime('%Y-%m-%d %H:%M:%S'); 
+        result = []
+        for row in c.execute('select * from log where datetime(time) > datetime(?) order by message_id desc',(nowish,)):
+            result.append(row);
+            #raise web.HTTPFound(location=row['long']);
+        return web.Response(body=json.dumps(result),content_type='application/json');
+    return web.HTTPForbidden();
+
 @routes.get('/beatsaber/{shorthand}')
 async def beatsaber(request):
     shorthand = request.match_info['shorthand'];

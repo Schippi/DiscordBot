@@ -214,6 +214,14 @@ for row in util.DBcursor.execute('''select * from urlmap limit 1'''):
 		pass;
 	else:
 		util.DBcursor.execute('''alter table urlmap add used INTEGER DEFAULT 0''');
+
+util.DB.commit();
+		
+util.DBcursor.execute('''CREATE TABLE IF NOT EXISTS  `token` (
+		`id`	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+		`token`	TEXT,
+		`display_name`	TEXT UNIQUE
+	);''');
 	
 util.DB.commit();
 
@@ -223,6 +231,7 @@ LOGDBcursor = LOGDB.cursor();
 LOGCNT = 0;
 LOGDBCHANGES = 0;
 LOGTIME = datetime.utcnow();
+util.DBLOG = LOGDB;
 
 def checkPrefix(bot, disMessage):
 	try:

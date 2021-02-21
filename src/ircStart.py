@@ -21,7 +21,13 @@ ircBot = None;
 initialized = False;
 
 
-class MyBot(commands.Bot):
+class MyIRCBot(commands.Bot):
+	
+	#def __init__(self,testing,irc_token,api_token,nick,prefix):
+	#	super().__init(self,irc_token=irc_token,api_token=api_token,nick=nick,prefix=prefix);
+	#	self.testing = testing;		
+		
+	
 	async def event_command_error(self, ctx, error):
 		if ( isinstance(error,commands.CommandNotFound)):
 			print('command {0} '.format(error), file=sys.stderr)
@@ -39,13 +45,14 @@ def main(client,testing):
 	
 	global ircBot;
 	
-	ircBot = MyBot(
+	ircBot = MyIRCBot(
 		irc_token=TwitchIRCAUTH,
 		api_token=TwitchAPI,
 		nick=TwitchIRCNICK,
 		prefix=myprefix
 		#,initial_channels=['nilesy','ravs_','theschippi','hybridpanda']
 	);
+	ircBot.testing = testing;
 	ircBot.enableLimmy = (util.getControlVal("Limmy", "True") == "True");
 	ircBot.msgcnt = 0;
 	ircBot.offset = 0;
@@ -58,9 +65,12 @@ def main(client,testing):
 		global initialized;
 		initialized = False;
 		print('IRC Ready | {}'.format(TwitchIRCNICK));
-		for row in util.DBcursor.execute('''select * from irc_channel where left is null'''):
-			await ircBot.join_channels((row['channel'],));
-			print('joined irc: '+row['channel']);
+		if not ircBot.testing:
+			for row in util.DBcursor.execute('''select * from irc_channel where left is null'''):
+				await ircBot.join_channels((row['channel'],));
+				print('joined irc: '+row['channel']);
+		else:
+			await ircBot.join_channels(('theschippi',));
 		print(ircBot.prefixes);
 		
 		client.loop.create_task(waitForInit(testing));
