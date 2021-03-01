@@ -36,7 +36,7 @@ class AuthFailed(Exception):
 
 if len(sys.argv) >= 3:
 	cfgPath = sys.argv[2];
-	
+print(sys.argv)
 file = open(cfgPath+"/../tokens/twitch.token","r");
 try:
 	contents =file.read().splitlines(); 
