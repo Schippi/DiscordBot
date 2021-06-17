@@ -214,6 +214,8 @@ def main(client,testing):
 			print('nope')
 			return;
 		try:
+			from_chnl = from_chnl.lower();
+			to_chnl = to_chnl.lower();
 			print('raidorhost: '+kind + ' '+from_chnl+' '+to_chnl +' '+str(viewers));
 			
 			mydate = time.strftime('%Y-%m-%d %H:%M:%S');
