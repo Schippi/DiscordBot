@@ -68,6 +68,7 @@ def main(client,testing):
 						select 'X' from sqlite_master 
 						where not exists (select * from dual)
 						limit 1''');
+	conn.commit();
 
 	@ircBot.event
 	async def event_ready():
