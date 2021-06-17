@@ -108,6 +108,15 @@ LOGDBCHANGES = 0;
 LOGTIME = datetime.utcnow();
 util.DBLOG = LOGDB;
 
+LOGDBcursor.execute('''CREATE TABLE IF NOT EXISTS  `dual` (
+		`DUMMY`	TEXT
+	);''');
+	
+LOGDBcursor.execute('''insert into dual(dummy)
+					select 'X' from sqlite_master 
+					where not exists (select * from dual)
+					limit 1''');
+
 def checkPrefix(bot, disMessage):
 	try:
 		sett = getSetting(disMessage.guild.id);
