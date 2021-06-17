@@ -64,6 +64,10 @@ def main(client,testing):
 	async def event_ready():
 		global initialized;
 		initialized = False;
+		global ghost_channels;
+		ghost_channels = [];
+		for row in util.DBcursor.execute('''select * from irc_channel where left is null and ghost = 1'''):
+			ghost_channels.append(row['channel']);
 		print('IRC Ready | {}'.format(TwitchIRCNICK));
 		if not ircBot.testing:
 			for row in util.DBcursor.execute('''select * from irc_channel where left is null'''):
@@ -71,6 +75,8 @@ def main(client,testing):
 				print('joined irc: '+row['channel']);
 		else:
 			await ircBot.join_channels(('theschippi',));
+			for row in util.DBcursor.execute('''select * from irc_channel where left is null and ghost = 1'''):
+				await ircBot.join_channels((row['channel'],));
 		print(ircBot.prefixes);
 		
 		client.loop.create_task(waitForInit(testing));
@@ -114,9 +120,14 @@ def main(client,testing):
 					await channel.send('the poll has closed! For results MODS can do '+myprefix+'poll (without asking a new question)')
 						
 		try:
+			global ghost_channels;
+			if message.channel.name in ghost_channels:
+				return;
 			st = time.strftime('%Y-%m-%d %H:%M:%S');
-			mlist = [st,message.channel.name,message.author.name,message.content];
-			cur.execute("INSERT INTO words(date,channel,usr,msg) VALUES (?,?,?,?)",mlist);
+			mlist = [st,message.channel.name,message.author.name,message.content,message.channel.name];
+			cur.execute('''INSERT INTO words(date,channel,usr,msg) 
+						select ?,?,?,? from dual 
+						where not exists(select * from irc_channel where ghost=1 and channel=?)''',mlist);
 			ircBot.msgcnt = ircBot.msgcnt + 1;
 			currenttime = datetime.now();
 			global lastmsgtime;
@@ -170,7 +181,64 @@ def main(client,testing):
 						await channel.send('.followers '+str(mtime)+'m');
 						#await asyncio.sleep(2);
 						#await channel.send("@nilesy i'd turn on followers-only mode on again but im not a mod");
+			if tags['msg-id'] == 'raid':
+				try:
+					to_chnl = channel.name;
+					from_chnl= tags['msg-param-displayName'];
+					viewcount = int(tags['msg-param-viewerCount']);
+					await raid_channel('raid',from_chnl,to_chnl,viewcount);
+					
+					
+				except Exception:
+					traceback.print_exc();
+				
+				
 		pass;
+	
+	
+	async def raid_channel(kind,from_chnl,to_chnl,viewers=0):
+		global initialized;
+		if not initialized and kind == 'host':
+			#dont do hosts when starting up
+			return;
+		try:
+			print('raidorhost: '+kind + ' '+from_chnl+' '+to_chnl +' '+str(viewers));
+			
+			mydate = time.strftime('%Y-%m-%d %H:%M:%S');
+			util.DBcursor.execute('''insert into connection(date,from_channel,to_channel,kind,viewers) 
+										select ?,?,?,?,? from dual ''',(mydate,from_chnl,to_chnl,kind,viewers));
+			util.DB.commit();
+			
+			#only join if not kicked before
+			exists = False;
+			for row in util.DBcursor.execute('''select * from irc_channel where channel = ?''',(from_chnl,)):
+				exists = True;
+				break;
+			if not exists:
+				await ircBot.join_channels((from_chnl,));
+				mydate = time.strftime('%Y-%m-%d %H:%M:%S');
+				util.DBcursor.execute('''insert into irc_channel(channel,joined,raid_auto,raid_time,ghost) 
+											select ?,?,?,?,? from dual where not exists (select * from irc_channel where channel = ?)
+											''',(from_chnl,mydate,0,None,1,from_chnl));
+				util.DB.commit();
+			exists = False;
+			for row in util.DBcursor.execute('''select * from irc_channel where channel = ?''',(to_chnl,)):
+				exists = True;
+				break;
+			if not exists:
+				await ircBot.join_channels((to_chnl,));
+				mydate = time.strftime('%Y-%m-%d %H:%M:%S');
+				util.DBcursor.execute('''insert into irc_channel(channel,joined,raid_auto,raid_time,ghost) 
+											select ?,?,?,?,? from dual where not exists (select * from irc_channel where channel = ?)
+											''',(to_chnl,mydate,0,None,1,to_chnl));
+				util.DB.commit();
+			#refresh ghost channels
+			global ghost_channels;
+			ghost_channels = [];
+			for row in util.DBcursor.execute('''select * from irc_channel where left is null and ghost = 1'''):
+				ghost_channels.append(row['channel']);
+		except Exception:
+			traceback.print_exc();
 	
 	@ircBot.event
 	async def event_join(user = None):
@@ -204,6 +272,23 @@ def main(client,testing):
 		if '@msg-id=host_on' in msg and '#theschippi' in msg and 'hosting nilesy' in msg:
 			if ircBot.get_channel('theschippi'):
 				await ircBot.get_channel('theschippi').send('detecting host');
+		mymsg = data.strip().lower();		
+		if (('@msg-id=host_on' in mymsg) and ('hosting' in mymsg)):
+			#print('-_1>msg host\n', file=sys.stderr)
+			#print('-_2>'+mymsg+"----end\n\n\n", file=sys.stderr)
+			#print('-_3>'+data.strip().lower()+"----end\n\n\n", file=sys.stderr)
+			#print('-_4>'+mymsg.split(' ')[-1]+"----end\n\n\n", file=sys.stderr)
+			
+			for msg in mymsg.split('\n'):
+				if "hosttarget" in msg:
+					to_channel = msg.split(' ')[-2][1:]; 
+					#print("--->"+mymsg+"<---")
+					for m in msg.split(' '):
+						if m[0] == '#':
+							from_channel = m[1:];
+							await raid_channel('host',from_channel,to_channel);
+							return;
+			
 	
 	@ircBot.command(name='raid')
 	async def raidauto_command(ctx):
@@ -213,6 +298,7 @@ def main(client,testing):
 			for row in util.DBcursor.execute('''select * from irc_channel 	
 										where left is null
 										and channel = ?
+										and ghost is null
 										''',(channelname,)):
 				a = row['raid_auto'];
 				if a and a > 0:
@@ -233,13 +319,15 @@ def main(client,testing):
 		if ctx.message.author.is_mod:
 			channel = ctx.message.channel;
 			channelname = channel.name.lower();
-			if not mtime or (mtime == 0):
-				return await channel.send('time missing or 0');
-			try:
-				for row in util.DBcursor.execute('''select * from irc_channel 	
-											where left is null
-											and channel = ?
-											''',(channelname,)):
+			
+			for row in util.DBcursor.execute('''select * from irc_channel 	
+										where left is null
+										and channel = ?
+										and ghost is null
+										''',(channelname,)):
+				try:
+					if not mtime or (mtime == 0):
+						return await channel.send('time missing or 0');
 					a = row['raid_time'];
 					util.DBcursor.execute('''update irc_channel 
 												set raid_time = ?
@@ -248,9 +336,10 @@ def main(client,testing):
 												''',(mtime,channelname,));
 					util.DB.commit();							
 					return await channel.send('ok - time now '+str(mtime)+", was "+str(a));
-				return await channel.send('not in channel, join it first');
-			except:
-				return await channel.send('failed :(');	
+				except:
+					return await channel.send('failed :(')
+				return;
+			
 	
 	# Commands use a different decorator
 	@ircBot.command(name='test')
@@ -276,32 +365,39 @@ def main(client,testing):
 	async def poll_command(ctx):
 		if ctx.message.author.is_mod:
 			channel = ctx.message.channel;
-			if len(ctx.message.content.split(' ')) == 1:
-				if( channel.name in polls):
-					mypoll = polls[channel.name];
-					yea = mypoll['yea'];
-					nay = mypoll['nay'];
-					sum = yea+nay;
-					pyea = 100* yea / (sum * 1.0);
-					pnay = 100* nay / (sum * 1.0);
-					await channel.send(mypoll['question']+': '+format(pyea, '.2f')+'% voted VoteYea, '+format(pnay, '.2f')+'% voted VoteNay '+str(sum)+' people voted!');
-					await asyncio.sleep(0.2);
-					if(mypoll['done']):
-						await channel.send('polls are closed, so no need to spam');
+			channelname = channel.name.lower();
+			for row in util.DBcursor.execute('''select * from irc_channel 	
+										where left is null
+										and channel = ?
+										and ghost is null
+										''',(channelname,)):
+				if len(ctx.message.content.split(' ')) == 1:
+					if( channel.name in polls):
+						mypoll = polls[channel.name];
+						yea = mypoll['yea'];
+						nay = mypoll['nay'];
+						sum = yea+nay;
+						pyea = 100* yea / (sum * 1.0);
+						pnay = 100* nay / (sum * 1.0);
+						await channel.send(mypoll['question']+': '+format(pyea, '.2f')+'% voted VoteYea, '+format(pnay, '.2f')+'% voted VoteNay '+str(sum)+' people voted!');
+						await asyncio.sleep(0.2);
+						if(mypoll['done']):
+							await channel.send('polls are closed, so no need to spam');
+						else:
+							await channel.send('polls are still open, you still can get your vote in!');
 					else:
-						await channel.send('polls are still open, you still can get your vote in!');
+						await channel.send('no poll ever asked');
+				elif len(ctx.message.content.split(' ')) < 3:
+					await channel.send('you need to ask a question pal... '+myprefix+'poll [time in seconds] [question]');
 				else:
-					await channel.send('no poll ever asked');
-			elif len(ctx.message.content.split(' ')) < 3:
-				await channel.send('you need to ask a question pal... '+myprefix+'poll [time in seconds] [question]');
-			else:
-				try:
-					question= ctx.message.content.split(' ',2)[2];
-					offset = int(ctx.message.content.split(' ',2)[1]);
-					polls[channel.name] = {'time':(time.time()+offset), 'question':question, 'yea':0, 'nay':0, 'users':[], 'done':False};
-					await channel.send('A new poll has been started! - '+question+' - vote with VoteYea or VoteNay! - You have '+str(offset)+ ' seconds!');
-				except:
-					await channel.send('Something went wrong, please try again. '+myprefix+'poll [time in seconds] [question]');
+					try:
+						question= ctx.message.content.split(' ',2)[2];
+						offset = int(ctx.message.content.split(' ',2)[1]);
+						polls[channel.name] = {'time':(time.time()+offset), 'question':question, 'yea':0, 'nay':0, 'users':[], 'done':False};
+						await channel.send('A new poll has been started! - '+question+' - vote with VoteYea or VoteNay! - You have '+str(offset)+ ' seconds!');
+					except:
+						await channel.send('Something went wrong, please try again. '+myprefix+'poll [time in seconds] [question]');
+				return;
 	return ircBot;
 	#bot.run();
 	#conn.close();
