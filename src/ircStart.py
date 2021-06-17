@@ -137,7 +137,8 @@ def main(client,testing):
 			mlist = [st,message.channel.name,message.author.name,message.content,message.channel.name];
 			cur.execute('''INSERT INTO words(date,channel,usr,msg) 
 						select ?,?,?,? from `dual` 
-						where not exists(select * from irc_channel where ghost=1 and channel=?)''',mlist);
+						''',mlist);
+						#where not exists(select * from irc_channel where ghost=1 and channel=?)
 			ircBot.msgcnt = ircBot.msgcnt + 1;
 			currenttime = datetime.now();
 			global lastmsgtime;
