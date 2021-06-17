@@ -285,7 +285,7 @@ def main(client,testing):
 			if ircBot.get_channel('theschippi'):
 				await ircBot.get_channel('theschippi').send('detecting host');
 		mymsg = data.strip().lower();	
-		print(mymsg);	
+		#print(mymsg);	
 		if (('@msg-id=host_on' in mymsg) and ('now hosting' in mymsg)):
 			print('-_1>msg host\n', file=sys.stderr)
 			print('-_2>'+mymsg+"----end\n\n\n", file=sys.stderr)
