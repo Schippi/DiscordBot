@@ -211,6 +211,7 @@ def main(client,testing):
 		global initialized;
 		if not initialized and kind == 'host':
 			#dont do hosts when starting up
+			print('nope')
 			return;
 		try:
 			print('raidorhost: '+kind + ' '+from_chnl+' '+to_chnl +' '+str(viewers));
@@ -283,16 +284,17 @@ def main(client,testing):
 		if '@msg-id=host_on' in msg and '#theschippi' in msg and 'hosting nilesy' in msg:
 			if ircBot.get_channel('theschippi'):
 				await ircBot.get_channel('theschippi').send('detecting host');
-		mymsg = data.strip().lower();		
-		if (('@msg-id=host_on' in mymsg) and ('hosting' in mymsg)):
-			#print('-_1>msg host\n', file=sys.stderr)
-			#print('-_2>'+mymsg+"----end\n\n\n", file=sys.stderr)
+		mymsg = data.strip().lower();	
+		print(mymsg);	
+		if (('@msg-id=host_on' in mymsg) and ('now hosting' in mymsg)):
+			print('-_1>msg host\n', file=sys.stderr)
+			print('-_2>'+mymsg+"----end\n\n\n", file=sys.stderr)
 			#print('-_3>'+data.strip().lower()+"----end\n\n\n", file=sys.stderr)
 			#print('-_4>'+mymsg.split(' ')[-1]+"----end\n\n\n", file=sys.stderr)
 			
 			for msg in mymsg.split('\n'):
-				if "hosttarget" in msg:
-					to_channel = msg.split(' ')[-2][1:]; 
+				if "now hosting" in msg:
+					to_channel = msg.split(' ')[-1][:-1]; 
 					#print("--->"+mymsg+"<---")
 					for m in msg.split(' '):
 						if m[0] == '#':
