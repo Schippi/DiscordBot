@@ -136,7 +136,7 @@ def main(client,testing):
 			st = time.strftime('%Y-%m-%d %H:%M:%S');
 			mlist = [st,message.channel.name,message.author.name,message.content,message.channel.name];
 			cur.execute('''INSERT INTO words(date,channel,usr,msg) 
-						select ?,?,?,? from dual 
+						select ?,?,?,? from `dual` 
 						where not exists(select * from irc_channel where ghost=1 and channel=?)''',mlist);
 			ircBot.msgcnt = ircBot.msgcnt + 1;
 			currenttime = datetime.now();
