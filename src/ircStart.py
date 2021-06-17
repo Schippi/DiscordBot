@@ -59,6 +59,15 @@ def main(client,testing):
 
 	conn = sqlite3.connect(DBLOG);
 	cur = conn.cursor();
+	
+	cur.execute('''CREATE TABLE IF NOT EXISTS  `dual` (
+			`DUMMY`	TEXT
+		);''');
+		
+	cur.execute('''insert into dual(dummy)
+						select 'X' from sqlite_master 
+						where not exists (select * from dual)
+						limit 1''');
 
 	@ircBot.event
 	async def event_ready():
