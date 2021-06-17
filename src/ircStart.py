@@ -134,7 +134,7 @@ def main(client,testing):
 			if message.channel.name in ghost_channels:
 				return;
 			st = time.strftime('%Y-%m-%d %H:%M:%S');
-			mlist = [st,message.channel.name,message.author.name,message.content,message.channel.name];
+			mlist = [st,message.channel.name,message.author.name,message.content];
 			cur.execute('''INSERT INTO words(date,channel,usr,msg) 
 						select ?,?,?,? from `dual` 
 						''',mlist);
