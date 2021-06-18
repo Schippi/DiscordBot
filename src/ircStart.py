@@ -11,6 +11,7 @@ from util import TwitchIRCAUTH;
 from util import TwitchIRCNICK;
 from util import getControlVal;
 import util;
+import logging;
 import os;
 
 starttime = {};
@@ -81,15 +82,19 @@ def main(client,testing):
 			ghost_channels.append(row['channel']);
 		print('IRC Ready | {}'.format(TwitchIRCNICK));
 		if not ircBot.testing:
+			logging.Logger.setLevel(10);
 			for row in util.DBcursor.execute('''select * from irc_channel where left is null'''):
+				print('trying: '+row['channel']);
 				await ircBot.join_channels((row['channel'],));
 				await asyncio.sleep(1)
 				print('joined irc: '+row['channel']);
 		else:
 			await ircBot.join_channels(('theschippi',));
 			for row in util.DBcursor.execute('''select * from irc_channel where left is null and ghost = 1'''):
+				print('trying: '+row['channel']);
 				await ircBot.join_channels((row['channel'],));
-				await asyncio.sleep()
+				await asyncio.sleep(1)
+				print('joined irc: '+row['channel']);
 		print(ircBot.prefixes);
 		
 		client.loop.create_task(waitForInit(testing));
