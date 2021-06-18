@@ -82,7 +82,6 @@ def main(client,testing):
 			ghost_channels.append(row['channel']);
 		print('IRC Ready | {}'.format(TwitchIRCNICK));
 		if not ircBot.testing:
-			logging.Logger.setLevel(10);
 			for row in util.DBcursor.execute('''select * from irc_channel where left is null'''):
 				print('trying: '+row['channel']);
 				await ircBot.join_channels((row['channel'],));
