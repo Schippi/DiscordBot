@@ -88,6 +88,7 @@ def main(client,testing):
 			await ircBot.join_channels(('theschippi',));
 			for row in util.DBcursor.execute('''select * from irc_channel where left is null and ghost = 1'''):
 				await ircBot.join_channels((row['channel'],));
+				await asyncio.sleep(1)
 		print(ircBot.prefixes);
 		
 		client.loop.create_task(waitForInit(testing));
