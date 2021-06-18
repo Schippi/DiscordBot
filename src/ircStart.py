@@ -81,23 +81,33 @@ def main(client,testing):
 		for row in util.DBcursor.execute('''select * from irc_channel where left is null and ghost = 1'''):
 			ghost_channels.append(row['channel']);
 		print('IRC Ready | {}'.format(TwitchIRCNICK));
+		i = 1;
 		if not ircBot.testing:
 			for row in util.DBcursor.execute('''select * from irc_channel where left is null'''):
-				print('trying: '+row['channel']);
-				await ircBot.join_channels((row['channel'],));
-				await asyncio.sleep(1)
-				print('joined irc: '+row['channel']);
+				i = i+1;
+				#print('trying: '+row['channel']);
+				#await ircBot.join_channels((row['channel'],));
+				#await asyncio.sleep(1)
+				#print('joined irc: '+row['channel']);
+				client.loop.create_task(joinLater(i,row['channel']));
 		else:
 			await ircBot.join_channels(('theschippi',));
 			for row in util.DBcursor.execute('''select * from irc_channel where left is null and ghost = 1'''):
-				print('trying: '+row['channel']);
-				await ircBot.join_channels((row['channel'],));
-				await asyncio.sleep(1)
-				print('joined irc: '+row['channel']);
+				i = i+1;
+				client.loop.create_task(joinLater(i,row['channel']));
+				#print('trying: '+row['channel']);
+				#await ircBot.join_channels((row['channel'],));
+				#await asyncio.sleep(1)
+				#print('joined irc: '+row['channel']);
 		print(ircBot.prefixes);
 		
 		client.loop.create_task(waitForInit(testing));
-		
+	
+	async def joinLater(time,chn):
+		print('irc: '+chn);
+		await asyncio.sleep(time)
+		await ircBot.join_channels((chn,));
+		print('joined irc: '+chn);
 		
 	async def waitForInit(testing):
 		await asyncio.sleep(5)
