@@ -9,6 +9,7 @@ import sys;
 from util import TwitchAPI;
 from util import TwitchIRCAUTH;
 from util import TwitchIRCNICK;
+from util import getControlVal;
 import util;
 import os;
 
@@ -214,43 +215,46 @@ def main(client,testing):
 			print('nope')
 			return;
 		try:
-			from_chnl = from_chnl.lower();
-			to_chnl = to_chnl.lower();
-			print('raidorhost: '+kind + ' '+from_chnl+' '+to_chnl +' '+str(viewers));
-			
-			mydate = time.strftime('%Y-%m-%d %H:%M:%S');
-			util.DBcursor.execute('''insert into connection(date,from_channel,to_channel,kind,viewers) 
-										select ?,?,?,?,? from dual ''',(mydate,from_chnl,to_chnl,kind,viewers));
-			util.DB.commit();
-			
+			newconnection = int(getControlVal('newconnection',1));
+			newirc = int(getControlVal('newirc',1));
+			if newconnection > 0:
+				from_chnl = from_chnl.lower();
+				to_chnl = to_chnl.lower();
+				print('raidorhost: '+kind + ' '+from_chnl+' '+to_chnl +' '+str(viewers));
+				
+				mydate = time.strftime('%Y-%m-%d %H:%M:%S');
+				util.DBcursor.execute('''insert into connection(date,from_channel,to_channel,kind,viewers) 
+											select ?,?,?,?,? from dual ''',(mydate,from_chnl,to_chnl,kind,viewers));
+				util.DB.commit();
+			if newirc > 0:
 			#only join if not kicked before
-			exists = False;
-			for row in util.DBcursor.execute('''select * from irc_channel where channel = ?''',(from_chnl,)):
-				exists = True;
-				break;
-			if not exists:
-				await ircBot.join_channels((from_chnl,));
-				mydate = time.strftime('%Y-%m-%d %H:%M:%S');
-				util.DBcursor.execute('''insert into irc_channel(channel,joined,raid_auto,raid_time,ghost) 
-											select ?,?,?,?,? from dual where not exists (select * from irc_channel where channel = ?)
-											''',(from_chnl,mydate,0,None,1,from_chnl));
-				util.DB.commit();
-			exists = False;
-			for row in util.DBcursor.execute('''select * from irc_channel where channel = ?''',(to_chnl,)):
-				exists = True;
-				break;
-			if not exists:
-				await ircBot.join_channels((to_chnl,));
-				mydate = time.strftime('%Y-%m-%d %H:%M:%S');
-				util.DBcursor.execute('''insert into irc_channel(channel,joined,raid_auto,raid_time,ghost) 
-											select ?,?,?,?,? from dual where not exists (select * from irc_channel where channel = ?)
-											''',(to_chnl,mydate,0,None,1,to_chnl));
-				util.DB.commit();
-			#refresh ghost channels
-			global ghost_channels;
-			ghost_channels = [];
-			for row in util.DBcursor.execute('''select * from irc_channel where left is null and ghost = 1'''):
-				ghost_channels.append(row['channel']);
+				exists = False;
+				for row in util.DBcursor.execute('''select * from irc_channel where channel = ?''',(from_chnl,)):
+					exists = True;
+					break;
+				if not exists:
+					await ircBot.join_channels((from_chnl,));
+					mydate = time.strftime('%Y-%m-%d %H:%M:%S');
+					util.DBcursor.execute('''insert into irc_channel(channel,joined,raid_auto,raid_time,ghost) 
+												select ?,?,?,?,? from dual where not exists (select * from irc_channel where channel = ?)
+												''',(from_chnl,mydate,0,None,1,from_chnl));
+					util.DB.commit();
+				exists = False;
+				for row in util.DBcursor.execute('''select * from irc_channel where channel = ?''',(to_chnl,)):
+					exists = True;
+					break;
+				if not exists:
+					await ircBot.join_channels((to_chnl,));
+					mydate = time.strftime('%Y-%m-%d %H:%M:%S');
+					util.DBcursor.execute('''insert into irc_channel(channel,joined,raid_auto,raid_time,ghost) 
+												select ?,?,?,?,? from dual where not exists (select * from irc_channel where channel = ?)
+												''',(to_chnl,mydate,0,None,1,to_chnl));
+					util.DB.commit();
+				#refresh ghost channels
+				global ghost_channels;
+				ghost_channels = [];
+				for row in util.DBcursor.execute('''select * from irc_channel where left is null and ghost = 1'''):
+					ghost_channels.append(row['channel']);
 		except Exception:
 			traceback.print_exc();
 	
