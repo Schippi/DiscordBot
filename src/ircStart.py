@@ -101,16 +101,16 @@ def main(client,testing):
 				#print('joined irc: '+row['channel']);
 		print(ircBot.prefixes);
 		
-		client.loop.create_task(waitForInit(testing));
+		client.loop.create_task(waitForInit(i,testing));
 	
 	async def joinLater(time,chn):
 		print('irc: '+chn);
-		await asyncio.sleep(time)
+		await asyncio.sleep(time*0.5)
 		await ircBot.join_channels((chn,));
 		print('joined irc: '+chn);
 		
-	async def waitForInit(testing):
-		await asyncio.sleep(5)
+	async def waitForInit(i,testing):
+		await asyncio.sleep(i*0.5+1)
 		global initialized;
 		initialized = True;
 		print("irc waiting over")
