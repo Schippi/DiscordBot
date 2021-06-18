@@ -293,8 +293,8 @@ def main(client,testing):
 		mymsg = data.strip().lower();	
 		#print(mymsg);	
 		if (('@msg-id=host_on' in mymsg) and ('now hosting' in mymsg)):
-			print('-_1>msg host\n', file=sys.stderr)
-			print('-_2>'+mymsg+"----end\n\n\n", file=sys.stderr)
+			#print('-_1>msg host\n', file=sys.stderr)
+			#print('-_2>'+mymsg+"----end\n\n\n", file=sys.stderr)
 			#print('-_3>'+data.strip().lower()+"----end\n\n\n", file=sys.stderr)
 			#print('-_4>'+mymsg.split(' ')[-1]+"----end\n\n\n", file=sys.stderr)
 			
