@@ -188,7 +188,7 @@ def main(client,testing):
 						shoulddo = True;
 					if row['raid_time'] and int(row['raid_time']) > 0:
 						mtime = int(row['raid_time']);
-				print('raid shoulddo '+str(shoulddo)+ "time: "+str(mtime));		
+				#print('raid shoulddo '+str(shoulddo)+ "time: "+str(mtime));		
 				if shoulddo:	
 					#global starttime;
 					
@@ -210,15 +210,19 @@ def main(client,testing):
 						#await asyncio.sleep(2);
 						#await channel.send("@nilesy i'd turn on followers-only mode on again but im not a mod");
 			if tags['msg-id'] == 'raid':
-				try:
-					to_chnl = channel.name;
-					from_chnl= tags['msg-param-displayName'];
-					viewcount = int(tags['msg-param-viewerCount']);
-					await raid_channel('raid',from_chnl,to_chnl,viewcount);
-					
-					
-				except Exception:
-					traceback.print_exc();
+				newraid = int(getControlVal('newraid',1));
+				if newraid > 0:
+					raidminviews = int(getControlVal('raidminviews',20));
+					try:
+						to_chnl = channel.name;
+						from_chnl= tags['msg-param-displayName'];
+						viewcount = int(tags['msg-param-viewerCount']);
+						if raidminviews < viewcount:
+							await raid_channel('raid',from_chnl,to_chnl,viewcount);
+						
+						
+					except Exception:
+						traceback.print_exc();
 				
 				
 		pass;
@@ -309,20 +313,21 @@ def main(client,testing):
 		mymsg = data.strip().lower();	
 		#print(mymsg);	
 		if (('@msg-id=host_on' in mymsg) and ('now hosting' in mymsg)):
+			newhost = int(getControlVal('newhost',1));
 			#print('-_1>msg host\n', file=sys.stderr)
 			#print('-_2>'+mymsg+"----end\n\n\n", file=sys.stderr)
 			#print('-_3>'+data.strip().lower()+"----end\n\n\n", file=sys.stderr)
 			#print('-_4>'+mymsg.split(' ')[-1]+"----end\n\n\n", file=sys.stderr)
-			
-			for msg in mymsg.split('\n'):
-				if "now hosting" in msg:
-					to_channel = msg.split(' ')[-1][:-1]; 
-					#print("--->"+mymsg+"<---")
-					for m in msg.split(' '):
-						if m[0] == '#':
-							from_channel = m[1:];
-							await raid_channel('host',from_channel,to_channel);
-							return;
+			if newhost > 0:
+				for msg in mymsg.split('\n'):
+					if "now hosting" in msg:
+						to_channel = msg.split(' ')[-1][:-1]; 
+						#print("--->"+mymsg+"<---")
+						for m in msg.split(' '):
+							if m[0] == '#':
+								from_channel = m[1:];
+								await raid_channel('host',from_channel,to_channel);
+								return;
 			
 	
 	@ircBot.command(name='raid')
