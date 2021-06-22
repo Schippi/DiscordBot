@@ -88,7 +88,16 @@ async def printEntry(client,entr,isRerun,sName,sGame,sURL,sTitle,sLogo, edit = F
 			for mymsg in messages:
 				if mymsg.author == client.user:
 					if mymsg.created_at > start:
-						alle = False;
+						msgarr = mycontent.split(' ');
+						oldmsgarr = mymsg.content.split(' ');
+						cnt = 0;
+						for m in msgarr:
+							for om in oldmsgarr:
+								if m == om:
+									cnt+=1;
+								break;
+						if cnt > len(msgarr)*0.75:
+							alle = False;
 						#for tee in entr.text.split():
 						#	teststring = '';
 						#	for ka in tee:
