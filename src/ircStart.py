@@ -13,6 +13,8 @@ from util import getControlVal;
 import util;
 import logging;
 import os;
+import aiohttp;
+import json;
 
 starttime = {};
 polls = {};
@@ -58,6 +60,7 @@ def main(client,testing):
 	ircBot.enableLimmy = (util.getControlVal("Limmy", "True") == "True");
 	ircBot.msgcnt = 0;
 	ircBot.offset = 0;
+	ircBot.session = aiohttp.ClientSession(); 
 
 	conn = sqlite3.connect(DBLOG);
 	cur = conn.cursor();
@@ -106,8 +109,14 @@ def main(client,testing):
 	async def joinLater(time,chn):
 		print('irc: '+chn);
 		await asyncio.sleep(time*0.5)
-		await ircBot.join_channels((chn,));
-		print('joined irc: '+chn);
+		try:
+			await ircBot.join_channels((chn,));
+			print('joined irc: '+chn);
+		except Exception as e:
+			mydate = time.strftime('%Y-%m-%d %H:%M:%S');
+			util.DBcursor.execute('''update irc_channel set left = ? where channel = ? and left is null''',(mydate,chn));
+			print('CANNOT JOIN irc: '+chn);
+		
 		
 	async def waitForInit(i,testing):
 		await asyncio.sleep(i*0.5+1)
@@ -221,16 +230,17 @@ def main(client,testing):
 							await raid_channel('raid',from_chnl,to_chnl,viewcount);
 						
 						
-					except Exception:
+					except Exception as e:
 						traceback.print_exc();
 				
 				
 		pass;
 	
+
 	
 	async def raid_channel(kind,from_chnl,to_chnl,viewers=0):
 		global initialized;
-		if not initialized and kind == 'host':
+		if not initialized and kind != 'host':
 			#dont do hosts when starting up
 			print('nope')
 			return;
@@ -243,33 +253,56 @@ def main(client,testing):
 				print('raidorhost: '+kind + ' '+from_chnl+' '+to_chnl +' '+str(viewers));
 				
 				mydate = time.strftime('%Y-%m-%d %H:%M:%S');
-				util.DBcursor.execute('''insert into connection(date,from_channel,to_channel,kind,viewers) 
-											select ?,?,?,?,? from dual ''',(mydate,from_chnl,to_chnl,kind,viewers));
+				people = {from_chnl,to_chnl};
+				peopleGame = {};
+				try:
+					if int(getControlVal('raidgames',1)) > 0:
+						oauthToken = getControlVal('token_oauth','');
+						if(oauthToken == ''):
+							oauthToken = await util.AuthMe(ircBot.session);
+						lookURL = 'https://api.twitch.tv/helix/users?login='+'&login='.join(people)
+						print(lookURL)
+						myjson = await util.fetch(ircBot.session,lookURL,{'client-id':util.TwitchAPI,
+																'Accept':'application/vnd.twitchtv.v5+json',
+																'Authorization':'Bearer '+oauthToken});	
+						myjson = json.loads(myjson);
+						newpeople = {};
+						myArray = myjson["data"];
+						for myEnt in myArray:
+							newpeople[myEnt["display_name"].lower()] = myEnt["id"];										
+							
+						myjson = await util.fetch(ircBot.session,'https://api.twitch.tv/helix/streams?user_id='+'&user_id='.join(newpeople.values()),{'client-id':util.TwitchAPI,
+																																'Accept':'application/vnd.twitchtv.v5+json',
+																																'Authorization':'Bearer '+oauthToken});
+						myjson = json.loads(myjson);
+						print(myjson)
+						gamesToFetch = set([k['game_id'] for k in myjson['data']]);
+						games = await util.getGames(gamesToFetch,ircBot.session,oauthToken);
+						for streamjson in myjson['data']:
+							peopleGame[streamjson['user_name'].lower()] = games[streamjson['game_id']];																										
+																															
+				except Exception:
+					traceback.print_exc();		
+				from_game = peopleGame.get(from_chnl, '');
+				to_game = peopleGame.get(to_chnl, ''); 																									
+				util.DBcursor.execute('''insert into connection(date,from_channel,to_channel,kind,viewers,from_game,to_game) 
+											select ?,?,?,?,?,?,? from dual ''',(mydate,from_chnl,to_chnl,kind,viewers,from_game,to_game));
 				util.DB.commit();
 			if newirc > 0:
 			#only join if not kicked before
-				exists = False;
-				for row in util.DBcursor.execute('''select * from irc_channel where channel = ?''',(from_chnl,)):
-					exists = True;
-					break;
-				if not exists:
-					await ircBot.join_channels((from_chnl,));
-					mydate = time.strftime('%Y-%m-%d %H:%M:%S');
-					util.DBcursor.execute('''insert into irc_channel(channel,joined,raid_auto,raid_time,ghost) 
-												select ?,?,?,?,? from dual where not exists (select * from irc_channel where channel = ?)
-												''',(from_chnl,mydate,0,None,1,from_chnl));
-					util.DB.commit();
-				exists = False;
-				for row in util.DBcursor.execute('''select * from irc_channel where channel = ?''',(to_chnl,)):
-					exists = True;
-					break;
-				if not exists:
-					await ircBot.join_channels((to_chnl,));
-					mydate = time.strftime('%Y-%m-%d %H:%M:%S');
-					util.DBcursor.execute('''insert into irc_channel(channel,joined,raid_auto,raid_time,ghost) 
-												select ?,?,?,?,? from dual where not exists (select * from irc_channel where channel = ?)
-												''',(to_chnl,mydate,0,None,1,to_chnl));
-					util.DB.commit();
+				for person in people:
+					exists = False;
+					for row in util.DBcursor.execute('''select * from irc_channel where channel = ?''',(person,)):
+						exists = True;
+						break;
+					if not exists:
+						await ircBot.join_channels((person,));
+						mydate = time.strftime('%Y-%m-%d %H:%M:%S');
+						util.DBcursor.execute('''insert into irc_channel(channel,joined,raid_auto,raid_time,ghost) 
+													select ?,?,?,?,? from dual where not exists (select * from irc_channel where channel = ?)
+													''',(person,mydate,0,None,1,person));
+						util.DB.commit();
+				
 				#refresh ghost channels
 				global ghost_channels;
 				ghost_channels = [];
@@ -319,9 +352,13 @@ def main(client,testing):
 			#print('-_3>'+data.strip().lower()+"----end\n\n\n", file=sys.stderr)
 			#print('-_4>'+mymsg.split(' ')[-1]+"----end\n\n\n", file=sys.stderr)
 			if newhost > 0:
-				for msg in mymsg.split('\n'):
+				for msg in [x.strip() for x in mymsg.split('\n')]:
 					if "now hosting" in msg:
 						to_channel = msg.split(' ')[-1][:-1]; 
+						print('')
+						print(msg.replace('\n','\\n'));
+						print('')
+						print(to_channel)
 						#print("--->"+mymsg+"<---")
 						for m in msg.split(' '):
 							if m[0] == '#':

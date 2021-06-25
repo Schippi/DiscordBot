@@ -145,6 +145,16 @@ def update(db, open_db_connection):
         `viewers`    INTEGER
     );''');
     
+    for row in open_db_connection.execute('''select * from `connection` limit 1'''):
+        if('from_game' in row.keys()):
+            pass;
+        else:
+            open_db_connection.execute('''alter table `connection` add from_game text''');
+        if('to_game' in row.keys()):
+            pass;
+        else:
+            open_db_connection.execute('''alter table `connection` add to_game text''');
+    
     for row in open_db_connection.execute('''select * from irc_channel limit 1'''):
         if('ghost' in row.keys()):
             pass;
