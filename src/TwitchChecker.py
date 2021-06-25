@@ -96,6 +96,7 @@ async def printEntry(client,entr,isRerun,sName,sGame,sURL,sTitle,sLogo, edit = F
 								if m == om:
 									cnt+=1;
 									break;
+						alle = True;
 						if cnt > len(msgarr)*0.75:
 							alle = False;
 						#for tee in entr.text.split():
