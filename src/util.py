@@ -296,6 +296,15 @@ async def posting(session, url, payload, headers = None):
 			except asyncio.TimeoutError:
 				return '';
 			
+			
+async def deletehttp(session, url, headers = None):
+	with async_timeout.timeout(10):
+		async with session.delete(url,headers = headers) as response:
+			try:
+				return await response.text()
+			except asyncio.TimeoutError:
+				return '';
+			
 def getControlVal(mystring,dflt):
 	valset = False;
 	for row in DBcursor.execute('SELECT * FROM control where key = ?',(mystring,)):

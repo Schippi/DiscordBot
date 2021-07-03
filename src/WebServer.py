@@ -230,8 +230,34 @@ async def pullSubCount(broadcaster_id,user_access_token):
     
     return cnt;
 
+@routes.get('/deleteraids')
+async def deleteraids(request):
+    query = '''
+    select * from twitch_person
+        where p.watching_raid_id is not null
+        or p.watching_raid_id_from is not null
+    ''';
+    oauthToken = await util.getOAuth();
+    for row in util.DB.cursor().execute(query):
+        if row['watching_raid_id']:
+            util.deletehttp(clientsession, HELIX+'eventsub/subscriptions?id='+row['watching_raid_id'], {'client-id':util.TwitchAPI,
+                                                                                        'Accept':'application/vnd.twitchtv.v5+json',
+                                                                                        'Authorization':'Bearer '+oauthToken,
+                                                                                        'Content-Type': 'application/json'
+                                                                                    })
+        if row['watching_raid_id_from']:
+            util.deletehttp(clientsession, HELIX+'eventsub/subscriptions?id='+row['watching_raid_id_from'], {'client-id':util.TwitchAPI,
+                                                                                        'Accept':'application/vnd.twitchtv.v5+json',
+                                                                                        'Authorization':'Bearer '+oauthToken,
+                                                                                        'Content-Type': 'application/json'
+                                                                                    })
+    util.DB.cursor().execute('''
+    update twitch_person set watching_raid_id = null,watching_raid_id_from=null 
+    ''');
+    util.DB.cursor().commit();
+    
 
-@routes.get('/startup')
+@routes.get('/startupraid')
 async def watchraids(request):
     query = '''
     select * from irc_channel irc
@@ -248,8 +274,9 @@ async def watchraids(request):
     return web.Response(text=str(cnt)+' new people\n\n\n'+str(html));
         
 async def ask_for_raidwatch(row):
-    print('asking for raids events for '+row['login']);
+    res = "";
     for condition in ['to_broadcaster_user_id','from_broadcaster_user_id']:
+        print('asking for raids events for '+row['login']+' '+condition);
         payload = {
                 "type":"channel.raid",
                 "version":"1",
@@ -270,7 +297,8 @@ async def ask_for_raidwatch(row):
                                                                                         'Authorization':'Bearer '+oauthToken,
                                                                                         'Content-Type': 'application/json'
                                                                                     })
-        return html;
+        res = res + '\n\n' + html
+    return res;
     
 @routes.post('/raidhook')
 async def handle_notif_raid(request):
@@ -293,9 +321,10 @@ async def handle_raid_confirmed(request,data):
     log.info('raid webhook confirmed:');
     log.info(str(data));
     for usr in data['subscription']['condition'].values():
+        field = 'watching_raid_id' if usr == 'to_broadcaster_user_id' else 'watching_raid_id_from'
         util.DBcursor.execute('''
-            update twitch_person set watching_raid_id = ? where id = ?
-        ''',(data['subscription']['id'],usr));
+            update twitch_person set ? = ? where id = ?
+        ''',(field,data['subscription']['id'],usr));
     util.DB.commit();
     
 async def handle_raid_data(request,data):
