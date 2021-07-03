@@ -86,7 +86,7 @@ def main(client,testing):
 		print('IRC Ready | {}'.format(TwitchIRCNICK));
 		i = 1;
 		if not ircBot.testing:
-			for row in util.DBcursor.execute('''select * from irc_channel where left is null'''):
+			for row in util.DBcursor.execute('''select * from irc_channel where left is null order by channel'''):
 				i = i+1;
 				#print('trying: '+row['channel']);
 				#await ircBot.join_channels((row['channel'],));
