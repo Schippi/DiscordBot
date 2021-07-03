@@ -240,10 +240,12 @@ async def watchraids(request):
         where irc.left is null
         and p.watching_raid_id is null
     ''';
+    cnt = 0;
+    html = "";
     for row in util.DB.cursor().execute(query):
         html = await ask_for_raidwatch(row);
-        return web.Response(text=str(html));
-    return web.Response(text='no new people');
+        cnt += 1
+    return web.Response(text=str(cnt)+' new people\n\n\n'+str(html));
         
 async def ask_for_raidwatch(row):
     print('asking for raids events for '+row['login']);
@@ -320,7 +322,7 @@ async def handle_raid_data(request,data):
     
     mydate = time.strftime('%Y-%m-%d %H:%M:%S');                                                                                                   
     util.DBcursor.execute('''insert into connection(date,from_channel,to_channel,kind,viewers,from_game,to_game) 
-                                select ?,?,?,?,?,?,? from dual ''',(mydate,from_chnl,to_chnl,'raid',data['viewers'],from_game,to_game));
+                                select ?,?,?,?,?,?,? from dual ''',(mydate,from_chnl,to_chnl,'hookraid',data['viewers'],from_game,to_game));
     util.DB.commit();
     for row in util.DBcursor.execute('''
             select * twitch_person where watching_raid_id is null and id in (?,?)
