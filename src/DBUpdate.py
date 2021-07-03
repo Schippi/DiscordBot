@@ -115,7 +115,7 @@ def update(db, open_db_connection):
             pass;
         else:
             open_db_connection.execute('''alter table twitch_person add refresh_token text''');
-        if('watching_raid' in row.keys()):
+        if('watching_raid_id' in row.keys()):
             pass;
         else:
             open_db_connection.execute('''alter table twitch_person add watching_raid_id text''');
