@@ -240,21 +240,23 @@ async def deleteraids(request):
     oauthToken = await util.getOAuth();
     for row in util.DB.cursor().execute(query):
         if row['watching_raid_id']:
-            util.deletehttp(clientsession, HELIX+'eventsub/subscriptions?id='+row['watching_raid_id'], {'client-id':util.TwitchAPI,
+            x = util.deletehttp(clientsession, HELIX+'eventsub/subscriptions?id='+row['watching_raid_id'], {'client-id':util.TwitchAPI,
                                                                                         'Accept':'application/vnd.twitchtv.v5+json',
                                                                                         'Authorization':'Bearer '+oauthToken,
                                                                                         'Content-Type': 'application/json'
                                                                                     })
+            log.info(x)
         if row['watching_raid_id_from']:
-            util.deletehttp(clientsession, HELIX+'eventsub/subscriptions?id='+row['watching_raid_id_from'], {'client-id':util.TwitchAPI,
+            x = util.deletehttp(clientsession, HELIX+'eventsub/subscriptions?id='+row['watching_raid_id_from'], {'client-id':util.TwitchAPI,
                                                                                         'Accept':'application/vnd.twitchtv.v5+json',
                                                                                         'Authorization':'Bearer '+oauthToken,
                                                                                         'Content-Type': 'application/json'
                                                                                     })
+            log.info(x)
     util.DB.cursor().execute('''
     update twitch_person set watching_raid_id = null,watching_raid_id_from=null 
     ''');
-    util.DB.cursor().commit();
+    util.DB.commit();
     
 
 @routes.get('/startupraid')
