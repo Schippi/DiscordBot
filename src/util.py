@@ -393,7 +393,7 @@ async def fetch_new_people(newpeople):
 	session = aiohttp.ClientSession(); 
 	myjson = await fetch(session,lookURL,{'client-id':TwitchAPI,
 											'Accept':'application/vnd.twitchtv.v5+json',
-											'Authorization':'Bearer '+getOAuth()});
+											'Authorization':'Bearer '+(await getOAuth())});
 	
 			
 	myjson = json.loads(myjson);
