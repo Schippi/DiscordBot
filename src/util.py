@@ -304,6 +304,8 @@ async def deletehttp(session, url, headers = None):
 				return await response.text()
 			except asyncio.TimeoutError:
 				return '';
+			except:
+				traceback.print_exc();
 			
 def getControlVal(mystring,dflt):
 	valset = False;
