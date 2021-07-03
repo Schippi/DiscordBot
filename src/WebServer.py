@@ -238,6 +238,7 @@ async def deleteraids(request):
         or p.watching_raid_id_from is not null
     ''';
     oauthToken = await util.getOAuth();
+    cnt = 0;
     for row in util.DB.cursor().execute(query):
         if row['watching_raid_id']:
             x = await util.deletehttp(clientsession, HELIX+'eventsub/subscriptions?id='+row['watching_raid_id'],headers = {'client-id':util.TwitchAPI,
@@ -246,6 +247,7 @@ async def deleteraids(request):
                                                                                         'Content-Type': 'application/json'
                                                                                     })
             log.info(x)
+            cnt+=1;
         if row['watching_raid_id_from']:
             x = await util.deletehttp(clientsession, HELIX+'eventsub/subscriptions?id='+row['watching_raid_id_from'], headers ={'client-id':util.TwitchAPI,
                                                                                         'Accept':'application/vnd.twitchtv.v5+json',
@@ -253,11 +255,12 @@ async def deleteraids(request):
                                                                                         'Content-Type': 'application/json'
                                                                                     })
             log.info(x)
+            cnt+=1;
     util.DB.cursor().execute('''
     update twitch_person set watching_raid_id = null,watching_raid_id_from = null 
     ''');
     util.DB.commit();
-    return web.Response(text='ok');
+    return web.Response(text='killed '+str(cnt));
     
 
 @routes.get('/startupraid')
@@ -323,11 +326,15 @@ async def handle_raid_confirmed(request,data):
     global bot_client;
     log.info('raid webhook confirmed:');
     log.info(str(data));
-    for usr in data['subscription']['condition'].values():
-        field = 'watching_raid_id' if usr == 'to_broadcaster_user_id' else 'watching_raid_id_from'
-        util.DBcursor.execute('''
-            update twitch_person set ? = ? where id = ?
-        ''',(field,data['subscription']['id'],usr));
+    for conds in data['subscription']['condition'].keys():
+        usr= data['subscription']['condition'][conds];
+        if usr and usr != '':
+            field = 'watching_raid_id' if conds == 'to_broadcaster_user_id' else 'watching_raid_id_from'
+            util.DBcursor.execute('''
+                update twitch_person set '''
+                +field+
+                ''' = ? where id = ?
+            ''',(data['subscription']['id'],usr));
     util.DB.commit();
     
 async def handle_raid_data(request,data):
