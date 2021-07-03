@@ -352,7 +352,7 @@ async def handle_raid_data(request,data):
                                                                                                                                 'Accept':'application/vnd.twitchtv.v5+json',
                                                                                                                                 'Authorization':'Bearer '+util.getOAuth()}));
     gamesToFetch = set([k['game_id'] for k in myjson['data']]);
-    games = await util.getGames(gamesToFetch,clientsession,util.getOAuth());
+    games = await util.getGames(gamesToFetch,clientsession,(await util.getOAuth()));
     peopleGame = {};
     for streamjson in myjson['data']:
         peopleGame[streamjson['user_name'].lower()] = games[streamjson['game_id']];
