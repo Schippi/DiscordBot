@@ -9,6 +9,8 @@ import base64;
 import yagmail;
 import json;
 import traceback;
+import aiohttp;
+from entities.TwitchAPI.TwitchAPI import TwitchUser;
 
 DBcursor = None;
 DB = None;
@@ -366,6 +368,40 @@ def sendMail(title,inhalt):
 	yag = yagmail.SMTP(NAME,base64.b64decode(TOKEN).decode());
 	contents = [inhalt];
 	yag.send(NAME, title, contents);
+	
+async def getOAuth():
+	oauthToken = getControlVal('token_oauth','');
+					
+	if(oauthToken == ''):
+		print('Authorization for the first time');
+		oauthToken = await AuthMe(aiohttp.ClientSession());
+	return oauthToken;
+	
+async def fetch_new_people(newpeople):
+	lookURL = HELIX+'users?login='+'&login='.join(newpeople.keys())
+	session = aiohttp.ClientSession(); 
+	myjson = await fetch(session,lookURL,{'client-id':TwitchAPI,
+											'Accept':'application/vnd.twitchtv.v5+json',
+											'Authorization':'Bearer '+getOAuth()});
+	
+			
+	myjson = json.loads(myjson);
+	print(myjson);
+	myArray = myjson["data"];
+	if myArray:
+		for myEnt in myArray:
+			data_user = TwitchUser(myEnt);
+			newpeople[myEnt["display_name"].lower()] = myEnt["id"];
+			
+			DBcursor.execute('update twitch set userid = ? where lower(username) = ?',[data_user.id,data_user.display_name.lower()]);
+			DBcursor.execute('''insert into twitch_person(id,login,display_name,type,broadcaster_type,description,profile_image_url,offline_image_url,view_count)
+				 select ?,?,?,?,?,?,?,?,? from dual
+				 where not exists (select * from twitch_person where id = ?) 
+				 '''							 
+			 ,[data_user.id,data_user.login,data_user.display_name,data_user.type,data_user.broadcaster_type,data_user.description,data_user.profile_image_url,data_user.offline_image_url,data_user.view_count,data_user.id]);
+		
+	DB.commit();
+	return newpeople;
 	
 def changeLog():
 	return '''0.3.0: introduction of changelog\n
