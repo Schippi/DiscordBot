@@ -345,14 +345,15 @@ async def handle_raid_data(request,data):
     from_chnl = data['event']['from_broadcaster_user_login']
     to_chnl_id = data['event']['to_broadcaster_user_id']
     to_chnl = data['event']['to_broadcaster_user_login']
+    session = await get_session(request);
     newpeople = await util.fetch_new_people({from_chnl:from_chnl_id,
                                  to_chnl:to_chnl_id
         });
-    myjson = json.loads(await util.fetch(clientsession,'https://api.twitch.tv/helix/streams?user_id='+'&user_id='.join(newpeople.values()),{'client-id':util.TwitchAPI,
+    myjson = json.loads(await util.fetch(session,'https://api.twitch.tv/helix/streams?user_id='+'&user_id='.join(newpeople.values()),{'client-id':util.TwitchAPI,
                                                                                                                                 'Accept':'application/vnd.twitchtv.v5+json',
-                                                                                                                                'Authorization':'Bearer '+util.getOAuth()}));
+                                                                                                                                'Authorization':'Bearer '+(await util.getOAuth())}));
     gamesToFetch = set([k['game_id'] for k in myjson['data']]);
-    games = await util.getGames(gamesToFetch,clientsession,(await util.getOAuth()));
+    games = await util.getGames(gamesToFetch,session,(await util.getOAuth()));
     peopleGame = {};
     for streamjson in myjson['data']:
         peopleGame[streamjson['user_name'].lower()] = games[streamjson['game_id']];
