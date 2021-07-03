@@ -233,7 +233,7 @@ async def pullSubCount(broadcaster_id,user_access_token):
 @routes.get('/deleteraids')
 async def deleteraids(request):
     query = '''
-    select * from twitch_person
+    select * from twitch_person p
         where p.watching_raid_id is not null
         or p.watching_raid_id_from is not null
     ''';
