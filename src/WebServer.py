@@ -28,6 +28,7 @@ from util import HELIX;
 import ssl;
 import logging;
 import time;
+from symbol import except_clause
 
 log = logging.getLogger(__name__);
 routes = web.RouteTableDef();
@@ -271,6 +272,7 @@ async def watchraids(request):
         on lower(irc.channel) = lower(p.login)
         where irc.left is null
         and p.watching_raid_id is null
+        and p.watching_raid_id_from is null
     ''';
     cnt = 0;
     html = "";
@@ -281,7 +283,7 @@ async def watchraids(request):
         
 async def ask_for_raidwatch(row):
     res = "";
-    log.info('ask_for_raidwatch 01');
+    html = "";
     for condition in ['to_broadcaster_user_id','from_broadcaster_user_id']:
         print('asking for raids events for '+row['login']+' '+condition);
         payload = {
@@ -297,15 +299,19 @@ async def ask_for_raidwatch(row):
                 }
             
             }
-        log.info('renew hook:'+str(payload))
         oauthToken = await util.getOAuth();
-        log.info('ask_for_raidwatch 02');
-        html = await util.posting(clientsession, HELIX+'eventsub/subscriptions', str(payload).replace('\'','"'),headers = {'client-id':util.TwitchAPI,
+        try:
+            html = await util.posting(clientsession, HELIX+'eventsub/subscriptions', str(payload).replace('\'','"'),headers = {'client-id':util.TwitchAPI,
                                                                                         'Accept':'application/vnd.twitchtv.v5+json',
                                                                                         'Authorization':'Bearer '+oauthToken,
                                                                                         'Content-Type': 'application/json'
-                                                                                    })
-        log.info('ask_for_raidwatch 03');
+            })
+            if('error' in html.lower()):
+                log.error('error in asking for raidwatch');
+                log.error('row '+row);
+                log.error('response '+html);
+        except Exception:
+            traceback.print_exc();
         res = res + '\n\n' + html
     return res;
     
@@ -314,7 +320,6 @@ async def handle_notif_raid(request):
     try:
         data = json.loads((await request.content.read()).decode("utf-8"));
         log.info('raidhook triggered')
-        log.info(str(data))
         if('challenge' in data.keys()):
             asyncio.get_event_loop().create_task(handle_raid_confirmed(request,data));
             return web.Response(text=data['challenge']);
@@ -327,8 +332,7 @@ async def handle_notif_raid(request):
 
 async def handle_raid_confirmed(request,data):
     global bot_client;
-    log.info('raid webhook confirmed:');
-    log.info(str(data));
+    log.info('raid webhook confirmed');
     for conds in data['subscription']['condition'].keys():
         usr= data['subscription']['condition'][conds];
         if usr and usr != '':
@@ -348,39 +352,38 @@ async def handle_raid_data(request,data):
     from_chnl = data['event']['from_broadcaster_user_login']
     to_chnl_id = data['event']['to_broadcaster_user_id']
     to_chnl = data['event']['to_broadcaster_user_login']
-    log.info('raid webhook 01');
-    session = await get_session(request);
-    log.info('raid webhook 02');
-    newpeople = await util.fetch_new_people(session,{
+    session = clientsession
+    peeps = {
         from_chnl:from_chnl_id,
         to_chnl:to_chnl_id
-        });
-    log.info('raid webhook 03');
+        };
+    newpeople = await util.fetch_new_people(session,peeps);
     oauthtoken = await util.getOAuth();
-    log.info('raid webhook 03.5');
     myjson = await util.fetch(session,'https://api.twitch.tv/helix/streams?user_id='+'&user_id='.join(newpeople.values()),{'client-id':util.TwitchAPI,
                                                                                                                                 'Accept':'application/vnd.twitchtv.v5+json',
                                                                                                                                 'Authorization':'Bearer '+oauthtoken});
-    log.info('raid webhook 03.7');
     myjson = json.loads(myjson);                                                                                                                            
-    log.info('raid webhook 04');
     gamesToFetch = set([k['game_id'] for k in myjson['data']]);
     games = await util.getGames(gamesToFetch,session,(await util.getOAuth()));
-    log.info('raid webhook 05');
     peopleGame = {};
     for streamjson in myjson['data']:
         peopleGame[streamjson['user_name'].lower()] = games[streamjson['game_id']];
     from_game = peopleGame.get(from_chnl, '');
     to_game = peopleGame.get(to_chnl, '');  
-    log.info('raid webhook 06');
     mydate = time.strftime('%Y-%m-%d %H:%M:%S');                                                                                                   
     util.DBcursor.execute('''insert into connection(date,from_channel,to_channel,kind,viewers,from_game,to_game) 
-                                select ?,?,?,?,?,?,? from dual ''',(mydate,from_chnl,to_chnl,'hookraid',data['viewers'],from_game,to_game));
+                                select ?,?,?,?,?,?,? from dual ''',(mydate,from_chnl,to_chnl,'hookraid',data['event']['viewers'],from_game,to_game));
     util.DB.commit();
+    log.info((from_chnl_id,to_chnl_id))
     for row in util.DBcursor.execute('''
-            select * twitch_person where watching_raid_id is null and id in (?,?)
+            select * from twitch_person 
+                where watching_raid_id is null 
+                    and watching_raid_id_from is null
+                and id in (?,?)
+                order by login desc
         ''',(from_chnl_id,to_chnl_id)):
-        log.info(await ask_for_raidwatch(row));
+        asyncio.get_event_loop().create_task(ask_for_raidwatch(row));
+
 
     
 

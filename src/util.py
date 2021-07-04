@@ -11,6 +11,7 @@ import json;
 import traceback;
 import aiohttp;
 from entities.TwitchAPI.TwitchAPI import TwitchUser;
+import logging;
 
 DBcursor = None;
 DB = None;
@@ -32,6 +33,7 @@ TwitchIRCNICK = '';
 TwitchIRCAUTH = '';
 YTAPI = '';
 pleaseLog=True;
+log = logging.getLogger(__name__);
 
 class AuthFailed(Exception):
 	pass;
@@ -410,6 +412,7 @@ async def fetch_new_people(session,newpeople):
 				 where not exists (select * from twitch_person where id = ?) 
 				 '''							 
 			 ,[data_user.id,data_user.login,data_user.display_name,data_user.type,data_user.broadcaster_type,data_user.description,data_user.profile_image_url,data_user.offline_image_url,data_user.view_count,data_user.id]);
+			print(data_user.id);
 		
 	DB.commit();
 	return newpeople;
