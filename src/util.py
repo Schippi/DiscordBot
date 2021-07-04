@@ -388,12 +388,12 @@ async def getOAuth():
 		oauthToken = await AuthMe(aiohttp.ClientSession());
 	return oauthToken;
 	
-async def fetch_new_people(newpeople):
+async def fetch_new_people(session,newpeople):
 	lookURL = HELIX+'users?login='+'&login='.join(newpeople.keys())
-	session = aiohttp.ClientSession(); 
+	oauthtoken = await getOAuth();
 	myjson = await fetch(session,lookURL,{'client-id':TwitchAPI,
 											'Accept':'application/vnd.twitchtv.v5+json',
-											'Authorization':'Bearer '+(await getOAuth())});
+											'Authorization':'Bearer '+oauthtoken});
 	
 			
 	myjson = json.loads(myjson);

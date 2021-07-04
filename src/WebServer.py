@@ -351,8 +351,9 @@ async def handle_raid_data(request,data):
     log.info('raid webhook 01');
     session = await get_session(request);
     log.info('raid webhook 02');
-    newpeople = await util.fetch_new_people({from_chnl:from_chnl_id,
-                                 to_chnl:to_chnl_id
+    newpeople = await util.fetch_new_people(session,{
+        from_chnl:from_chnl_id,
+        to_chnl:to_chnl_id
         });
     log.info('raid webhook 03');
     myjson = json.loads(await util.fetch(session,'https://api.twitch.tv/helix/streams?user_id='+'&user_id='.join(newpeople.values()),{'client-id':util.TwitchAPI,
