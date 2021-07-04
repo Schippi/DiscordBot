@@ -356,9 +356,13 @@ async def handle_raid_data(request,data):
         to_chnl:to_chnl_id
         });
     log.info('raid webhook 03');
-    myjson = json.loads(await util.fetch(session,'https://api.twitch.tv/helix/streams?user_id='+'&user_id='.join(newpeople.values()),{'client-id':util.TwitchAPI,
+    oauthtoken = await util.getOAuth();
+    log.info('raid webhook 03.5');
+    myjson = await util.fetch(session,'https://api.twitch.tv/helix/streams?user_id='+'&user_id='.join(newpeople.values()),{'client-id':util.TwitchAPI,
                                                                                                                                 'Accept':'application/vnd.twitchtv.v5+json',
-                                                                                                                                'Authorization':'Bearer '+(await util.getOAuth())}));
+                                                                                                                                'Authorization':'Bearer '+oauthtoken});
+    log.info('raid webhook 03.7');
+    myjson = json.loads(myjson);                                                                                                                            
     log.info('raid webhook 04');
     gamesToFetch = set([k['game_id'] for k in myjson['data']]);
     games = await util.getGames(gamesToFetch,session,(await util.getOAuth()));
