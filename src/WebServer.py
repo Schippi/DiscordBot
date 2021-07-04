@@ -281,6 +281,7 @@ async def watchraids(request):
         
 async def ask_for_raidwatch(row):
     res = "";
+    log.info('ask_for_raidwatch 01');
     for condition in ['to_broadcaster_user_id','from_broadcaster_user_id']:
         print('asking for raids events for '+row['login']+' '+condition);
         payload = {
@@ -298,11 +299,13 @@ async def ask_for_raidwatch(row):
             }
         log.info('renew hook:'+str(payload))
         oauthToken = await util.getOAuth();
+        log.info('ask_for_raidwatch 02');
         html = await util.posting(clientsession, HELIX+'eventsub/subscriptions', str(payload).replace('\'','"'),headers = {'client-id':util.TwitchAPI,
                                                                                         'Accept':'application/vnd.twitchtv.v5+json',
                                                                                         'Authorization':'Bearer '+oauthToken,
                                                                                         'Content-Type': 'application/json'
                                                                                     })
+        log.info('ask_for_raidwatch 03');
         res = res + '\n\n' + html
     return res;
     
@@ -345,21 +348,26 @@ async def handle_raid_data(request,data):
     from_chnl = data['event']['from_broadcaster_user_login']
     to_chnl_id = data['event']['to_broadcaster_user_id']
     to_chnl = data['event']['to_broadcaster_user_login']
+    log.info('raid webhook 01');
     session = await get_session(request);
+    log.info('raid webhook 02');
     newpeople = await util.fetch_new_people({from_chnl:from_chnl_id,
                                  to_chnl:to_chnl_id
         });
+    log.info('raid webhook 03');
     myjson = json.loads(await util.fetch(session,'https://api.twitch.tv/helix/streams?user_id='+'&user_id='.join(newpeople.values()),{'client-id':util.TwitchAPI,
                                                                                                                                 'Accept':'application/vnd.twitchtv.v5+json',
                                                                                                                                 'Authorization':'Bearer '+(await util.getOAuth())}));
+    log.info('raid webhook 04');
     gamesToFetch = set([k['game_id'] for k in myjson['data']]);
     games = await util.getGames(gamesToFetch,session,(await util.getOAuth()));
+    log.info('raid webhook 05');
     peopleGame = {};
     for streamjson in myjson['data']:
         peopleGame[streamjson['user_name'].lower()] = games[streamjson['game_id']];
     from_game = peopleGame.get(from_chnl, '');
     to_game = peopleGame.get(to_chnl, '');  
-    
+    log.info('raid webhook 06');
     mydate = time.strftime('%Y-%m-%d %H:%M:%S');                                                                                                   
     util.DBcursor.execute('''insert into connection(date,from_channel,to_channel,kind,viewers,from_game,to_game) 
                                 select ?,?,?,?,?,?,? from dual ''',(mydate,from_chnl,to_chnl,'hookraid',data['viewers'],from_game,to_game));
