@@ -333,6 +333,7 @@ async def handle_notif_raid(request):
 async def handle_raid_confirmed(request,data):
     global bot_client;
     log.info('raid webhook confirmed');
+    mydate = time.strftime('%Y-%m-%d %H:%M:%S'); 
     for conds in data['subscription']['condition'].keys():
         usr= data['subscription']['condition'][conds];
         if usr and usr != '':
@@ -340,8 +341,9 @@ async def handle_raid_confirmed(request,data):
             util.DBcursor.execute('''
                 update twitch_person set '''
                 +field+
-                ''' = ? where id = ?
-            ''',(data['subscription']['id'],usr));
+                ''' = ?
+                ,watching_since = ? where id = ?
+            ''',(data['subscription']['id'],mydate,usr));
     util.DB.commit();
     
 async def handle_raid_data(request,data):
@@ -352,37 +354,43 @@ async def handle_raid_data(request,data):
     from_chnl = data['event']['from_broadcaster_user_login']
     to_chnl_id = data['event']['to_broadcaster_user_id']
     to_chnl = data['event']['to_broadcaster_user_login']
+    newconnection = int(util.getControlVal('hooknewconnection',1));
+    hookspread = int(util.getControlVal('hookspread',1));
+    raidminviews = int(util.getControlVal('raidminviews',10));
     session = clientsession
-    peeps = {
-        from_chnl:from_chnl_id,
-        to_chnl:to_chnl_id
-        };
-    newpeople = await util.fetch_new_people(session,peeps);
-    oauthtoken = await util.getOAuth();
-    myjson = await util.fetch(session,'https://api.twitch.tv/helix/streams?user_id='+'&user_id='.join(newpeople.values()),{'client-id':util.TwitchAPI,
-                                                                                                                                'Accept':'application/vnd.twitchtv.v5+json',
-                                                                                                                                'Authorization':'Bearer '+oauthtoken});
-    myjson = json.loads(myjson);                                                                                                                            
-    gamesToFetch = set([k['game_id'] for k in myjson['data']]);
-    games = await util.getGames(gamesToFetch,session,(await util.getOAuth()));
-    peopleGame = {};
-    for streamjson in myjson['data']:
-        peopleGame[streamjson['user_name'].lower()] = games[streamjson['game_id']];
-    from_game = peopleGame.get(from_chnl, '');
-    to_game = peopleGame.get(to_chnl, '');  
-    mydate = time.strftime('%Y-%m-%d %H:%M:%S');                                                                                                   
-    util.DBcursor.execute('''insert into connection(date,from_channel,to_channel,kind,viewers,from_game,to_game) 
-                                select ?,?,?,?,?,?,? from dual ''',(mydate,from_chnl,to_chnl,'hookraid',data['event']['viewers'],from_game,to_game));
-    util.DB.commit();
-    log.info((from_chnl_id,to_chnl_id))
-    for row in util.DBcursor.execute('''
-            select * from twitch_person 
-                where watching_raid_id is null 
-                    and watching_raid_id_from is null
-                and id in (?,?)
-                order by login desc
-        ''',(from_chnl_id,to_chnl_id)):
-        asyncio.get_event_loop().create_task(ask_for_raidwatch(row));
+    if int(data['event']['viewers']) > raidminviews:
+        peeps = {
+            from_chnl:from_chnl_id,
+            to_chnl:to_chnl_id
+            };
+        newpeople = await util.fetch_new_people(session,peeps);
+        oauthtoken = await util.getOAuth();
+        myjson = await util.fetch(session,'https://api.twitch.tv/helix/streams?user_id='+'&user_id='.join(newpeople.values()),{'client-id':util.TwitchAPI,
+                                                                                                                                    'Accept':'application/vnd.twitchtv.v5+json',
+                                                                                                                                    'Authorization':'Bearer '+oauthtoken});
+        myjson = json.loads(myjson);                                                                                                                            
+        gamesToFetch = set([k['game_id'] for k in myjson['data']]);
+        games = await util.getGames(gamesToFetch,session,(await util.getOAuth()));
+        peopleGame = {};
+        for streamjson in myjson['data']:
+            peopleGame[streamjson['user_name'].lower()] = games[streamjson['game_id']];
+        from_game = peopleGame.get(from_chnl, '');
+        to_game = peopleGame.get(to_chnl, '');  
+        mydate = time.strftime('%Y-%m-%d %H:%M:%S');   
+        if newconnection > 0:                                                                                                
+            util.DBcursor.execute('''insert into connection(date,from_channel,to_channel,kind,viewers,from_game,to_game) 
+                                        select ?,?,?,?,?,?,? from dual ''',(mydate,from_chnl,to_chnl,'hookraid',data['event']['viewers'],from_game,to_game));
+            util.DB.commit();
+            log.info((from_chnl_id,to_chnl_id))
+        if hookspread > 0:
+            for row in util.DBcursor.execute('''
+                    select * from twitch_person 
+                        where watching_raid_id is null 
+                            and watching_raid_id_from is null
+                        and id in (?,?)
+                        order by login desc
+                ''',(from_chnl_id,to_chnl_id)):
+                asyncio.get_event_loop().create_task(ask_for_raidwatch(row));
 
 
     

@@ -123,6 +123,10 @@ def update(db, open_db_connection):
             pass;
         else:
             open_db_connection.execute('''alter table twitch_person add watching_raid_id_from text''');
+        if('watching_since' in row.keys()):
+            pass;
+        else:
+            open_db_connection.execute('''alter table twitch_person add watching_since text''');
     
     open_db_connection.execute('''CREATE TABLE IF NOT EXISTS  `urlmap` (
             'ID'    INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
