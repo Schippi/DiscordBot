@@ -5,7 +5,8 @@ Created on 17 May 2020
 '''
 
 from aiohttp import web;
-import aiohttp;
+import aiohttp
+from aiohttp.web_response import Response;
 import aiohttp_session;
 from aiohttp_session import setup, get_session;
 from aiohttp_session.cookie_storage import EncryptedCookieStorage;
@@ -314,6 +315,18 @@ async def ask_for_raidwatch(row):
             traceback.print_exc();
         res = res + '\n\n' + html
     return res;
+
+@routes.get('/testingbaby')
+async def testingbaby(request):
+    for row in util.DBcursor.execute('''select * from connection where from_channel = ?
+                                                                        and to_channel = ?
+                                                                        and kind = ?
+                                                                        and viewers = ?
+                                                                        and date like ?
+                                            
+                                        ''',('ravs_','hybridpanda','hookraid','258','2021-07-08 19:50%'
+                                        )):
+        return web.Response(text=str(row));
     
 @routes.post('/raidhook')
 async def handle_notif_raid(request):
@@ -358,7 +371,8 @@ async def handle_raid_data(request,data):
     hookspread = int(util.getControlVal('hookspread',1));
     raidminviews = int(util.getControlVal('raidminviews',10));
     session = clientsession
-    if int(data['event']['viewers']) > raidminviews:
+    raidingviewers = int(data['event']['viewers']);
+    if raidingviewers > raidminviews:
         peeps = {
             from_chnl:from_chnl_id,
             to_chnl:to_chnl_id
@@ -376,10 +390,21 @@ async def handle_raid_data(request,data):
             peopleGame[streamjson['user_name'].lower()] = games[streamjson['game_id']];
         from_game = peopleGame.get(from_chnl, '');
         to_game = peopleGame.get(to_chnl, '');  
-        mydate = time.strftime('%Y-%m-%d %H:%M:%S');   
+        myshortdate = time.strftime('%Y-%m-%d %H:%M')+'%';
+        mydate = time.strftime('%Y-%m-%d %H:%M:%S');
         if newconnection > 0:                                                                                                
             util.DBcursor.execute('''insert into connection(date,from_channel,to_channel,kind,viewers,from_game,to_game) 
-                                        select ?,?,?,?,?,?,? from dual ''',(mydate,from_chnl,to_chnl,'hookraid',data['event']['viewers'],from_game,to_game));
+                                        select ?,?,?,?,?,?,? from dual 
+                                        where not exists
+                                            (select * from connection where from_channel = ?
+                                                                        and to_channel = ?
+                                                                        and kind = ?
+                                                                        and viewers = ?
+                                                                        and date like ?
+                                            )
+                                        ''',(mydate,from_chnl,to_chnl,'hookraid',raidingviewers ,from_game,to_game,
+                                            from_chnl,to_chnl,'hookraid',raidingviewers,myshortdate
+                                        ));
             util.DB.commit();
             log.info((from_chnl_id,to_chnl_id))
         if hookspread > 0:
