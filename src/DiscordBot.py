@@ -226,11 +226,11 @@ async def on_message(message):
 								await message.delete();
 							except:
 								pass;
-							with open(util.cfgPath+"/qr/"+str(att.id)+".data","w+") as the_file:
-								the_file.write(str(x[0])+"\n\n");
-								the_file.write(str(x[0].data)+"\n\n");
-								the_file.write(att.filename+"\n\n");
-								the_file.write(str(message)+"\n\n");
+							#with open(util.cfgPath+"/qr/"+str(att.id)+".data","w+") as the_file:
+							#	the_file.write(str(x[0])+"\n\n");
+							#	the_file.write(str(x[0].data)+"\n\n");
+							#	the_file.write(att.filename+"\n\n");
+							#	the_file.write(str(message)+"\n\n");
 					except:
 						if x[0].data:
 							print(x[0].data);
