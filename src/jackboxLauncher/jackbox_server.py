@@ -11,8 +11,8 @@ import base64
 import ssl
 import time
 import os.path
-from jackbox_config import ALL_APP_IDS
-from jackbox_config import games
+from jackboxLauncher.jackbox_config import ALL_APP_IDS
+from jackboxLauncher.jackbox_config import games
 
 jackroutes = web.RouteTableDef()
 
@@ -123,13 +123,23 @@ async def jackbox_post_handler(request):
         steamid = int(data['steamid'])
     except (ValueError, KeyError) as e:
         return web.Response(text='Invalid SteamId, did you use the Steam64 ID?', status=400)
-    return await user_gallery_handler(request, steamid=steamid)
+    raise web.HTTPFound('/jackbox/'+str(steamid))
 
 
 @jackroutes.get('/jackbox/{steamid}')
 async def steam_play_handler(request):
     steamid = int(request.match_info['steamid'])
     return await user_gallery_handler(request, steamid)
+
+@jackroutes.get('/jackbox/{steamid}/draw')
+async def steam_play_handler(request):
+    steamid = int(request.match_info['steamid'])
+    return await user_gallery_handler(request, steamid, onlydraw=True)
+
+@jackroutes.get('/jackbox/{steamid}/draw/{playerCount}')
+async def steam_play_handler(request):
+    steamid = int(request.match_info['steamid'])
+    return await user_gallery_handler(request, steamid, onlydraw=True, playerCount=int(request.match_info['playerCount']))
 
 
 async def user_gallery_handler(request, steamid: int, onlydraw: bool = False, playerCount: int = 0):

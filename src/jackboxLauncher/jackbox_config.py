@@ -95,5 +95,7 @@ games = [
     GameItem(name='Paper Pirates', players_min=2, players_max=10, local_recommended=0, image='PaperPirates.jpg', game=PartyPack(name='Paper Pirates', app_id=1234220)),
     GameItem(name='Verse Surf', players_min=4, players_max=8, local_recommended=0, image='VerseSurf.jpg', game=PartyPack(name='Verse Surf', app_id=1315390)),
 
+    GameItem(name='Use Your Words', players_min=4, players_max=8, local_recommended=0, image='UseYourWords.jpg', game=PartyPack(name='Use Your Words', app_id=521350)),
+
 
 ]

@@ -6,18 +6,14 @@ Created on 17 May 2020
 
 from aiohttp import web;
 import aiohttp
-from aiohttp.web_response import Response;
 import aiohttp_session;
-from aiohttp_session import setup, get_session;
+from aiohttp_session import get_session;
 from aiohttp_session.cookie_storage import EncryptedCookieStorage;
 import asyncio;
 import util;
 import json;
 from entities import TwitchEntry;
-from TwitchChecker import streamonline;
 from TwitchChecker import printEntry;
-from TwitchChecker import stuff_lock;
-from entities.TwitchAPI.TwitchAPI import TwitchUser;
 from entities.TwitchAPI.TwitchAPI import TwitchStream;
 from util import logEx;
 import traceback;
@@ -29,7 +25,6 @@ from util import HELIX;
 import ssl;
 import logging;
 import time;
-from symbol import except_clause
 
 log = logging.getLogger(__name__);
 routes = web.RouteTableDef();
@@ -60,11 +55,11 @@ def setup(my_client):
 	
 	
 	app.add_routes(routes);
-	from jackbox_server import jackroutes;
+	from jackboxLauncher.jackbox_server import jackroutes;
 	app.add_routes(jackroutes);
 	runner = web.AppRunner(app);
 	root_folder = os.path.dirname(__file__)
-	app.router.add_static('/images', root_folder+'/images')
+	app.router.add_static('/images', root_folder+'/jackboxLauncher/images')
 	asyncio.get_event_loop().run_until_complete(runner.setup())
 	
 	ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
