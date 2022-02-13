@@ -55,7 +55,8 @@ def setup(my_client):
 	
 	
 	app.add_routes(routes);
-	from jackboxLauncher.jackbox_server import jackroutes;
+	sys.path.insert(0,'jackboxLauncher')
+	from jackbox_server import jackroutes;
 	app.add_routes(jackroutes);
 	runner = web.AppRunner(app);
 	root_folder = os.path.dirname(__file__)

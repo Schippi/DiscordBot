@@ -11,47 +11,14 @@ import base64
 import ssl
 import time
 import os.path
-from jackboxLauncher.jackbox_config import ALL_APP_IDS
-from jackboxLauncher.jackbox_config import games
+from jackbox_config import ALL_APP_IDS
+from jackbox_config import games
 
 jackroutes = web.RouteTableDef()
 
 
 def current_milli_time():
     return round(time.time() * 1000)
-
-
-def setup(config_dict: dict):
-    app = web.Application()
-    httpsapp = app
-    fernet_key = fernet.Fernet.generate_key()
-    secret_key = base64.urlsafe_b64decode(fernet_key)
-    storage = EncryptedCookieStorage(secret_key)
-    # print(storage.cookie_params)
-    # storage.cookie_params['samesite']='strict'
-    # storage.save_cookie(response, cookie_data)
-    aiohttp_session.setup(app, storage)
-
-    app.add_routes(jackroutes)
-
-    runner = web.AppRunner(app)
-
-    asyncio.get_event_loop().run_until_complete(runner.setup())
-
-    host = config_dict['host']
-    port = config_dict['port']
-
-    if 'certificate' in config_dict.keys() and 'private_key' in config_dict.keys():
-        certificate = config_dict['certificate']  # = util.cfgPath+'/fullchain.pem'
-        private_key = config_dict['private_key']  # = util.cfgPath+'/privkey.pem'
-        ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-        ssl_context.load_cert_chain(certificate, private_key)
-        website = web.TCPSite(runner, host, port, ssl_context=ssl_context)
-    else:
-        website = web.TCPSite(runner, host, port)
-
-    return website
-
 
 async def start_site(app: web.Application, config: dict):
     host = config['host']
@@ -60,23 +27,12 @@ async def start_site(app: web.Application, config: dict):
     runner = web.AppRunner(app)
     root_folder = os.path.dirname(sys.argv[0])
     app.router.add_static('/images', root_folder+'/images')
+    app.router.add_static('/css', root_folder+'/htdocs/css')
     app.router.add_route('*', '/', launcher_handler)
 
-    runners.append(runner)
     await runner.setup()
     site = web.TCPSite(runner, host, port)
     await site.start()
-
-
-async def root_handler(request, *args, **kwargs):
-    tasklist.clear()
-    return web.FileResponse('jackboxLauncher/htdocs/index.html')
-
-
-def loopdirectory(s):
-    for f in os.listdir(s):
-        yield f
-
 
 async def launcher_handler(request):
     return await gallery_handler(request);
@@ -108,6 +64,11 @@ async def draw_play_handler(request):
 @jackroutes.get('/jackbox')
 async def jackbox_index_handler(request):
     return web.FileResponse('jackboxLauncher/htdocs/jackbox.html')
+
+
+@jackroutes.get('/jackbox/')
+async def jackbox_index_handler_2(request):
+    return await jackbox_index_handler(request)
 
 
 @jackroutes.get('/jackbox/all')
@@ -169,7 +130,6 @@ async def gallery_handler(request, onlydraw: bool = False, playerCount: int = 0,
     with open('jackboxLauncher/htdocs/list.html.part02', 'r') as f:
         loopy = f.read()
     item = None;
-    print(ALL_APP_IDS)
     for game in (g for g in games if g.game.app_id in filter_games and (playerCount == 0 or g.players_min <= playerCount <= g.players_max) and (g.drawing or not onlydraw)):
         item = loopy.replace('{app_id}', str(game.game.app_id))
         item = item.replace('{game_name}', game.name)
@@ -187,25 +147,9 @@ async def gallery_handler(request, onlydraw: bool = False, playerCount: int = 0,
 
     return web.Response(content_type='text/html', text=result)
 
-
-async def cancel_tasks():
-    for t in tasklist:
-        t.cancel()
-        tasklist.remove(t)
-        await t
-
-
 if __name__ == '__main__':
     from jackbox_config import config;
-    from·threading·import··Lock
 
-#    runners·=·[]
- #   tasklist·=·[]
-  #  last_static_action·=·(None,·None)
-   # mutex·=·Lock()
-
-    # web.run_app(setuphttp(config)[0])
-    # print("something")
     loop = asyncio.get_event_loop()
     # web.run_app(setuphttp(config)[0])
     loop.create_task(start_site(web.Application(), config))
@@ -214,8 +158,5 @@ if __name__ == '__main__':
         print("starting, config:")
         print(config)
         loop.run_forever()
-    except:
+    except Exception as e:
         pass
-    finally:
-        for runner in runners:
-            loop.run_until_complete(runner.cleanup())

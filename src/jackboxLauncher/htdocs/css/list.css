@@ -1,0 +1,86 @@
+.tooltip {
+  position: relative;
+  display: inline-block;
+  border-bottom: 1px dotted black;
+}
+
+.banner {
+  width: 300px;
+  height: 150px;
+  padding: 5px;
+}
+
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 180px;
+  background-color: black;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  //padding: 5px 0;
+ //border-shadow: 10px 2px 2px #fff;
+  /* Position the tooltip */
+  position: absolute;
+  left: 220px;
+  top: 50px;
+  z-index: 1;
+}
+
+.tooltip .tooltipimg {
+  visibility: hidden;
+
+  /* Position the tooltip */
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  z-index: 1;
+  padding: 5px;
+}
+
+.tooltip .tooltipclick {
+  visibility: hidden;
+
+  /* Position the tooltip */
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  z-index: 1;
+  padding: 5px;
+}
+
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+}
+
+.tooltip:hover .tooltipimg {
+  visibility: visible;
+}
+
+.tooltip:active .tooltiptext {
+  visibility: hidden;
+}
+
+.tooltip:active .tooltipimg {
+  visibility: hidden;
+}
+.tooltip:active .tooltipclick {
+  visibility: visible;
+}
+
+.tooltip:not:hover .tooltipclick{
+  visibility: hidden;
+}
+
+body {
+    background-color: #1C1B22;
+    width: 80%;
+    min-height: 100vh;
+    display: overflow;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+    overflow-wrap: anywhere;
+    padding-left: 50px;
+    padding-right: 50px;
+}
