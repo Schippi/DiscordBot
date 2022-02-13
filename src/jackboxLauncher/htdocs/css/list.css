@@ -81,6 +81,6 @@ body {
     align-items: center;
     margin: 0;
     overflow-wrap: anywhere;
-    padding-left: 50px;
-    padding-right: 50px;
+    //padding-left: 50px;
+    //padding-right: 50px;
 }

@@ -72,7 +72,7 @@ async def jackbox_index_handler_2(request):
 
 
 @jackroutes.get('/jackbox/all')
-async def jackbox_index_handler(request):
+async def jackbox_list_index_handler(request):
     return await gallery_handler(request);
 
 
