@@ -24,7 +24,6 @@ class GameItem:
     drawing: bool = False
     image: str = None
 
-ALL_APP_IDS = [331670,397460,434170,610180,774461,1211630,1552350,351510,442070,1111940,1234220,1315390]
 
 PP1 = PartyPack(name='PartyPack01', app_id=331670)
 PP2 = PartyPack(name='PartyPack02', app_id=397460)
@@ -99,3 +98,5 @@ games = [
 
 
 ]
+
+ALL_APP_IDS = set([b.game.app_id for b in games])

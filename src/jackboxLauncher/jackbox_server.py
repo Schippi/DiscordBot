@@ -148,7 +148,7 @@ async def user_gallery_handler(request, steamid: int, onlydraw: bool = False, pl
         async with aiohttp.ClientSession() as session:
             my_dict = {
                 'steamid': steamid,
-                'appids_filter':ALL_APP_IDS
+                'appids_filter': list(ALL_APP_IDS)
             }
             my_url='https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=%s&input_json=%s' % (STEAM_API_KEY, json.dumps(my_dict))
             #print(my_url)
