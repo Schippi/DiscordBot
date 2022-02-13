@@ -63,7 +63,7 @@ def setup(my_client):
 	from jackbox_server import jackroutes;
 	app.add_routes(jackroutes);
 	runner = web.AppRunner(app);
-	root_folder = os.path.dirname(sys.argv[0])
+	root_folder = os.path.dirname(__file__)
 	app.router.add_static('/images', root_folder+'/images')
 	asyncio.get_event_loop().run_until_complete(runner.setup())
 	
