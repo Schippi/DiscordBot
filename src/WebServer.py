@@ -60,8 +60,11 @@ def setup(my_client):
 	runner = web.AppRunner(app);
 	root_folder = os.path.dirname(__file__)
 	app.router.add_static('/images', root_folder+'/jackboxLauncher/images')
+
+	app.router.add_static('/css', root_folder+'/jackboxLauncher/htdocs/css')
+
 	asyncio.get_event_loop().run_until_complete(runner.setup())
-	
+
 	ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
 	ssl_context.load_cert_chain(util.cfgPath+'/fullchain.pem', util.cfgPath+'/privkey.pem');
 
@@ -70,7 +73,7 @@ def setup(my_client):
 
 async def handle_http(request):
 	u = str(request.url)
-	if(u.startswith('http:')):
+	if u.startswith('http:'):
 		global httpsapp;
 		x = await httpsapp.router.resolve(request); 
 		if not isinstance(x,aiohttp.web_urldispatcher.MatchInfoError):
