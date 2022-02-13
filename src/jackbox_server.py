@@ -56,9 +56,9 @@ def setup(config_dict: dict):
 async def start_site(app: web.Application, config: dict):
     host = config['host']
     port = config['port']
-    root_folder = os.path.dirname(sys.argv[0])
     app.add_routes(jackroutes)
     runner = web.AppRunner(app)
+    root_folder = os.path.dirname(sys.argv[0])
     app.router.add_static('/images', root_folder+'/images')
     app.router.add_route('*', '/', launcher_handler)
 

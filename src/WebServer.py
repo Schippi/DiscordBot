@@ -39,6 +39,7 @@ web_srv_session = aiohttp.ClientSession();
 
 bot_client = None;
 httpsapp = None;
+import os;
 
 clientsession = aiohttp.ClientSession(); 
 
@@ -62,6 +63,8 @@ def setup(my_client):
 	from jackbox_server import jackroutes;
 	app.add_routes(jackroutes);
 	runner = web.AppRunner(app);
+	root_folder = os.path.dirname(sys.argv[0])
+	app.router.add_static('/images', root_folder+'/images')
 	asyncio.get_event_loop().run_until_complete(runner.setup())
 	
 	ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
