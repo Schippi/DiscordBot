@@ -29,6 +29,18 @@
   z-index: 1;
 }
 
+.tooltip .tooltipimg {
+  visibility: hidden;
+  width: 180px;
+
+
+  /* Position the tooltip */
+  position: absolute;
+  left: 60px;
+  top: 50px;
+  z-index: 1;
+}
+
 .tooltip:hover .tooltiptext {
   visibility: visible;
 }

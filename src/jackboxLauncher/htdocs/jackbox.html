@@ -1,18 +1,30 @@
 <html>
 <head>
+    <link rel="stylesheet" href="/css/main.css">
 </head>
 <body>
-<h1>Jackbox Launcher</h1>
-<p>
-<form action="/jackbox" method="post" accept-charset="utf-8"
-      enctype="application/x-www-form-urlencoded">
-    <label for="steamid">Steam64 ID</label>
-    <input id="steamid" name="steamid" type="text" value="" autofocus/>
-    <input type="submit" value="send"/>
-</form>
-<a href="https://steamid.xyz">Find your Steam-ID</a><br/>
-We need the long number in your profile Permalink
-</p>
-<p><a href="/jackbox/all">Show All Games</a></p>
+
+<div class="main">
+    <h1><u>Jackbox Launcher</u></h1>
+    <form action="/jackbox" method="post" accept-charset="utf-8"
+          enctype="application/x-www-form-urlencoded">
+        <!--<label for="steamid">Steam64 ID</label>-->
+        <input id="steamid" name="steamid" type="text" placeholder="Steam64 ID" />
+        <input id="submit" type="submit" value="Submit"/>
+    </form>
+
+    <h4>What is a Steam ID?</h4>
+    A SteamID is a unique identifier used to identify a Steam account. It is also used to refer to a user's Steam Community profile page.
+    <h4>Why do you need my Steam ID?</h4>
+    To find out which of the games you have access to.
+    <h4>How do I find my Steam ID?</h4>
+    It is the 17 digit number in your profile URL. If you have a vanity URL use the following tool to find your Steam ID:
+    <a href="https://steamid.xyz" target="blank">Find your Steam ID</a><br/>
+    We specifically need the Steam64ID, which is the 17 digit number in your profile Permalink
+<p/>
+    <h4>Profile is private or want to see all "Jackboxy" games?</h4>
+    Please make your Steam Profile public or Click here to show <a href="/jackbox/all">All Games</a>
+
+    </div>
 </body>
 </html>

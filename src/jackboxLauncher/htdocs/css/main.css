@@ -1,0 +1,72 @@
+body{
+    background-color: #1C1B22;
+    color: #fff;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+    text-shadow: 1px 1px 2px #000;
+    font-family: system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica New",Arial,"Noto Sans","Liberation Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+}
+
+::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
+  color: darkgrey;
+  opacity: 1; /* Firefox */
+}
+
+:-ms-input-placeholder { /* Internet Explorer 10-11 */
+  color: darkgrey;
+}
+
+h1{
+    color: #E46A6B;
+    //text-shadow: 0px 0px 2px #fff;
+}
+
+::-ms-input-placeholder { /* Microsoft Edge */
+  color: darkgrey;
+}
+
+form{
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+input {
+  font-family: inherit;
+  line-height: normal;
+  width: 100%;
+  display: block;
+  padding: .2em;
+  margin: .2em 0;
+ // box-sizing: content-box;
+  background: #e7e7e7;
+  border-radius: 1.5px;
+  font-size: 1em;
+}
+
+#steamid{
+    color:red;
+    width: 100%;
+}
+
+#submit{
+    cursor: pointer;
+    background: #7c3f3f;
+    color: #fff;
+    box-shadow: 0 0 2px 0 #000;
+    border: none;
+}
+
+.main{
+    background-color: #3B3B3B;
+    box-shadow: 0px 0px 4px 4px #000;
+    padding: 10;
+    text-align: center;
+     width:40%
+}
+
+a:visited {
+  color: green;
+}
