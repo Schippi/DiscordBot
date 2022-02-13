@@ -70,7 +70,7 @@ async def start_site(app: web.Application, config: dict):
 
 async def root_handler(request, *args, **kwargs):
     tasklist.clear()
-    return web.FileResponse('htdocs/index.html')
+    return web.FileResponse('jackboxLauncher/htdocs/index.html')
 
 
 def loopdirectory(s):
@@ -107,7 +107,7 @@ async def draw_play_handler(request):
 
 @jackroutes.get('/jackbox')
 async def jackbox_index_handler(request):
-    return web.FileResponse('htdocs/jackbox.html')
+    return web.FileResponse('jackboxLauncher/htdocs/jackbox.html')
 
 
 @jackroutes.get('/jackbox/all')
@@ -164,9 +164,9 @@ async def user_gallery_handler(request, steamid: int, onlydraw: bool = False, pl
 
 async def gallery_handler(request, onlydraw: bool = False, playerCount: int = 0, prefix: str = '/', filter_games: list = ALL_APP_IDS):
     result = ""
-    with open('htdocs/list.html.part01', 'r') as f:
+    with open('jackboxLauncher/htdocs/list.html.part01', 'r') as f:
         result = result + f.read()
-    with open('htdocs/list.html.part02', 'r') as f:
+    with open('jackboxLauncher/htdocs/list.html.part02', 'r') as f:
         loopy = f.read()
     item = None;
     print(ALL_APP_IDS)
@@ -182,7 +182,7 @@ async def gallery_handler(request, onlydraw: bool = False, playerCount: int = 0,
         result = result + item
     if item is None:
         result = '<h1>No games found :(</h1>'
-    with open('htdocs/list.html.part03', 'r') as f:
+    with open('jackboxLauncher/htdocs/list.html.part03', 'r') as f:
         result = result + f.read()
 
     return web.Response(content_type='text/html', text=result)
@@ -195,15 +195,14 @@ async def cancel_tasks():
         await t
 
 
-from threading import  Lock
-
-runners = []
-tasklist = []
-last_static_action = (None, None)
-mutex = Lock()
-
 if __name__ == '__main__':
     from jackbox_config import config;
+    from·threading·import··Lock
+
+#    runners·=·[]
+ #   tasklist·=·[]
+  #  last_static_action·=·(None,·None)
+   # mutex·=·Lock()
 
     # web.run_app(setuphttp(config)[0])
     # print("something")
