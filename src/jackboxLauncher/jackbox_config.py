@@ -33,7 +33,7 @@ PP5 = PartyPack(name='PartyPack05', app_id=774461)
 PP6 = PartyPack(name='PartyPack06', app_id=774461)
 PP7 = PartyPack(name='PartyPack07', app_id=1211630)
 PP8 = PartyPack(name='PartyPack08', app_id=1552350)
-#PP9 = PartyPack(name='PartyPack9', app_id='app_id9')
+#PP9 = PartyPack(name='PartyPack09', app_id='app_id9')
 
 games = [
     GameItem(name='You Don\'t Know Jack 2015', players_min=1, players_max=4, local_recommended=True, game=PP1, image='Jack_2015.webp'),
@@ -51,7 +51,7 @@ games = [
     GameItem(name='Bomb Corp.', players_min=1, players_max=4, local_recommended=False, game=PP2),
 
     GameItem(name='Drawful 2', players_min=3, players_max=10, local_recommended=False, image='drawful2.jpg', drawing=True, game=PartyPack(name='Drawful 2', app_id=442070)),
-    GameItem(name='Fibbage XL', players_min=2, players_max=8, local_recommended=False, game=PartyPack(name='Fibbage XL', app_id=448080)), # this is the same as in PP1
+    GameItem(name='Fibbage XL', players_min=2, players_max=8, local_recommended=False, game=PartyPack(name='Fibbage XL Standalone', app_id=448080)), # this is the same as in PP1
 
     GameItem(name='Quiplash 2', players_min=3, players_max=8, local_recommended=False, game=PP3),
     GameItem(name='Trivia Murder Party', players_min=1, players_max=8, local_recommended=False, game=PP3),

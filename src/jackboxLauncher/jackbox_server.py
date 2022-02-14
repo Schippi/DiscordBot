@@ -39,27 +39,28 @@ async def launcher_handler(request):
 
 def strToBoolOrNone(draw: str):
     if draw and draw.lower() in ('true', 'false'):
-        return bool(draw)
+        return draw.lower() == 'true'
     else:
         return None
 
 @jackroutes.get('/jackbox')
 async def jackbox_index_handler(request):
-    steamid = request.rel_url.query.get('steamid', None)
+
+    insensitive_dict = {k.lower(): v for k, v in request.rel_url.query.items()}
+    steamid = insensitive_dict.get('steamid', None)
     if steamid:
         try:
             steamid = int(steamid)
         except ValueError:
             return web.Response(text='Invalid SteamId, did you use the Steam64 ID?', status=400)
-    draw = request.rel_url.query.get('draw', None)
-    draw = strToBoolOrNone(draw)
+    draw = strToBoolOrNone(insensitive_dict.get('draw', None))
     try:
-        playerCount = int(request.rel_url.query.get('playerCount', '0'))
+        playerCount = int(insensitive_dict.get('playerCount', '0'))
     except ValueError:
         playerCount = 0
-    localOnly = request.rel_url.query.get('localOnly', None)
-    localOnly = strToBoolOrNone(localOnly)
-    if not steamid and not draw and not localOnly and playerCount == 0:
+    localOnly = strToBoolOrNone(insensitive_dict.get('localonly', None))
+    print(steamid, draw, playerCount, localOnly, str(request.rel_url.query))
+    if steamid is None and draw is None and localOnly is None and playerCount == 0:
         return web.FileResponse('jackboxLauncher/htdocs/jackbox.html')
     if steamid:
         return await user_gallery_handler(request, steamid, onlydraw=draw, playerCount=playerCount, localOnly=localOnly)
@@ -115,7 +116,7 @@ async def gallery_handler(request, onlydraw: bool = False, playerCount: int = 0,
     with open('jackboxLauncher/htdocs/list.html.part02', 'r') as f:
         loopy = f.read()
     item = None
-    for game in (g for g in games if g.game.app_id in filter_games and (playerCount == 0 or g.players_min <= playerCount <= g.players_max) and (g.drawing == onlydraw or not onlydraw) and (g.local_recommended == localOnly or not localOnly)):
+    for game in (g for g in games if g.game.app_id in filter_games and (playerCount == 0 or g.players_min <= playerCount <= g.players_max) and (g.drawing == onlydraw or onlydraw is None) and (g.local_recommended == localOnly or localOnly is None)):
         item = loopy.replace('{app_id}', str(game.game.app_id))
         item = item.replace('{game_name}', game.name)
         if game.image:
