@@ -58,7 +58,7 @@ async def jackbox_index_handler(request):
         playerCount = int(insensitive_dict.get('playerCount', '0'))
     except ValueError:
         playerCount = 0
-    localOnly = strToBoolOrNone(insensitive_dict.get('localonly', None))
+    localOnly = strToBoolOrNone(insensitive_dict.get('local', None))
     print(steamid, draw, playerCount, localOnly, str(request.rel_url.query))
     if steamid is None and draw is None and localOnly is None and playerCount == 0:
         return web.FileResponse('jackboxLauncher/htdocs/jackbox.html')
