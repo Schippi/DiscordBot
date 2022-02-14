@@ -11,12 +11,12 @@ body{
 }
 
 ::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
-  color: darkgrey;
-  opacity: 1; /* Firefox */
+    color: darkgrey;
+    opacity: 1; /* Firefox */
 }
 
 :-ms-input-placeholder { /* Internet Explorer 10-11 */
-  color: darkgrey;
+    color: darkgrey;
 }
 
 h1{
@@ -25,7 +25,7 @@ h1{
 }
 
 ::-ms-input-placeholder { /* Microsoft Edge */
-  color: darkgrey;
+    color: darkgrey;
 }
 
 form{
@@ -47,7 +47,7 @@ input {
 }
 
 #steamid{
-    color:red;
+    color: black;
     width: 100%;
 }
 
@@ -64,7 +64,7 @@ input {
     box-shadow: 0px 0px 4px 4px #000;
     padding: 10;
     text-align: center;
-     width:500px
+    width: 500px
 }
 
 a:visited {
