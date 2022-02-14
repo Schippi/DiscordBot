@@ -25,15 +25,15 @@ class GameItem:
     image: str = None
 
 
-PP1 = PartyPack(name='The Jackbox Party Pack', app_id=331670)
-PP2 = PartyPack(name='The Jackbox Party Pack 2', app_id=397460)
-PP3 = PartyPack(name='The Jackbox Party Pack 3', app_id=434170)
-PP4 = PartyPack(name='The Jackbox Party Pack 4', app_id=610180)
-PP5 = PartyPack(name='The Jackbox Party Pack 5', app_id=774461)
-PP6 = PartyPack(name='The Jackbox Party Pack 6', app_id=774461)
-PP7 = PartyPack(name='The Jackbox Party Pack 7', app_id=1211630)
-PP8 = PartyPack(name='The Jackbox Party Pack 8', app_id=1552350)
-#PP9 = PartyPack(name='The Jackbox Party Pack 9', app_id='app_id9')
+PP1 = PartyPack(name='PartyPack01', app_id=331670)
+PP2 = PartyPack(name='PartyPack02', app_id=397460)
+PP3 = PartyPack(name='PartyPack03', app_id=434170)
+PP4 = PartyPack(name='PartyPack04', app_id=610180)
+PP5 = PartyPack(name='PartyPack05', app_id=774461)
+PP6 = PartyPack(name='PartyPack06', app_id=774461)
+PP7 = PartyPack(name='PartyPack07', app_id=1211630)
+PP8 = PartyPack(name='PartyPack08', app_id=1552350)
+#PP9 = PartyPack(name='PartyPack9', app_id='app_id9')
 
 games = [
     GameItem(name='You Don\'t Know Jack 2015', players_min=1, players_max=4, local_recommended=True, game=PP1, image='Jack_2015.webp'),
@@ -50,8 +50,8 @@ games = [
     GameItem(name='Quiplash XL', players_min=3, players_max=8, local_recommended=False, game=PP2),
     GameItem(name='Bomb Corp.', players_min=1, players_max=4, local_recommended=False, game=PP2),
 
-    GameItem(name='Drawful 2', players_min=3, players_max=10, local_recommended=False, image='drawful2.jpg', drawing=True, game=PartyPack(name='Drawful 2 Standalone', app_id=442070)),
-    GameItem(name='Fibbage XL', players_min=2, players_max=8, local_recommended=False, game=PartyPack(name='Fibbage XL Standalone', app_id=448080)), # this is the same as in PP1
+    GameItem(name='Drawful 2', players_min=3, players_max=10, local_recommended=False, image='drawful2.jpg', drawing=True, game=PartyPack(name='Drawful 2', app_id=442070)),
+    GameItem(name='Fibbage XL', players_min=2, players_max=8, local_recommended=False, game=PartyPack(name='Fibbage XL', app_id=448080)), # this is the same as in PP1
 
     GameItem(name='Quiplash 2', players_min=3, players_max=8, local_recommended=False, game=PP3),
     GameItem(name='Trivia Murder Party', players_min=1, players_max=8, local_recommended=False, game=PP3),
@@ -91,10 +91,10 @@ games = [
     GameItem(name='The Wheel of Enormous Proportions', players_min=2, players_max=10, local_recommended=False, game=PP8, image='TWoEP.webp'),
     GameItem(name='Weapons Drawn', players_min=4, players_max=8, local_recommended=False, drawing=True, game=PP8),
 
-    GameItem(name='Paper Pirates', players_min=2, players_max=10, local_recommended=False, image='PaperPirates.jpg', game=PartyPack(name='Paper Pirates Standalone', app_id=1234220)),
-    GameItem(name='Verse Surf', players_min=4, players_max=8, local_recommended=False, image='VerseSurf.jpg', game=PartyPack(name='Verse Surf Standalone', app_id=1315390)),
+    GameItem(name='Paper Pirates', players_min=2, players_max=10, local_recommended=False, image='PaperPirates.jpg', game=PartyPack(name='Paper Pirates', app_id=1234220)),
+    GameItem(name='Verse Surf', players_min=4, players_max=8, local_recommended=False, image='VerseSurf.jpg', game=PartyPack(name='Verse Surf', app_id=1315390)),
 
-    GameItem(name='Use Your Words', players_min=4, players_max=8, local_recommended=False, image='UseYourWords.jpg', game=PartyPack(name='Use Your Words Standalone', app_id=521350)),
+    GameItem(name='Use Your Words', players_min=4, players_max=8, local_recommended=False, image='UseYourWords.jpg', game=PartyPack(name='Use Your Words', app_id=521350)),
 
 
 ]
