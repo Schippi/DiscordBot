@@ -109,7 +109,7 @@ async def user_gallery_handler(request, steamid: int, onlydraw: bool = None, pla
         return web.FileResponse('jackboxLauncher/htdocs/errorSteamAPI.html')
 
 
-async def gallery_handler(request, onlydraw: bool = False, playerCount: int = 0, prefix: str = '/', filter_games: list = ALL_APP_IDS, localOnly: bool = None):
+async def gallery_handler(request, onlydraw: bool = None, playerCount: int = 0, prefix: str = '/', filter_games: list = ALL_APP_IDS, localOnly: bool = None):
     result = ""
     with open('jackboxLauncher/htdocs/list.html.part01', 'r') as f:
         result = result + f.read()

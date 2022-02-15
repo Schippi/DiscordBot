@@ -1,6 +1,6 @@
 <div class="tooltip"><a href="steam://run/{app_id}">
         <img class="banner" src="{app_icon}" alt="{game_name}" title="{game_name}" />
-    <span class="tooltiptext">{tooltip_text}</span>
     <span class="tooltipimg"><img src="/images/play.png"/></span>
     <span class="tooltipclick"><img src="/images/play2.png"/></span>
+    <span class="tooltiptext">{tooltip_text}</span>
 </div>
