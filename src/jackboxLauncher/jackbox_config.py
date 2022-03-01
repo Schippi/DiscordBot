@@ -92,10 +92,10 @@ games = [
     GameItem(name='Weapons Drawn', players_min=4, players_max=8, local_recommended=False, drawing=True, game=PP8),
 
     GameItem(name='Paper Pirates', players_min=2, players_max=10, local_recommended=False, game=PartyPack(name='Paper Pirates', app_id=1234220)),
-    GameItem(name='Verse Surf', players_min=4, players_max=8, local_recommended=False, game=PartyPack(name='Verse Surf', app_id=1315390)),
+    GameItem(name='Verse Surf', players_min=2, players_max=8, local_recommended=False, game=PartyPack(name='Verse Surf', app_id=1315390)),
 
     GameItem(name='Use Your Words', players_min=4, players_max=8, local_recommended=False, game=PartyPack(name='Use Your Words', app_id=521350)),
-    GameItem(name='What The Dub?!', players_min=4, players_max=8, local_recommended=False, game=PartyPack(name='What The Dub!?', app_id=1495860)),
+    GameItem(name='What The Dub?!', players_min=1, players_max=6, local_recommended=False, game=PartyPack(name='What The Dub!?', app_id=1495860)),
 
 
 
