@@ -88,6 +88,41 @@ async def jackbox_post_handler(request):
         return web.Response(text='Invalid SteamId, did you use the Steam64 ID?', status=400)
     raise web.HTTPFound('/jackbox?steamid='+str(steamid))
 
+def getImagesFromDir(folder: str):
+    images = []
+    getImagesRecursive(folder, images)
+    return images
+
+def getImagesRecursive(folder: str, images: list):
+    for file in os.listdir(folder):
+        if file.endswith('.jpg') or file.endswith('.png') or file.endswith('.webp'):
+            images.append(folder+'/'+file)
+        elif os.path.isdir(folder+'/'+file):
+            getImagesRecursive(folder+'/'+file, images)
+
+
+@jackroutes.get('/random')
+async def random_post_handler(request):
+    amount = 13;
+
+    for i,img in enumerate(getImagesFromDir('jackboxLauncher/images')):
+        print(img)
+        from PIL import Image
+        import math
+        import numpy as np
+        import cv2
+        im = Image.open(img)
+        im.convert('RGBA')
+        w, h = im.size
+        angle = 360 / amount / 2
+        height = w*math.sin(angle)
+        cv_image = cv2.imread(img)
+        mask = np.zeros(cv_image.shape, dtype=np.uint8)
+        roi_corners = np.array([[(0,h / 2), (w,h/2 - height), (w,h/2 + height)]], dtype=np.int32)
+        break;
+
+    raise web.Response(text='Random Jackbox ')
+
 
 async def user_gallery_handler(request, steamid: int, onlydraw: bool = None, playerCount: int = 0, localOnly: bool = None):
     from jackbox_secrets import STEAM_API_KEY;
@@ -119,10 +154,21 @@ async def gallery_handler(request, onlydraw: bool = None, playerCount: int = 0, 
     for game in (g for g in games if g.game.app_id in filter_games and (playerCount == 0 or g.players_min <= playerCount <= g.players_max) and (g.drawing == onlydraw or onlydraw is None) and (g.local_recommended == localOnly or localOnly is None)):
         item = loopy.replace('{app_id}', str(game.game.app_id))
         item = item.replace('{game_name}', game.name)
+        sanitized_pack = game.game.name.replace(' ','').replace('!','').replace('?','').replace("'", '')
+        sanitized_game = game.name.replace(' ','').replace('!','').replace('?','').replace("'", '')
         if game.image:
-            item = item.replace('{app_icon}', prefix+'images/'+game.game.name.replace(' ','')+'/'+game.image)
+            item = item.replace('{app_icon}', prefix+'images/'+sanitized_pack+'/'+game.image)
         else:
-            item = item.replace('{app_icon}', prefix+'images/'+game.game.name.replace(' ','')+'/'+game.name.replace("'", '').replace(' ', '') + '.webp')
+            root_folder = os.path.dirname(sys.argv[0])
+            filepath = prefix+'images/'+sanitized_pack+'/'+sanitized_game + '.jpg';
+            if os.path.isfile(root_folder+filepath):
+                item = item.replace('{app_icon}', filepath)
+            filepath = prefix+'images/'+sanitized_pack+'/'+sanitized_game + '.png';
+            if os.path.isfile(root_folder+filepath):
+                item = item.replace('{app_icon}', filepath)
+            #default fallback
+            filepath = prefix+'images/'+sanitized_pack+'/'+sanitized_game + '.webp';
+            item = item.replace('{app_icon}', filepath)
 
         item = item.replace('{tooltip_text}', '%s<br/>%s</br>%d - %d players<br/>' % (game.name,game.game.name,game.players_min, game.players_max))
         result = result + item

@@ -42,7 +42,7 @@ games = [
     GameItem(name='Lie Swatter', players_min=1, players_max=100, local_recommended=False, game=PP1),
     GameItem(name='Fibbage XL', players_min=2, players_max=8, local_recommended=False, game=PP1),
 
-    GameItem(name='Quiplash', players_min=2, players_max=10, local_recommended=False, image='Quiplash.jpg', game=PartyPack(name='Quiplash', app_id='351510')),
+    GameItem(name='Quiplash', players_min=2, players_max=10, local_recommended=False, game=PartyPack(name='Quiplash', app_id='351510')),
 
     GameItem(name='Fibbage 2', players_min=2, players_max=8, local_recommended=False, game=PP2),
     GameItem(name='Earwax', players_min=3, players_max=8, local_recommended=False, game=PP2),
@@ -50,7 +50,7 @@ games = [
     GameItem(name='Quiplash XL', players_min=3, players_max=8, local_recommended=False, game=PP2),
     GameItem(name='Bomb Corp.', players_min=1, players_max=4, local_recommended=False, game=PP2),
 
-    GameItem(name='Drawful 2', players_min=3, players_max=10, local_recommended=False, image='drawful2.jpg', drawing=True, game=PartyPack(name='Drawful 2', app_id=442070)),
+    GameItem(name='Drawful 2', players_min=3, players_max=10, local_recommended=False, drawing=True, game=PartyPack(name='Drawful 2', app_id=442070)),
     GameItem(name='Fibbage XL', players_min=2, players_max=8, local_recommended=False, game=PartyPack(name='Fibbage XL', app_id=448080)), # this is the same as in PP1
 
     GameItem(name='Quiplash 2', players_min=3, players_max=8, local_recommended=False, game=PP3),
@@ -91,10 +91,12 @@ games = [
     GameItem(name='The Wheel of Enormous Proportions', players_min=2, players_max=10, local_recommended=False, game=PP8, image='TWoEP.webp'),
     GameItem(name='Weapons Drawn', players_min=4, players_max=8, local_recommended=False, drawing=True, game=PP8),
 
-    GameItem(name='Paper Pirates', players_min=2, players_max=10, local_recommended=False, image='PaperPirates.jpg', game=PartyPack(name='Paper Pirates', app_id=1234220)),
-    GameItem(name='Verse Surf', players_min=4, players_max=8, local_recommended=False, image='VerseSurf.jpg', game=PartyPack(name='Verse Surf', app_id=1315390)),
+    GameItem(name='Paper Pirates', players_min=2, players_max=10, local_recommended=False, game=PartyPack(name='Paper Pirates', app_id=1234220)),
+    GameItem(name='Verse Surf', players_min=4, players_max=8, local_recommended=False, game=PartyPack(name='Verse Surf', app_id=1315390)),
 
-    GameItem(name='Use Your Words', players_min=4, players_max=8, local_recommended=False, image='UseYourWords.jpg', game=PartyPack(name='Use Your Words', app_id=521350)),
+    GameItem(name='Use Your Words', players_min=4, players_max=8, local_recommended=False, game=PartyPack(name='Use Your Words', app_id=521350)),
+    GameItem(name='What The Dub?!', players_min=4, players_max=8, local_recommended=False, game=PartyPack(name='What The Dub!?', app_id=1495860)),
+
 
 
 ]
