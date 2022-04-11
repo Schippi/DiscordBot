@@ -181,7 +181,7 @@ def getGameImage(game: GameItem, prefix: str = '/', slice: bool = False):
         sanitized_game = 'slice_'+sanitized_game
     if game.image:
         return prefix+'images/'+sanitized_pack+'/'+game.image
-    root_folder = os.path.dirname(sys.argv[0] if sys.argv[0] else '.')
+    root_folder = os.path.dirname(sys.argv[0] if sys.argv[0].strip() != '' else '.')
     filepath = prefix+'images/'+sanitized_pack+'/'+sanitized_game + '.jpg';
     if os.path.isfile(root_folder+filepath):
         return filepath
@@ -194,7 +194,7 @@ def getGameImage(game: GameItem, prefix: str = '/', slice: bool = False):
     if slice:
         return getGameImage(game, prefix, False)
 
-    print('1%s 2%s 3%s'% (root_folder, os.path.realpath(root_folder+filepath), filepath))
+    print('1%s 2%s 3%s 4%s '% (root_folder, os.path.realpath(root_folder+filepath), filepath, sys.argv[0]))
     return None;
 
 async def gallery_handler(request, onlydraw: bool = None, playerCount: int = 0, prefix: str = '/', filter_games: list = ALL_APP_IDS, localOnly: bool = None):
