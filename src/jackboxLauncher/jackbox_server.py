@@ -1,3 +1,5 @@
+import random
+
 from aiohttp import web
 import aiohttp
 import aiohttp_session
@@ -13,6 +15,7 @@ import time
 import os.path
 from jackbox_config import ALL_APP_IDS
 from jackbox_config import games
+from jackbox_config import GameItem
 
 jackroutes = web.RouteTableDef()
 
@@ -28,6 +31,7 @@ async def start_site(app: web.Application, theConfig: dict):
     root_folder = os.path.dirname(sys.argv[0])
     app.router.add_static('/images', root_folder+'/images')
     app.router.add_static('/css', root_folder+'/htdocs/css')
+    app.router.add_static('/js', root_folder+'/htdocs/js')
     app.router.add_route('*', '/', launcher_handler)
 
     await runner.setup()
@@ -103,25 +107,52 @@ def getImagesRecursive(folder: str, images: list):
 
 @jackroutes.get('/random')
 async def random_post_handler(request):
-    amount = 13;
+    insensitive_dict = {k.lower(): v for k, v in request.rel_url.query.items()}
+    steamid = insensitive_dict.get('steamid', None)
+    filter_games = ALL_APP_IDS
 
-    for i,img in enumerate(getImagesFromDir('jackboxLauncher/images')):
-        print(img)
-        from PIL import Image
-        import math
-        import numpy as np
-        import cv2
-        im = Image.open(img)
-        im.convert('RGBA')
-        w, h = im.size
-        angle = 360 / amount / 2
-        height = w*math.sin(angle)
-        cv_image = cv2.imread(img)
-        mask = np.zeros(cv_image.shape, dtype=np.uint8)
-        roi_corners = np.array([[(0,h / 2), (w,h/2 - height), (w,h/2 + height)]], dtype=np.int32)
-        break;
+    if steamid:
+        try:
+            steamid = int(steamid)
+            async with aiohttp.ClientSession() as session:
+                my_dict = {
+                    'steamid': steamid,
+                    'appids_filter': list(ALL_APP_IDS)
+                }
+            my_url='https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=%s&input_json=%s' % (STEAM_API_KEY, json.dumps(my_dict))
+            #print(my_url)
+            async with session.get(my_url) as resp:
+                #print(await resp.text())
+                data = await resp.json()
+                app_list = list(g['appid'] for g in data['response']['games'] if g['appid'] in ALL_APP_IDS);
+                filter_games = app_list
+        except ValueError:
+            return web.Response(text='Invalid SteamId, did you use the Steam64 ID?', status=400)
+    else:
+        steamid = 0
+    onlydraw = strToBoolOrNone(insensitive_dict.get('draw', None))
+    try:
+        playerCount = int(insensitive_dict.get('playerCount', '0'))
+    except ValueError:
+        playerCount = 0
+    localOnly = strToBoolOrNone(insensitive_dict.get('local', None))
 
-    raise web.Response(text='Random Jackbox ')
+    allgames = [game for game in (g for g in games if g.game.app_id in filter_games and (playerCount == 0 or g.players_min <= playerCount <= g.players_max) and (g.drawing == onlydraw or onlydraw is None) and (g.local_recommended == localOnly or localOnly is None))]
+    result = ""
+    random.shuffle(allgames)
+    allgames=allgames[:16]
+
+    with open('jackboxLauncher/htdocs/random.html.part01', 'r') as f:
+        result = result + f.read();
+    result = result.replace('{num_games}', str(len(allgames)))
+    import randomImage
+    ta = time.time_ns() // 1000000
+    games_text = randomImage.random(steamid,allgames,'jackboxLauncher/')
+    print((time.time_ns() // 1000000) - ta)
+    result = result.replace('{games_text}', games_text)
+    result = result.replace('{games_image}', ('"../images/random%d.png"'%steamid))
+
+    return web.Response(content_type='text/html', text=result)
 
 
 async def user_gallery_handler(request, steamid: int, onlydraw: bool = None, playerCount: int = 0, localOnly: bool = None):
@@ -143,6 +174,26 @@ async def user_gallery_handler(request, steamid: int, onlydraw: bool = None, pla
         traceback.print_exc()
         return web.FileResponse('jackboxLauncher/htdocs/errorSteamAPI.html')
 
+def getGameImage(game : GameItem, prefix: str = '/', slice: bool = False):
+    sanitized_pack = game.game.name.replace(' ','').replace('!','').replace('?','').replace("'", '')
+    sanitized_game = game.name.replace(' ','').replace('!','').replace('?','').replace("'", '')
+    if slice:
+        sanitized_game = 'slice_'+sanitized_game
+    if game.image:
+        return prefix+'images/'+sanitized_pack+'/'+game.image
+    root_folder = os.path.dirname(sys.argv[0])
+    filepath = prefix+'images/'+sanitized_pack+'/'+sanitized_game + '.jpg';
+    if os.path.isfile(root_folder+filepath):
+        return filepath
+    filepath = prefix+'images/'+sanitized_pack+'/'+sanitized_game + '.png';
+    if os.path.isfile(root_folder+filepath):
+        return filepath
+    filepath = prefix+'images/'+sanitized_pack+'/'+sanitized_game + '.webp';
+    if os.path.isfile(root_folder+filepath):
+        return filepath
+    if slice:
+        return getGameImage(game, prefix, False)
+    return None;
 
 async def gallery_handler(request, onlydraw: bool = None, playerCount: int = 0, prefix: str = '/', filter_games: list = ALL_APP_IDS, localOnly: bool = None):
     result = ""
@@ -154,21 +205,7 @@ async def gallery_handler(request, onlydraw: bool = None, playerCount: int = 0, 
     for game in (g for g in games if g.game.app_id in filter_games and (playerCount == 0 or g.players_min <= playerCount <= g.players_max) and (g.drawing == onlydraw or onlydraw is None) and (g.local_recommended == localOnly or localOnly is None)):
         item = loopy.replace('{app_id}', str(game.game.app_id))
         item = item.replace('{game_name}', game.name)
-        sanitized_pack = game.game.name.replace(' ','').replace('!','').replace('?','').replace("'", '')
-        sanitized_game = game.name.replace(' ','').replace('!','').replace('?','').replace("'", '')
-        if game.image:
-            item = item.replace('{app_icon}', prefix+'images/'+sanitized_pack+'/'+game.image)
-        else:
-            root_folder = os.path.dirname(sys.argv[0])
-            filepath = prefix+'images/'+sanitized_pack+'/'+sanitized_game + '.jpg';
-            if os.path.isfile(root_folder+filepath):
-                item = item.replace('{app_icon}', filepath)
-            filepath = prefix+'images/'+sanitized_pack+'/'+sanitized_game + '.png';
-            if os.path.isfile(root_folder+filepath):
-                item = item.replace('{app_icon}', filepath)
-            #default fallback
-            filepath = prefix+'images/'+sanitized_pack+'/'+sanitized_game + '.webp';
-            item = item.replace('{app_icon}', filepath)
+        item = item.replace('{app_icon}', getGameImage(game, prefix))
 
         item = item.replace('{tooltip_text}', '%s<br/>%s</br>%d - %d players<br/>' % (game.name,game.game.name,game.players_min, game.players_max))
         result = result + item
