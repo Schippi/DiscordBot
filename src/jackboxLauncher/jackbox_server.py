@@ -176,14 +176,14 @@ async def user_gallery_handler(request, steamid: int, onlydraw: bool = None, pla
 
 def getGameImage(game: GameItem, prefix: str = '/', slice: bool = False):
     sanitized_pack = game.game.name.replace(' ','').replace('!','').replace('?','').replace("'", '')
-    sanitized_game = game.name.replace(' ','').replace('!','').replace('?','').replace("'", '').lower()
+    sanitized_game = game.name.replace(' ','').replace('!','').replace('?','').replace("'", '')
     if slice:
         sanitized_game = 'slice_'+sanitized_game
     if game.image:
         return prefix+'images/'+sanitized_pack+'/'+game.image
     root_folder = os.path.dirname(os.path.realpath(__file__))
     filepath = prefix+'images/'+sanitized_pack+'/'+sanitized_game + '.jpg';
-    print('fp%s sys%s path%s' % (filepath, './'+sys.argv[0], os.path.dirname(sys.argv[0])))
+    #print('fp%s sys%s path%s' % (filepath, './'+sys.argv[0], os.path.dirname(sys.argv[0])))
     if os.path.isfile(root_folder+filepath):
         return filepath
     filepath = prefix+'images/'+sanitized_pack+'/'+sanitized_game + '.png';
