@@ -176,14 +176,14 @@ async def user_gallery_handler(request, steamid: int, onlydraw: bool = None, pla
 
 def getGameImage(game: GameItem, prefix: str = '/', slice: bool = False):
     sanitized_pack = game.game.name.replace(' ','').replace('!','').replace('?','').replace("'", '')
-    sanitized_game = game.name.replace(' ','').replace('!','').replace('?','').replace("'", '')
+    sanitized_game = game.name.replace(' ','').replace('!','').replace('?','').replace("'", '').lower()
     if slice:
         sanitized_game = 'slice_'+sanitized_game
     if game.image:
         return prefix+'images/'+sanitized_pack+'/'+game.image
     root_folder = os.path.dirname(os.path.realpath(__file__))
     filepath = prefix+'images/'+sanitized_pack+'/'+sanitized_game + '.jpg';
-    print('fp%s sys%s path%s' % (filepath, './'+sys.argv[0], os.path.dirname(sys.argv[0])))
+    #print('fp%s sys%s path%s' % (filepath, './'+sys.argv[0], os.path.dirname(sys.argv[0])))
     if os.path.isfile(root_folder+filepath):
         return filepath
     filepath = prefix+'images/'+sanitized_pack+'/'+sanitized_game + '.png';
@@ -195,7 +195,7 @@ def getGameImage(game: GameItem, prefix: str = '/', slice: bool = False):
     if slice:
         return getGameImage(game, prefix, False)
 
-    print('1%s 2%s 3%s 4%s '% (root_folder, os.path.realpath(root_folder+filepath), filepath, sys.argv[0]))
+    #print('1%s 2%s 3%s 4%s '% (root_folder, os.path.realpath(root_folder+filepath), filepath, sys.argv[0]))
     return None;
 
 async def gallery_handler(request, onlydraw: bool = None, playerCount: int = 0, prefix: str = '/', filter_games: list = ALL_APP_IDS, localOnly: bool = None):
@@ -208,9 +208,11 @@ async def gallery_handler(request, onlydraw: bool = None, playerCount: int = 0, 
     for game in (g for g in games if g.game.app_id in filter_games and (playerCount == 0 or g.players_min <= playerCount <= g.players_max) and (g.drawing == onlydraw or onlydraw is None) and (g.local_recommended == localOnly or localOnly is None)):
         item = loopy.replace('{app_id}', str(game.game.app_id))
         item = item.replace('{game_name}', game.name)
-        item = item.replace('{app_icon}', getGameImage(game, prefix))
-
-        item = item.replace('{tooltip_text}', '%s<br/>%s</br>%d - %d players<br/>' % (game.name,game.game.name,game.players_min, game.players_max))
+        try:
+            item = item.replace('{app_icon}', getGameImage(game, prefix))
+            item = item.replace('{tooltip_text}', '%s<br/>%s</br>%d - %d players<br/>' % (game.name,game.game.name,game.players_min, game.players_max))
+        except TypeError:
+            print('error getting img of %s' % game.name)
         result = result + item
     if item is None:
         return web.FileResponse('jackboxLauncher/htdocs/nogames.html')
