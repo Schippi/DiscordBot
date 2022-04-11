@@ -174,14 +174,14 @@ async def user_gallery_handler(request, steamid: int, onlydraw: bool = None, pla
         traceback.print_exc()
         return web.FileResponse('jackboxLauncher/htdocs/errorSteamAPI.html')
 
-def getGameImage(game : GameItem, prefix: str = '/', slice: bool = False):
+def getGameImage(game: GameItem, prefix: str = '/', slice: bool = False):
     sanitized_pack = game.game.name.replace(' ','').replace('!','').replace('?','').replace("'", '')
     sanitized_game = game.name.replace(' ','').replace('!','').replace('?','').replace("'", '')
     if slice:
         sanitized_game = 'slice_'+sanitized_game
     if game.image:
         return prefix+'images/'+sanitized_pack+'/'+game.image
-    root_folder = os.path.dirname(sys.argv[0])
+    root_folder = os.path.dirname(sys.argv[0] if sys.argv[0] else '.')
     filepath = prefix+'images/'+sanitized_pack+'/'+sanitized_game + '.jpg';
     if os.path.isfile(root_folder+filepath):
         return filepath
