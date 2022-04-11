@@ -193,7 +193,8 @@ def getGameImage(game : GameItem, prefix: str = '/', slice: bool = False):
         return filepath
     if slice:
         return getGameImage(game, prefix, False)
-    print('%s %s'% (root_folder, filepath))
+
+    print('1%s 2%s 3%s'% (root_folder, os.path.realpath(root_folder, filepath), filepath))
     return None;
 
 async def gallery_handler(request, onlydraw: bool = None, playerCount: int = 0, prefix: str = '/', filter_games: list = ALL_APP_IDS, localOnly: bool = None):
