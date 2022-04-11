@@ -181,8 +181,7 @@ def getGameImage(game: GameItem, prefix: str = '/', slice: bool = False):
         sanitized_game = 'slice_'+sanitized_game
     if game.image:
         return prefix+'images/'+sanitized_pack+'/'+game.image
-    root_folder = os.path.dirname(sys.argv[0] if '/' in sys.argv[0].strip() else './'+sys.argv[0])
-    root_folder = './' if root_folder == '' else root_folder
+    root_folder = os.path.dirname(os.path.realpath(sys.argv[0] if '/' in sys.argv[0] else './'+sys.argv[0]))
     filepath = prefix+'images/'+sanitized_pack+'/'+sanitized_game + '.jpg';
     print('fp%s sys%s path%s' % (filepath, './'+sys.argv[0], os.path.dirname(sys.argv[0])))
     if os.path.isfile(root_folder+filepath):
