@@ -30,6 +30,7 @@ class ChromaImpl:
         self.app_dict = app_dict
         self.session_id = None
         self.show_effect = False
+        self.uri = None
         self.current_effect = None
         self.custom_url = custom_url
         self.custom_port = str(custom_port)
