@@ -177,8 +177,7 @@ async def on_ready():
     print("Client logged in");
 
 from chroma import *
-from chromaconfig import chroma_ip
-from chromaconfig import chroma_port
+import chromaconfig
 
 @client.event
 async def on_message(message):
@@ -189,7 +188,7 @@ async def on_message(message):
             if not client.running_chroma:
                 client.running_chroma = True;
                 print(message.content);
-                keyboard = ChromaImpl(chroma_ip, chroma_port);
+                keyboard = ChromaImpl(chromaconfig.chroma_ip, chromaconfig.chroma_port);
                 await keyboard.connect()
                 await keyboard.show_text(" "+message.content, 5, color=(255, 255, 0))
                 await keyboard.disconnect()

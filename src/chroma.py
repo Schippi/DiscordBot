@@ -33,7 +33,7 @@ class ChromaImpl:
         self.uri = None
         self.current_effect = None
         self.custom_url = custom_url
-        self.custom_port = str(custom_port)
+        self.custom_port = custom_port
         self.remote_local_port = {}
 
     async def cancel_effect(self):
@@ -64,7 +64,7 @@ class ChromaImpl:
                             break
                 except Exception as e:
                     self.session_id = None
-                    print("Failed to connect to port %d" % self.custom_port)
+                    print("Failed to connect to custom port %d" % self.custom_port)
                     traceback.print_exc()
                     pass
                 return
