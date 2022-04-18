@@ -187,7 +187,10 @@ async def on_message(message):
             print('trying chroma')
             if not client.running_chroma:
                 client.running_chroma = True;
-                print(message.content);
+                print(message.content)
+                print(chromaconfig.chroma_ip)
+                print(chromaconfig.chroma_port)
+                print('go on..')
                 keyboard = ChromaImpl(chromaconfig.chroma_ip, chromaconfig.chroma_port);
                 await keyboard.connect()
                 await keyboard.show_text(" "+message.content, 5, color=(255, 255, 0))

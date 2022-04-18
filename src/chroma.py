@@ -36,6 +36,7 @@ class ChromaImpl:
         self.custom_port = custom_port
         self.remote_local_port = {}
 
+
     async def cancel_effect(self):
         self.show_effect = False
         for _ in range(10):
