@@ -34,7 +34,7 @@ class ChromaImpl:
         self.current_effect = None
         self.custom_url = custom_url
         self.custom_port = str(custom_port)
-        self.remote_local_port = ''
+        self.remote_local_port = {}
 
     async def cancel_effect(self):
         self.show_effect = False
@@ -59,12 +59,12 @@ class ChromaImpl:
                         async with session.post(base_url, json=self.app_dict) as resp:
                             json_resp = await resp.json()
                             print(json_resp)
-                            self.remote_local_port = '?port='+json_resp['uri'].split(':')[-1]
+                            self.remote_local_port = {'port' : json_resp['uri'].split(':')[-1]}
                             self.uri = '%s:%s' % (self.custom_url, self.custom_port)
                             break
                 except Exception as e:
                     self.session_id = None
-                    print("Failed to connect to port %d" % port)
+                    print("Failed to connect to port %d" % custom_port)
                     traceback.print_exc()
                     pass
                 return
@@ -100,7 +100,7 @@ class ChromaImpl:
         }
         effect_ids = []
         async with aiohttp.ClientSession() as session:
-            async with session.post(self.uri + '/keyboard'+self.remote_local_port, json=clear_effect_json) as resp:
+            async with session.post(self.uri + '/keyboard', params=self.remote_local_port, json=clear_effect_json) as resp:
                 cnt = await resp.json()
                 try:
                     effect_ids.append(cnt['id'])
@@ -133,7 +133,7 @@ class ChromaImpl:
                     "param": arr
                 }
 
-                async with session.post(self.uri + '/keyboard'+self.remote_local_port, json=effect_json) as resp:
+                async with session.post(self.uri + '/keyboard', params=self.remote_local_port, json=effect_json) as resp:
                     cnt = await resp.json()
                     try:
                         effect_ids.append(cnt['id'])
@@ -145,10 +145,10 @@ class ChromaImpl:
             for idx, effect_id in enumerate(effect_ids):
                 print('%s %s %s' % (idx, txt[:idx], effect_id))
                 for _ in range(1):
-                    async with await session.put(self.uri + '/effect'+self.remote_local_port, json={"id": str(effect_id)}) as resp:
+                    async with await session.put(self.uri + '/effect', params=self.remote_local_port, json={"id": str(effect_id)}) as resp:
                         print(await resp.json())
                     await asyncio.sleep(1.0 / speed)
-                    async with await session.put(self.uri + '/effect'+self.remote_local_port, json={"id": str(effect_ids[0])}) as resp:
+                    async with await session.put(self.uri + '/effect', params=self.remote_local_port, json={"id": str(effect_ids[0])}) as resp:
                         print(await resp.json())
                     await asyncio.sleep(1.0 / speed)
             self.current_effect = None
@@ -179,7 +179,7 @@ class ChromaImpl:
                         arr2
                 }
                 print(json.dumps(effect_json))
-                async with session.post(self.uri + '/keyboard'+self.remote_local_port, json=effect_json) as resp:
+                async with session.post(self.uri + '/keyboard', params=self.remote_local_port, json=effect_json) as resp:
                     cnt = await resp.json()
                     try:
                         effect_ids.append(cnt['id'])
@@ -192,7 +192,7 @@ class ChromaImpl:
                 if not self.show_effect:
                     break
                 for idx, effect_id in enumerate(effect_ids):
-                    async with await session.put(self.uri + '/effect'+self.remote_local_port, json={"id": str(effect_id)}) as resp:
+                    async with await session.put(self.uri + '/effect', params=self.remote_local_port, json={"id": str(effect_id)}) as resp:
                         print(await resp.json())
                     await asyncio.sleep(1.0 / speed)
                     if not self.show_effect:
@@ -210,7 +210,7 @@ class ChromaImpl:
         if self.uri:
             try:
                 async with aiohttp.ClientSession() as session:
-                    async with session.put(self.uri+self.remote_local_port) as resp:
+                    async with session.put(self.uri, params=self.remote_local_port) as resp:
                         print(resp.status)
             except:
                 self.uri = None
