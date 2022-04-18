@@ -64,7 +64,7 @@ class ChromaImpl:
                             break
                 except Exception as e:
                     self.session_id = None
-                    print("Failed to connect to port %d" % custom_port)
+                    print("Failed to connect to port %d" % self.custom_port)
                     traceback.print_exc()
                     pass
                 return
