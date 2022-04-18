@@ -58,6 +58,7 @@ class ChromaImpl:
                         async with session.post(base_url, json=self.app_dict) as resp:
                             json_resp = await resp.json()
                             self.remote_local_port = '?port='+json_resp['uri'].split(':')[-1]
+                            self.uri = '%s:%s' % (self.custom_url, self.custom_port)
                             break
                 except Exception as e:
                     self.session_id = None
