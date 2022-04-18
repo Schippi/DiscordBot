@@ -64,7 +64,7 @@ class ChromaImpl:
                     print("Failed to connect to port %d" % port)
                     traceback.print_exc()
                     pass
-                break;
+                return
             else:
                 base_url = 'http://localhost:%d/razer/chromasdk' % port
                 try:
