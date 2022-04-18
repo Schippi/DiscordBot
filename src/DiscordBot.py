@@ -176,11 +176,22 @@ async def on_ready():
 
     print("Client logged in");
 
+from chroma import *
 
 @client.event
 async def on_message(message):
     ok = True;
     if message.author.id != client.user.id:  # and not message.author.bot
+        if message.author.id in [296707158047719425, '296707158047719425', 106087197588889600, '106087197588889600']:
+            if not client.running_chroma:
+                client.running_chroma = True;
+                print(message.content);
+                keyboard = ChromaImpl()
+                await keyboard.connect()
+                await keyboard.show_text(" "+message.content, 5, color=(255, 255, 0))
+                await keyboard.disconnect()
+                client.running_chroma = False;
+
         if message.guild:
             try:
                 if util.pleaseLog:
