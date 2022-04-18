@@ -185,6 +185,7 @@ async def on_message(message):
     ok = True;
     if message.author.id != client.user.id:  # and not message.author.bot
         if message.author.id in [296707158047719425, '296707158047719425', 106087197588889600, '106087197588889600']:
+            print('trying chroma')
             if not client.running_chroma:
                 client.running_chroma = True;
                 print(message.content);
@@ -744,6 +745,7 @@ def ask_exit():
 
 
 util.client = client;
+client.running_chroma = False;
 # client.remove_command('help');
 # startChecking(None);
 checkingTask = client.loop.create_task(startChecking(client));
