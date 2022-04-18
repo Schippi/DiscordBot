@@ -191,7 +191,7 @@ async def on_message(message):
                 print(chromaconfig.chroma_ip)
                 print(chromaconfig.chroma_port)
                 print('go on..')
-                keyboard = ChromaImpl(chromaconfig.chroma_ip, chromaconfig.chroma_port);
+                keyboard = ChromaImpl(custom_url=chromaconfig.chroma_ip, custom_port=chromaconfig.chroma_port);
                 await keyboard.connect()
                 await keyboard.show_text(" "+message.content, 5, color=(255, 255, 0))
                 await keyboard.disconnect()
