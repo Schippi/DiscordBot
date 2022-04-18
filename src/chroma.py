@@ -55,6 +55,7 @@ class ChromaImpl:
         for port in [54235, 54236]:
             if self.custom_url:
                 base_url = '%s:%s/razer/chromasdk' % (self.custom_url, self.custom_port)
+                print(base_url)
                 try:
                     async with aiohttp.ClientSession() as session:
                         async with session.post(base_url, json=self.app_dict) as resp:
