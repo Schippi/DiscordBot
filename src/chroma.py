@@ -58,6 +58,7 @@ class ChromaImpl:
                     async with aiohttp.ClientSession() as session:
                         async with session.post(base_url, json=self.app_dict) as resp:
                             json_resp = await resp.json()
+                            print(json_resp)
                             self.remote_local_port = '?port='+json_resp['uri'].split(':')[-1]
                             self.uri = '%s:%s' % (self.custom_url, self.custom_port)
                             break
