@@ -1,15 +1,31 @@
 char_dict = {
-    '^': (1, 0),
-    '1': (1, 1),
-    '2': (1, 2),
-    '3': (1, 3),
-    '4': (1, 4),
-    '5': (1, 5),
-    '6': (1, 6),
-    '7': (1, 7),
-    '8': (1, 8),
-    '9': (1, 9),
-    '0': (1, 10),
+    'esc': (0, 1),
+    'f1': (0, 3),
+    'f2': (0, 4),
+    'f3': (0, 5),
+    'f4': (0, 6),
+    'f5': (0, 7),
+    'f6': (0, 8),
+    'f7': (0, 9),
+    'f8': (0, 10),
+    'f9': (0, 11),
+    'f10': (0, 12),
+    'f11': (0, 13),
+    'f12': (0, 14),
+    'druck': (0, 15),
+    'roll': (0, 16),
+    'pause': (0, 17),
+    '^': (1, 1),
+    '1': (1, 2),
+    '2': (1, 3),
+    '3': (1, 4),
+    '4': (1, 5),
+    '5': (1, 6),
+    '6': (1, 7),
+    '7': (1, 8),
+    '8': (1, 9),
+    '9': (1, 10),
+    '0': (1, 11),
     'q': (2, 2),
     'w': (2, 3),
     'e': (2, 4),
@@ -43,5 +59,48 @@ char_dict = {
     ',': (4, 10),
     '.': (4, 11),
     '-': (4, 12),
-    ' ': (5, 7),
+    ' ': (5, 6),
+    'left_alt': (5, 3),
+    'left_shift': (4, 1),
+    'left_ctrl': (5, 1),
+    'left_win': (5, 2),
+    'right_alt': (5, 10),
+    'right_win': (5, 13),
+    'right_ctrl': (5, 14),
+    'right_shift': (4, 14),
+    'capslock': (3, 1),
+    'tab': (2, 1),
+    'fn': (5, 12),
+    'enter': (3, 14),
+
 }
+specials = {
+    '❤': ([(4, 6), (5, 6), (2, 5), (4, 8), (3, 8), (2, 8), (2, 9), (1, 9), (3, 7), (3, 6), char_dict['b'], char_dict['f'], char_dict['t'], char_dict['5']], (255,0,0)),
+    '😊': ([char_dict['d'], char_dict['c'], char_dict['v'], char_dict['b'], char_dict['n'], char_dict['m'], char_dict['k'], char_dict['5'], char_dict['7']], (255,221,0)),
+    '😒': ([char_dict['x'], char_dict['c'], char_dict['v'], char_dict['b'], char_dict['n'], char_dict['m'], char_dict[','], char_dict['r'], char_dict['u'],
+          char_dict['left_alt'],
+          char_dict['right_alt']], (255,221,0)),
+    'ß': ([char_dict['esc'], char_dict['f1'], char_dict['f2'], char_dict['f3'], char_dict['4'],
+           char_dict['tab'], char_dict['q'],  char_dict['w'], char_dict['e'],
+           char_dict['left_ctrl'], char_dict['left_win'], char_dict['y'], char_dict['x'], char_dict['c'],
+          char_dict['r'], char_dict['t'], char_dict['z'],
+          char_dict['f'], char_dict['g'], char_dict['h'],
+          char_dict['7'], char_dict['f6'], char_dict['f7'], char_dict['f8'], char_dict['f9'],
+          char_dict['u'], char_dict['i'], char_dict['o'], char_dict['p'], char_dict['ü'],
+          char_dict['n'], char_dict['m'], char_dict[','], char_dict['right_alt'], char_dict['fn'],
+           ], (0,255,221)),
+}
+
+import re
+
+def repl_text(text):
+    text = text.lower()
+    text=re.sub(r'http.*?(?=\s)', " ", text.lower())
+    text=text.replace('<3', '❤')
+    text=text.replace(':aggressivelove:', '❤')
+    text=text.replace(':heart:', '❤')
+    text=text.replace(':)', '😊')
+    text=text.replace(':-)', '😊')
+    text=text.replace(':-(', '😒')
+    text=text.replace(':(', '😒')
+    return text

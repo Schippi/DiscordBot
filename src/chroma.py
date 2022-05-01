@@ -1,3 +1,5 @@
+from concurrent.futures import ThreadPoolExecutor
+
 import aiohttp
 import asyncio
 from PIL import Image
@@ -7,8 +9,9 @@ from PIL import ImageFont
 import numpy as np
 import json
 import sys
-from keyboard import char_dict
+from keyboard import char_dict, repl_text, specials
 import traceback
+import re
 
 
 class ChromaImpl:
@@ -35,7 +38,9 @@ class ChromaImpl:
         self.custom_url = custom_url
         self.custom_port = custom_port
         self.remote_local_port = {}
+        self.effect_dict = {
 
+        }
 
     async def cancel_effect(self):
         self.show_effect = False
@@ -46,6 +51,7 @@ class ChromaImpl:
         return False
 
     async def disconnect(self):
+        self.effect_dict = {}
         if self.uri:
             async with aiohttp.ClientSession() as session:
                 async with session.delete(self.uri) as resp:
@@ -61,7 +67,7 @@ class ChromaImpl:
                         async with session.post(base_url, json=self.app_dict) as resp:
                             json_resp = await resp.json()
                             print(json_resp)
-                            self.remote_local_port = {'port' : json_resp['uri'].split(':')[-1].split('/')[0]}
+                            self.remote_local_port = {'port': json_resp['uri'].split(':')[-1].split('/')[0]}
                             self.uri = '%s:%s/chromasdk' % (self.custom_url, self.custom_port)
                             break
                 except Exception as e:
@@ -84,118 +90,170 @@ class ChromaImpl:
                     pass
         return self.uri
 
+    async def blink_letter(self,x,y):
+        async with aiohttp.ClientSession() as session:
+            arr = [[0] * 22 for _ in range(6)]
+            arr[x][y] = 255
+            effect_json = {
+                "effect": "CHROMA_CUSTOM",
+                "param": arr
+            }
+            async with session.post(self.uri + '/keyboard', params=self.remote_local_port, json=effect_json) as resp:
+                resp_data = await resp.json()
+                effect_id = resp_data['id'];
+                await self.send_effect(effect_id, session)
+
     async def show_text(self, txt, speed=20, color=33554431):
         self.show_effect = True
         if type(color) == tuple:
             color = rgb_to_bgr_int(color)
-        clear_arr = [[0] * 22 for _ in range(6)]
-        # clear_effect_json = {
-        #     "effect": "CHROMA_CUSTOM_KEY",
-        #     "param": {
-        #             "color": clear_arr,
-        #             "key": clear_arr
-        #         }
-        # }
-        clear_effect_json = {
-            "effect": "CHROMA_CUSTOM",
-            "param": clear_arr
-        }
-        effect_ids = []
-        async with aiohttp.ClientSession() as session:
-            async with session.post(self.uri + '/keyboard', params=self.remote_local_port, json=clear_effect_json) as resp:
-                cnt = await resp.json()
-                try:
-                    effect_ids.append(cnt['id'])
-                except Exception as e:
-                    print("error clearing keyboard")
-                    traceback.print_exc()
-            prev = ''
-            for i, t in enumerate(txt):
-                if t in char_dict:
-                    x, y = char_dict[t]
-                else:
-                    print('char not found:', t)
-                    continue
-                arr = [[0] * 22 for _ in range(6)]
+        txt = repl_text(txt)
+        all_effects = {'effects': []}
+
+        looked_up_text = ''
+        for i, t in enumerate(txt):
+
+            if (t, color) in self.effect_dict:
+                continue
+            looked_up_text += t
+            arr = [[0] * 22 for _ in range(6)]
+
+            if t in specials:
+                for (x, y) in specials[t][0]:
+                    arr[x][y] = rgb_to_bgr_int(specials[t][1])  # red
+            elif t in char_dict:
+                x, y = char_dict[t]
                 arr[x][y] = color
+            else:
+                print('char not found:', t)
+                continue
 
-                # color_arr = [[0] * 22 for _ in range(6)]
-                # color_arr[x][y] = 0xff0000
-                # effect_json = {
-                #     "effect": "CHROMA_CUSTOM_KEY",
-                #     "param":
-                #         {
-                #             "color": color_arr,
-                #             "key": arr
-                #         }
-                # }
+            # color_arr = [[0] * 22 for _ in range(6)]
+            # color_arr[x][y] = 0xff0000
+            # effect_json = {
+            #     "effect": "CHROMA_CUSTOM_KEY",
+            #     "param":
+            #         {
+            #             "color": color_arr,
+            #             "key": arr
+            #         }
+            # }
 
-                effect_json = {
-                    "effect": "CHROMA_CUSTOM",
-                    "param": arr
-                }
+            effect_json = {
+                "effect": "CHROMA_CUSTOM",
+                "param": arr
+            }
+            all_effects['effects'].append(effect_json)
+        async with aiohttp.ClientSession() as session:
+            clear_effect_id = await self.get_clear_effect(session)
+            async with session.post(self.uri + '/keyboard', params=self.remote_local_port, json=all_effects) as resp:
+                resp_data = await resp.json()
 
-                async with session.post(self.uri + '/keyboard', params=self.remote_local_port, json=effect_json) as resp:
-                    cnt = await resp.json()
-                    try:
-                        effect_ids.append(cnt['id'])
-                    except e as e:
-                        print("error generating keyboard effect for letter")
-                        print('%s: %s' % (t, effect_json))
-                        traceback.print_exc()
+                try:
+                    results = resp_data['results']
+                    for idx, result in enumerate(results):
+                        character = looked_up_text[idx]
+                        self.effect_dict[(character, color)] = result['id']
+                    print(zip(looked_up_text, results))
 
-            for idx, effect_id in enumerate(effect_ids):
-                print('%s %s %s' % (idx, txt[:idx], effect_id))
+                except Exception as e:
+                    print("error generating keyboard effect for text")
+                    print('%s: %s' % (t, all_effects))
+                    traceback.print_exc()
+
+            for idx, t in enumerate(txt):
+                print('%s %s %s' % (idx, txt[:idx], self.effect_dict[(t, color)]))
                 for _ in range(1):
-                    async with await session.put(self.uri + '/effect', params=self.remote_local_port, json={"id": str(effect_id)}) as resp:
-                        print(await resp.json())
+                    await self.send_effect(clear_effect_id, session)
                     await asyncio.sleep(1.0 / speed)
-                    async with await session.put(self.uri + '/effect', params=self.remote_local_port, json={"id": str(effect_ids[0])}) as resp:
-                        print(await resp.json())
+                    await self.send_effect(self.effect_dict[(t, color)], session)
                     await asyncio.sleep(1.0 / speed)
             self.current_effect = None
+
+    async def get_effect(self, session, effect, json):
+        if effect in self.effect_dict:
+            return self.effect_dict[effect]
+        else:
+            async with session.post(self.uri + '/keyboard', params=self.remote_local_port, json=json) as resp:
+                resp_data = await resp.json()
+                self.effect_dict[effect] = resp_data['id']
+                return resp_data['id']
+
+    async def get_clear_effect(self, session):
+        clear_effect_json = {
+            "effect": "CHROMA_STATIC",
+            "param":
+                {
+                    "color": 1
+                }
+        }
+        return await self.get_effect(session, 'clear', clear_effect_json)
+
+    async def send_effect(self, clear_effect_id, session):
+        async with await session.put(self.uri + '/effect', params=self.remote_local_port, json={"id": str(clear_effect_id)}) as resp:
+            data = await resp.json()
+            if 'result' not in data or data['result'] != 0:
+                print('error sending effect: %s' % data)
+
+    async def flash(self, color, speed=5.0):
+        async with aiohttp.ClientSession() as session:
+            static_effect = {
+                "effect": "CHROMA_STATIC",
+                "param":
+                    {
+                        "color": 255
+                    }
+            }
+            effects = [(await self.get_effect(session, 'flash', static_effect)), (await self.get_clear_effect(session))]
+
+            for _ in range(3):
+                for effect_id in effects:
+                    await self.send_effect(effect_id, session)
+                    await asyncio.sleep(1.0 / speed)
 
     async def show_image(self, img, speed=20, repeat=1, reverse=False):
         self.show_effect = True
         self.current_effect = 'show_image'
         slices = horizontal_slices(img)
         effect_ids = []
-        async with aiohttp.ClientSession() as session:
-            for i, img in enumerate(slices):
-                # s.save("./debug/%s.bmp"%i)
-                # self.set_static_image(build_img(s))
-                # time.sleep(1.0/speed)
-                arr = np.array(img)
-                print('%s %s ' % (len(arr), len(arr[0])))
-                print(arr)
-                arr2 = []
-                for ii, y in enumerate(arr):
-                    arr3 = []
-                    for jj, x in enumerate(y):
+        all_effects = {'effects': []}
 
-                        arr3.append(int(arr[ii][jj][0] + arr[ii][jj][1] * 256 + arr[ii][jj][2] * 65536))
-                    arr2.append(arr3)
-                effect_json = {
-                    "effect": "CHROMA_CUSTOM",
-                    "param":
-                        arr2
-                }
-                print(json.dumps(effect_json))
-                async with session.post(self.uri + '/keyboard', params=self.remote_local_port, json=effect_json) as resp:
-                    cnt = await resp.json()
-                    try:
-                        effect_ids.append(cnt['id'])
-                    except Exception as e:
-                        print("error generating keyboard effect for image")
-                        traceback.print_exc()
-            if reverse:
-                effect_ids.reverse()
+        if reverse:
+            slices = reversed(slices)
+        for i, img in enumerate(slices):
+            # s.save("./debug/%s.bmp"%i)
+            # self.set_static_image(build_img(s))
+            # time.sleep(1.0/speed)
+            arr = np.array(img)
+            print('%s %s ' % (len(arr), len(arr[0])))
+            print(arr)
+            arr2 = []
+            for ii, y in enumerate(arr):
+                arr3 = []
+                for jj, x in enumerate(y):
+                    arr3.append(int(arr[ii][jj][0] + arr[ii][jj][1] * 256 + arr[ii][jj][2] * 65536))
+                arr2.append(arr3)
+            effect_json = {
+                "effect": "CHROMA_CUSTOM",
+                "param":
+                    arr2
+            }
+            all_effects['effects'].append(effect_json)
+            #print(json.dumps(effect_json))
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(self.uri + '/keyboard', params=self.remote_local_port, json=all_effects) as resp:
+                response = await resp.json()
+                try:
+                    effect_ids = [result['id'] for result in response['results']]
+                except Exception as e:
+                    print("error generating keyboard effect for image")
+                    traceback.print_exc()
             for _ in range(repeat):
                 if not self.show_effect:
                     break
                 for idx, effect_id in enumerate(effect_ids):
-                    async with await session.put(self.uri + '/effect', params=self.remote_local_port, json={"id": str(effect_id)}) as resp:
-                        print(await resp.json())
+                    await self.send_effect(effect_id, session)
                     await asyncio.sleep(1.0 / speed)
                     if not self.show_effect:
                         break
@@ -213,16 +271,17 @@ class ChromaImpl:
             try:
                 async with aiohttp.ClientSession() as session:
                     async with session.put(self.uri, params=self.remote_local_port) as resp:
-                        print(resp.status)
+                        if resp.status != 200:
+                            print(resp.json())
             except:
                 self.uri = None
                 print("Heartbeat except")
-        if not self.uri:
-            print("Heartbeat fail")
-            uri = self.init_connection()
-            if not uri:
-                print("No connection")
-                exit(1)
+        # if not self.uri:
+        #     print("Heartbeat fail")
+        #     uri = self.connect()
+        #     if not uri:
+        #         print("No connection")
+        #         exit(1)
 
 
 def rgb_to_bgr_int(rgb):
@@ -305,23 +364,51 @@ async def heartbeat_loop(keyboard: ChromaImpl):
         await keyboard.heartbeat()
 
 
+async def move_around(keyboard: ChromaImpl):
+    x = 2
+    y = 2
+    while True:
+        await keyboard.blink_letter(x, y)
+        inp = await ainput('next: ')
+        if inp == 's':
+            x = x + 1
+        if inp == 'w':
+            x = x - 1
+        if inp == 'a':
+            y = y - 1
+        if inp == 'd':
+            y = y + 1
+        if inp == 'p':
+            print('x: ' + str(x) + ' y: ' + str(y))
+        if inp == 'q':
+            break
+    await keyboard.disconnect()
+
 async def main(keyboard: ChromaImpl):
     # await show_text_as_img([("Razer Chroma", "red")],10)
     print('and now text')
     # input()
     await keyboard.connect()
     # await keyboard.show_text(" ccc", 2, color=(255, 255, 0))
-    Image.open('../gradient2.png').show()
-    await keyboard.show_text(" welcome", 5, color=(255, 255, 0))
-    await keyboard.show_image(Image.open('../gradient2.png').convert('RGB'), speed=10, repeat=4, reverse=True)
+    #Image.open('../mng.png').show()
+    await keyboard.show_text(":)", 0.2, color=(255, 255, 0))
+    await keyboard.show_image(Image.open('../gradient2.png').convert('RGB'), speed=10, repeat=4)
+
+    await move_around(keyboard)
     # await show_text("qwertz",2)
 
     # await keyboard.show_text_as_img([("Razer Chroma", "red"), ("REST", "green")],4)
+    await keyboard.disconnect()
     pass
 
+async def ainput(prompt: str = ''):
+    with ThreadPoolExecutor(1, 'ainput') as executor:
+        return (await asyncio.get_event_loop().run_in_executor(executor, input, prompt)).rstrip()
 
 async def m(keyboard: ChromaImpl):
-    await asyncio.gather(main(keyboard), heartbeat_loop(keyboard))
+    await asyncio.gather(main(keyboard)
+                         , heartbeat_loop(keyboard)
+                         )
 
 if __name__ == "__main__":
     #  loop = asyncio.get_event_loop()
