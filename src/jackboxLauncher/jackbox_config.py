@@ -98,6 +98,8 @@ games = [
     GameItem(name='Use Your Words', players_min=4, players_max=8, local_recommended=False, game=PartyPack(name='Use Your Words', app_id=521350)),
     GameItem(name='What The Dub?!', players_min=1, players_max=6, local_recommended=False, game=PartyPack(name='What The Dub!?', app_id=1495860)),
 
+    GameItem(name='RiffTrax: The Game', players_min=1, players_max=6, local_recommended=False, game=PartyPack(name='RiffTrax: The Game', app_id=1707870)),
+
     GameItem(name='Trivia Murder Party 2', players_min=1, players_max=8, local_recommended=False, game=PPStarter),
     GameItem(name='Quiplash 3', players_min=3, players_max=8, local_recommended=False, game=PPStarter),
     GameItem(name='Tee K.O.', players_min=3, players_max=8, local_recommended=False, drawing=True, game=PPStarter),

@@ -175,8 +175,8 @@ async def user_gallery_handler(request, steamid: int, onlydraw: bool = None, pla
         return web.FileResponse('jackboxLauncher/htdocs/errorSteamAPI.html')
 
 def getGameImage(game: GameItem, prefix: str = '/', slice: bool = False):
-    sanitized_pack = game.game.name.replace(' ','').replace('!','').replace('?','').replace("'", '')
-    sanitized_game = game.name.replace(' ','').replace('!','').replace('?','').replace("'", '')
+    sanitized_pack = game.game.name.replace(' ','').replace('!','').replace('?','').replace("'", '').replace(":", '')
+    sanitized_game = game.name.replace(' ','').replace('!','').replace('?','').replace("'", '').replace(":", '')
     if slice:
         sanitized_game = 'slice_'+sanitized_game
     if game.image:
