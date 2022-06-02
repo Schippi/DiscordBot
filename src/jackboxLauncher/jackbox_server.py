@@ -204,6 +204,15 @@ async def gallery_handler(request, onlydraw: bool = None, playerCount: int = 0, 
         result = result + f.read()
     with open('jackboxLauncher/htdocs/list.html.part02', 'r') as f:
         loopy = f.read()
+    insensitive_dict = {k.lower(): v for k, v in request.rel_url.query.items()}
+    if not onlydraw and 'onlydraw' in insensitive_dict:
+        onlydraw = (insensitive_dict['onlydraw'] == 'True' or insensitive_dict['onlydraw'] == 'true')
+    if playerCount == 0 and 'playercount' in insensitive_dict:
+        try:
+            playerCount = int(insensitive_dict['playercount'])
+        except:
+            pass
+
     item = None
     for game in (g for g in games if g.game.app_id in filter_games and (playerCount == 0 or g.players_min <= playerCount <= g.players_max) and (g.drawing == onlydraw or onlydraw is None) and (g.local_recommended == localOnly or localOnly is None)):
         item = loopy.replace('{app_id}', str(game.game.app_id))
