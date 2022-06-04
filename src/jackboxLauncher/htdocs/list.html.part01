@@ -1,7 +1,28 @@
 <!DOCTYPE html>
 <html>
-<link rel="stylesheet" href="/css/list.css">
     <head>
         <title>Jackbox Launcher</title>
+        <link rel="icon" type="image/png" href="/css/favicon.png"/>
+        <link rel="stylesheet" href="/css/list.css">
     </head>
 <body>
+<input type="text" id="myInput" onkeyup="filterGames()" placeholder="Search for names.." title="Type in a name"><br/>
+    <script>
+    function filterGames() {
+        var input, filter, ul, li, a, i, txtValue;
+        input = document.getElementById("myInput");
+        filter = input.value.toUpperCase();
+
+        const collection = document.getElementsByClassName("tooltip");
+        for (i = 0; i < collection.length; i++) {
+            myimg = collection[i].getElementsByClassName("tooltiptext")[0];
+            imgtxt = myimg.textContent.replace('<br>','')
+            if (imgtxt.toUpperCase().indexOf(filter) > -1) {
+                collection[i].style.display = "";
+            } else {
+                collection[i].style.display = "none";
+            }
+        }
+
+    }
+    </script>
