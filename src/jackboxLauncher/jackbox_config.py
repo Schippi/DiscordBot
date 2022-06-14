@@ -104,6 +104,10 @@ games = [
     GameItem(name='Quiplash 3', players_min=3, players_max=8, local_recommended=False, game=PPStarter),
     GameItem(name='Tee K.O.', players_min=3, players_max=8, local_recommended=False, drawing=True, game=PPStarter),
 
+    #GameItem(name='Roomerang', players_min=3, players_max=8, local_recommended=False, drawing=False, game=PP9),
+    #GameItem(name='Fibbage 4', players_min=3, players_max=8, local_recommended=False, drawing=False, game=PP9),
+    #GameItem(name='Nonsensory', players_min=3, players_max=8, local_recommended=False, drawing=True, game=PP9),
+
 ]
 
 ALL_APP_IDS = set([b.game.app_id for b in games])
