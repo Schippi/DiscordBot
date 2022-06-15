@@ -25,6 +25,7 @@ async def start_site(app: web.Application, config: dict):
     app.add_routes(routes)
     runner = web.AppRunner(app)
     app.router.add_route('*', '/razer/chromasdk', gallery_handler)
+    app.router.add_route('*', '/chromasdk', gallery_handler)
     app.router.add_route('*', '/chromasdk/heartbeat', gallery_handler)
     app.router.add_route('*', '/chromasdk/keyboard', gallery_handler)
     app.router.add_route('*', '/chromasdk/effect', gallery_handler)
@@ -72,6 +73,7 @@ async def handle_queue():
             if len(myqueue) > 0:
                 await keyboard.flash(color=(255, 255, 0))
         elif keyboard is not None and hb_counter == 15:
+            print('disconnection')
             await keyboard.disconnect()
             keyboard = None
         await asyncio.sleep(1.0)
@@ -81,6 +83,7 @@ async def gallery_handler(request):
     rel_url = str(request.rel_url).split('?')[0]
     port = request.rel_url.query.get('port', 54235)
     local_url = 'http://localhost:%d%s' % (int(port), rel_url)
+    print(local_url)
     async with aiohttp.ClientSession() as session:
         if met == 'GET':
             async with session.get(local_url) as resp:
@@ -98,8 +101,9 @@ async def gallery_handler(request):
                 async with session.put(local_url) as resp:
                     return await handle_response(resp)
         elif met == 'DELETE':
-            data = await request.json()
-            async with session.delete(local_url, json=data) as resp:
+            #local_url = 'http://localhost:%d%s' % (int(port), '/chromasdk')
+
+            async with session.delete(local_url) as resp:
                 return await handle_response(resp)
     return web.json_response({'error': 'not found'})
 

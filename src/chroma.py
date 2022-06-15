@@ -55,11 +55,11 @@ class ChromaImpl:
         if self.custom_url:
             base_url = '%s:%s/razer/chromasdk' % (self.custom_url, self.custom_port)
             async with aiohttp.ClientSession() as session:
-                async with session.delete(base_url) as resp:
+                async with session.delete(base_url, params=self.remote_local_port) as resp:
                     print(await resp.json())
         elif self.uri:
             async with aiohttp.ClientSession() as session:
-                async with session.delete(self.uri) as resp:
+                async with session.delete(self.uri, params=self.remote_local_port) as resp:
                     print(await resp.json())
 
     async def connect(self):
