@@ -196,6 +196,8 @@ async def on_message(message):
                     await keyboard.connect()
                     await keyboard.show_text(" "+message.content, 5, color=(255, 255, 0))
                     await keyboard.disconnect()
+                except:
+                    print('chroma failed');
                 finally:
                     print('chroma done')
                     client.running_chroma = False;
