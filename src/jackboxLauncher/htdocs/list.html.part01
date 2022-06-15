@@ -6,7 +6,8 @@
         <link rel="stylesheet" href="/css/list.css"/>
         <meta property="og:image" content="/css/favicon.png"/>
         <meta property="og:title" content="Jackbox Launcher"/>
-        <meta property="og:description" content="Launch any Jackbox Game without remembering which Pack it is from"/>
+        <meta property="og:type" content="website">
+        <meta name="Description" content="Launch any Jackbox Game without remembering which Pack it is from"/>
     </head>
 <body>
 <input type="text" id="myInput" onkeyup="filterGames()" placeholder="Search for names.." title="Type in a name"><br/>
