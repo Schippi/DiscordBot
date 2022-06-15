@@ -101,8 +101,7 @@ async def gallery_handler(request):
                 async with session.put(local_url) as resp:
                     return await handle_response(resp)
         elif met == 'DELETE':
-            #local_url = 'http://localhost:%d%s' % (int(port), '/chromasdk')
-
+            local_url = 'http://localhost:%d%s' % (int(port), '/chromasdk')
             async with session.delete(local_url) as resp:
                 return await handle_response(resp)
     return web.json_response({'error': 'not found'})
