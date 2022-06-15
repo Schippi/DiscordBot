@@ -6,8 +6,14 @@
         <link rel="stylesheet" href="/css/list.css"/>
         <meta property="og:image" content="/css/favicon.png"/>
         <meta property="og:title" content="Jackbox Launcher"/>
-        <meta property="og:type" content="website">
+        <meta property="og:type" content="website"/>
+        <meta property="og:description" content="Launch any Jackbox Game without remembering which Pack it is from"/>
         <meta name="Description" content="Launch any Jackbox Game without remembering which Pack it is from"/>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+        <meta name="viewport" content="width=device-width,initial-scale=1"/>
+        <meta name="theme-color" content="#171a21"/>
+        <meta property="og:site" content="Jackbox Launcher"/>
+
     </head>
 <body>
 <input type="text" id="myInput" onkeyup="filterGames()" placeholder="Search for names.." title="Type in a name"><br/>
