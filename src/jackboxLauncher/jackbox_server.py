@@ -204,8 +204,9 @@ async def gallery_handler(request, onlydraw: bool = None, playerCount: int = 0, 
     with open('jackboxLauncher/htdocs/list.html.part01', 'r') as f:
         result = result + f.read()
         global call_cnt
+        launch_cnt = 0
         call_cnt += 1
-        result = result.replace('{call_cnt}',str(call_cnt)).replace('{launch_cnt}', str(launch_cnt))
+        result = result.replace('{call_cnt}',str(call_cnt)).replace('{call_cnt}', str(launch_cnt))
     with open('jackboxLauncher/htdocs/list.html.part02', 'r') as f:
         loopy = f.read()
     insensitive_dict = {k.lower(): v for k, v in request.rel_url.query.items()}
