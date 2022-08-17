@@ -36,7 +36,7 @@ PP7 = PartyPack(name='PartyPack07', app_id=1211630)
 PP8 = PartyPack(name='PartyPack08', app_id=1552350)
 PPStarter = PartyPack(name='StarterPack', app_id=1755580)
 #AtParty = PartyPack(name='AtTheParty', app_id=1506530)
-PP9 = PartyPack(name='PartyPack9', app_id=1850960)
+PP9 = PartyPack(name='PartyPack09', app_id=1850960)
 
 games = [
     GameItem(name='You Don\'t Know Jack 2015', players_min=1, players_max=4, local_recommended=True, game=PP1, image='Jack_2015.webp'),
