@@ -23,7 +23,7 @@ class GameItem:
     game: PartyPack = None
     drawing: bool = False
     image: str = None
-    #dlc: int = None
+    dlc: int = None
 
 
 PP1 = PartyPack(name='PartyPack01', app_id=331670)
