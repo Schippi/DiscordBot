@@ -23,6 +23,7 @@ class GameItem:
     game: PartyPack = None
     drawing: bool = False
     image: str = None
+    #dlc: int = None
 
 
 PP1 = PartyPack(name='PartyPack01', app_id=331670)
@@ -34,7 +35,8 @@ PP6 = PartyPack(name='PartyPack06', app_id=774461)
 PP7 = PartyPack(name='PartyPack07', app_id=1211630)
 PP8 = PartyPack(name='PartyPack08', app_id=1552350)
 PPStarter = PartyPack(name='StarterPack', app_id=1755580)
-#PP9 = PartyPack(name='PartyPack9', app_id='app_id9')
+#AtParty = PartyPack(name='AtTheParty', app_id=1506530)
+PP9 = PartyPack(name='PartyPack9', app_id=1850960)
 
 games = [
     GameItem(name='You Don\'t Know Jack 2015', players_min=1, players_max=4, local_recommended=True, game=PP1, image='Jack_2015.webp'),
@@ -104,10 +106,21 @@ games = [
     GameItem(name='Quiplash 3', players_min=3, players_max=8, local_recommended=False, game=PPStarter),
     GameItem(name='Tee K.O.', players_min=3, players_max=8, local_recommended=False, drawing=True, game=PPStarter),
 
-    #GameItem(name='Roomerang', players_min=3, players_max=8, local_recommended=False, drawing=False, game=PP9),
-    #GameItem(name='Fibbage 4', players_min=3, players_max=8, local_recommended=False, drawing=False, game=PP9),
-    #GameItem(name='Nonsensory', players_min=3, players_max=8, local_recommended=False, drawing=True, game=PP9),
+    #GameItem(name='Wait, What?', players_min=3, players_max=16, local_recommended=False, drawing=False, game=AtParty, dlc=1506541),
+    #GameItem(name='Brand New', players_min=3, players_max=16, local_recommended=False, drawing=True, game=AtParty, dlc=1506540),
+    #GameItem(name='Suspect Sketch', players_min=3, players_max=16, local_recommended=False, drawing=True, game=AtParty, dlc=1601640),
+
+
+    GameItem(name='Fibbage 4', players_min=2, players_max=8, local_recommended=False, drawing=False, game=PP9),
+    GameItem(name='Quixort', players_min=1, players_max=10, local_recommended=False, drawing=False, game=PP9),
+    GameItem(name='Junktopia', players_min=3, players_max=8, local_recommended=False, drawing=False, game=PP9),
+    GameItem(name='Nonsensory', players_min=3, players_max=8, local_recommended=False, drawing=True, game=PP9),
+    GameItem(name='Roomerang', players_min=4, players_max=9, local_recommended=False, drawing=False, game=PP9),
+
+
+
 
 ]
 
-ALL_APP_IDS = set([b.game.app_id for b in games])
+#ALL_APP_IDS = set([b.dlc for b in games if b.dlc is not None])
+ALL_APP_IDS = set([b.game.app_id for b in games] + [b.dlc for b in games if b.dlc is not None])
