@@ -120,8 +120,9 @@ async def download_all(users, stopOnPgOne):
                     if len(data['data']) == 0:
                         break
                     for x in data['data']:
-                        data_to_db(x,cur)
+                        data_to_db(x, cur)
                         replay_url = x['replay']
+                        print(replay_url)
                         replay_file_name = replay_url[replay_url.rindex('/')+1:]
                         local_file_name = 'beatsaber/replays/%s/%s' % (p, replay_file_name)
                         if not os.path.exists(local_file_name):
