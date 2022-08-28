@@ -219,7 +219,7 @@ async def gallery_handler(request, onlydraw: bool = None, playerCount: int = 0, 
             pass
 
     item = None
-    for game in (g for g in games if g.game.app_id in filter_games and (playerCount == 0 or g.players_min <= playerCount <= g.players_max) and (g.drawing == onlydraw or onlydraw is None) and (g.local_recommended == localOnly or localOnly is None)):
+    for game in (g for g in games if g.game.app_id in filter_games and (g.dlc is None or g.dlc in filter_games) and (playerCount == 0 or g.players_min <= playerCount <= g.players_max) and (g.drawing == onlydraw or onlydraw is None) and (g.local_recommended == localOnly or localOnly is None)):
         item = loopy.replace('{app_id}', str(game.game.app_id))
         item = item.replace('{game_name}', game.name)
         try:
