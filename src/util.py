@@ -81,6 +81,19 @@ def toDateTime(strr):
 def dateToStr(dd):
 	return dd.strftime(timeStr);
 
+from contextlib import contextmanager
+
+@contextmanager
+def OpenCursor(conn):
+	cursor = conn.cursor()
+	try:
+		yield (cursor)
+	except Exception as e:
+		cursor.close()
+		raise e
+	else:
+		cursor.close()
+
 def getMarkupStr(args):
 	if(len(args) > 1):
 		text = '';

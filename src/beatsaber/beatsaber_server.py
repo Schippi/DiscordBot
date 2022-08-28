@@ -161,7 +161,7 @@ async def urlredirector(request):
 
 @bsroutes.get('/bs/replay/{score_id}')
 async def replay_handler(request):
-    score_id = request.rel_url.query['score']
+    score_id = request.match_info['score']
     if not score_id:
         return web.Response(status=400, reason='no score id')
     try:
