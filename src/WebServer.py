@@ -39,7 +39,7 @@ import os;
 clientsession = aiohttp.ClientSession(); 
 
 
-def setup(my_client):
+def setup(my_client, testing):
 	global bot_client;
 	global httpsapp;
 	bot_client = my_client;
@@ -55,9 +55,13 @@ def setup(my_client):
 	
 	
 	app.add_routes(routes);
-	sys.path.insert(0,'jackboxLauncher')
+	sys.path.insert(0, 'jackboxLauncher')
 	from jackbox_server import jackroutes;
 	app.add_routes(jackroutes);
+	sys.path.insert(0, 'beatsaber')
+	from beatsaber_server import bsroutes
+	app.add_routes(bsroutes)
+
 	runner = web.AppRunner(app);
 	root_folder = os.path.dirname(__file__)
 	app.router.add_static('/images', root_folder+'/jackboxLauncher/images')
@@ -65,11 +69,14 @@ def setup(my_client):
 	app.router.add_static('/css', root_folder+'/jackboxLauncher/htdocs/css')
 
 	asyncio.get_event_loop().run_until_complete(runner.setup())
+	if not testing:
+		ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+		ssl_context.load_cert_chain(util.cfgPath+'/fullchain.pem', util.cfgPath+'/privkey.pem');
 
-	ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-	ssl_context.load_cert_chain(util.cfgPath+'/fullchain.pem', util.cfgPath+'/privkey.pem');
+		website = web.TCPSite(runner, util.serverHost, util.serverPort, ssl_context = ssl_context)
+	else:
+		website = web.TCPSite(runner, util.serverHost, util.serverPort)
 
-	website = web.TCPSite(runner, util.serverHost, util.serverPort,ssl_context = ssl_context)
 	return website;
 
 async def handle_http(request):

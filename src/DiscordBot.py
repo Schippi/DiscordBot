@@ -246,7 +246,7 @@ async def on_message(message):
                 from PIL import Image;
                 from shutil import copyfile;
                 x = decode(Image.open(util.cfgPath + "/qr/botcheck"));
-                copyfile(util.cfgPath + "/qr/botcheck", util.cfgPath + "/qr/" + str(att.id) + "_" + str(att.filename));
+                #copyfile(util.cfgPath + "/qr/botcheck", util.cfgPath + "/qr/" + str(att.id) + "_" + str(att.filename));
                 if len(x) > 0:
                     try:
                         if x[0].data and "discord" in x[0].data.decode("utf-8", "ignore").lower():
@@ -770,8 +770,15 @@ ircTask = client.loop.create_task(ircStart.main(client, testing).start());
 
 from WebServer import setup, setuphttp;
 
-client.loop.run_until_complete(setup(client).start())
+client.loop.run_until_complete(setup(client, testing).start())
 client.loop.run_until_complete(setuphttp().start())
+
+from beatsaber.beatsaber_server import download_all_loop
+
+BS_DB = util.DB
+if not testing:
+    client.loop.create_task(download_all_loop(util.beatsaber_people))
+    pass
 
 for sig in (signal.SIGINT, signal.SIGTERM):
     try:

@@ -172,5 +172,53 @@ def update(db, open_db_connection):
             pass;
         else:
             open_db_connection.execute('''alter table irc_channel add ghost text''');
-            
-    db.commit();
+
+    open_db_connection.execute('''CREATE TABLE IF NOT EXISTS  `bs_song` (
+        `id`    TEXT,
+        `hash`    TEXT,
+        `name`    TEXT,
+        `sub_name`    TEXT,
+        `author`    TEXT,
+        `mapper`    TEXT,
+        `mapper_id`    TEXT,
+        `cover_image` TEXT,
+        `duration` INTEGER,
+        `uploadtime` INTEGER
+    );''')
+
+    open_db_connection.execute('''CREATE TABLE IF NOT EXISTS  `bs_song_diff` (
+        `id`    TEXT,
+        `id_song`    TEXT,
+        `difficultyName`    TEXT,
+        `stars`    TEXT,
+        `notes`    TEXT,
+        `bombs`    TEXT,
+        `walls` TEXT,
+        `rankedTime` INTEGER,
+        `nps` TEXT
+    );''');
+
+    open_db_connection.execute('''CREATE TABLE IF NOT EXISTS  `bs_replay` (
+        `id`    TEXT,
+        `id_diff`    TEXT,
+        `id_user`    TEXT,
+        `badCuts`    INTEGER,
+        `missedNotes`    INTEGER,
+        `bombCuts`    INTEGER,
+        `wallsHit` INTEGER,
+        `pauses` INTEGER,
+        `fullCombo` INTEGER,
+        `replay` TEXT,
+        `modifiers` TEXT,
+        `score` INTEGER
+    );''');
+
+    open_db_connection.execute('''CREATE TABLE IF NOT EXISTS  `bs_user` (
+        `id_user`    TEXT,
+        `user_name` TEXT
+    );''');
+
+
+
+
+    db.commit()

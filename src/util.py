@@ -35,6 +35,8 @@ YTAPI = '';
 pleaseLog=True;
 log = logging.getLogger(__name__);
 
+beatsaber_people = [4476, 4478]
+
 class AuthFailed(Exception):
 	pass;
 

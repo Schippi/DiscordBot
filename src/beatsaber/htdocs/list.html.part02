@@ -1,0 +1,5 @@
+<div class="tooltip"><a href="/bs/song/{song_id}">
+        <img class="banner" src="{cover}" alt="{mytxt}" title="{mytxt}" />
+    <span class="mytxt">{mytxt}</span>
+</a>
+</div>
