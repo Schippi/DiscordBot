@@ -134,6 +134,8 @@ async def download_all(users, stopOnPgOne):
                                     f = await aiofiles.open(local_file_name, mode='wb')
                                     await f.write(await resp.read())
                                     await f.close()
+                        else:
+                            print('REPLAY MISSING !?!? ' + str(x['id']))
                     if dld == 0 and stopOnPgOne:
                         break
 
