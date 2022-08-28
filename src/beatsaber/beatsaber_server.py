@@ -122,10 +122,10 @@ async def download_all(users, stopOnPgOne):
                     for x in data['data']:
                         replay_url = x['replay']
                         if replay_url:
-                            data_to_db(x, cur)
                             replay_file_name = replay_url[replay_url.rindex('/')+1:]
                             local_file_name = 'beatsaber/replays/%s/%s' % (p, replay_file_name)
                             if not os.path.exists(local_file_name):
+                                data_to_db(x, cur)
                                 dld = dld + 1
                                 async with session.get(replay_url) as resp:
                                     if resp.status != 200:
