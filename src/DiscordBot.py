@@ -184,23 +184,24 @@ async def on_message(message):
     ok = True;
     if message.author.id != client.user.id:  # and not message.author.bot
         if message.author.id in [296707158047719425, '296707158047719425', 106087197588889600, '106087197588889600']:
-            print('trying chroma')
-            if not client.running_chroma:
-                client.running_chroma = True;
-                try:
-                    print(message.content)
-                    print(chromaconfig.chroma_ip)
-                    print(chromaconfig.chroma_port)
-                    print('go on..')
-                    keyboard = ChromaImpl(custom_url=chromaconfig.chroma_ip, custom_port=chromaconfig.chroma_port);
-                    await keyboard.connect()
-                    await keyboard.show_text(" "+message.content, 5, color=(255, 255, 0))
-                    await keyboard.disconnect()
-                except:
-                    print('chroma failed');
-                finally:
-                    print('chroma done')
-                    client.running_chroma = False;
+            if util.getControlVal('chroma', 'false').lower() == 'true':
+                print('trying chroma')
+                if not client.running_chroma:
+                    client.running_chroma = True;
+                    try:
+                        print(message.content)
+                        print(chromaconfig.chroma_ip)
+                        print(chromaconfig.chroma_port)
+                        print('go on..')
+                        keyboard = ChromaImpl(custom_url=chromaconfig.chroma_ip, custom_port=chromaconfig.chroma_port);
+                        await keyboard.connect()
+                        await keyboard.show_text(" "+message.content, 5, color=(255, 255, 0))
+                        await keyboard.disconnect()
+                    except:
+                        print('chroma failed');
+                    finally:
+                        print('chroma done')
+                        client.running_chroma = False;
 
         if message.guild:
             try:
@@ -776,8 +777,9 @@ client.loop.run_until_complete(setuphttp().start())
 from beatsaber.beatsaber_server import download_all_loop
 
 BS_DB = util.DB
+client.loop.create_task(download_all_loop(util.beatsaber_people))
 if not testing:
-    client.loop.create_task(download_all_loop(util.beatsaber_people))
+
     pass
 
 for sig in (signal.SIGINT, signal.SIGTERM):
