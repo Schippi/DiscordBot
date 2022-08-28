@@ -120,21 +120,20 @@ async def download_all(users, stopOnPgOne):
                     if len(data['data']) == 0:
                         break
                     for x in data['data']:
-                        data_to_db(x, cur)
                         replay_url = x['replay']
-                        print('replay url: %s' % replay_url)
-                        replay_file_name = replay_url[replay_url.rindex('/')+1:]
-                        local_file_name = 'beatsaber/replays/%s/%s' % (p, replay_file_name)
-                        if not os.path.exists(local_file_name):
-                            dld = dld + 1
-                            async with session.get(replay_url) as resp:
-                                if resp.status != 200:
-                                    print(resp.status)
-                                    break
-                                f = await aiofiles.open(local_file_name, mode='wb')
-                                await f.write(await resp.read())
-                                await f.close()
-                                print(replay_file_name)
+                        if replay_url:
+                            data_to_db(x, cur)
+                            replay_file_name = replay_url[replay_url.rindex('/')+1:]
+                            local_file_name = 'beatsaber/replays/%s/%s' % (p, replay_file_name)
+                            if not os.path.exists(local_file_name):
+                                dld = dld + 1
+                                async with session.get(replay_url) as resp:
+                                    if resp.status != 200:
+                                        print(resp.status)
+                                        break
+                                    f = await aiofiles.open(local_file_name, mode='wb')
+                                    await f.write(await resp.read())
+                                    await f.close()
                     if dld == 0 and stopOnPgOne:
                         break
 
