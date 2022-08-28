@@ -65,7 +65,7 @@ def data_to_db(data,cur):
         for row in cur.execute('SELECT id from bs_song where id = ?', (song['id'],)):
             doSong = False
         if doSong:
-            cur.execute('insert into bs_song(id,hash,author,mapper,mapper_id,cover_image,duration,uploadtime, name, subname) '
+            cur.execute('insert into bs_song(id,hash,author,mapper,mapper_id,cover_image,duration,uploadtime, name, sub_name) '
                         'select ?,?,?,?,?,?,?,?,?,? from dual', (song['id'],song['hash'],song['author'],song['mapper'],song['mapperId'],song['coverImage'],song['duration'],song['uploadTime'],song['name'],song['subName']))
         debug = 1
         for d in song['difficulties']:
