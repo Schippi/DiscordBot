@@ -201,6 +201,7 @@ async def replay_handler(request):
                 title=row['name']
             )
     buf = io.StringIO()
+    fig.update_layout(template='plotly_dark')
     fig.write_html(buf)
 
     return web.Response(text=buf.getvalue(), content_type='text/html')
