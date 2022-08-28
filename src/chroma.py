@@ -11,7 +11,7 @@ import numpy as np
 import json
 import sys
 
-from PySide6.QtWidgets import QLabel, QVBoxLayout
+
 
 from keyboard import char_dict, repl_text, specials
 import traceback
@@ -504,6 +504,7 @@ class AsyncLoopThread(Thread):
         self.loop.run_forever()
 
 def whackamole():
+    from PySide6.QtWidgets import QLabel, QVBoxLayout
     from PySide6.QtWidgets import QLineEdit
     from PySide6 import QtCore
     from PySide6 import QtWidgets
