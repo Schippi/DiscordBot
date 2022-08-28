@@ -51,7 +51,7 @@ def strToBoolOrNone(draw: str):
 
 async def download_all_loop(users):
     while True:
-        await download_all(users, True)
+        await download_all(users, False)
         for i in range(30):
             #print(i)
             await asyncio.sleep(60)
