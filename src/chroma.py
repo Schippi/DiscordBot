@@ -2,6 +2,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import aiohttp
 import asyncio
+from threading import Thread
 from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
@@ -9,6 +10,9 @@ from PIL import ImageFont
 import numpy as np
 import json
 import sys
+
+from PySide6.QtWidgets import QLabel, QVBoxLayout
+
 from keyboard import char_dict, repl_text, specials
 import traceback
 import re
@@ -93,6 +97,7 @@ class ChromaImpl:
                     print("Failed to connect to port %d" % port)
                     traceback.print_exc()
                     pass
+        print("Connected to %s" % self.uri)
         return self.uri
 
     async def blink_letter(self,x,y):
@@ -107,6 +112,41 @@ class ChromaImpl:
                 resp_data = await resp.json()
                 effect_id = resp_data['id'];
                 await self.send_effect(effect_id, session)
+
+    async def init_letters(self, color=33554431, letter = None):
+        all_effects = {'effects': []}
+        txt = 'abcdefghijklmnopqrstuvwxyz/'
+        for i, t in enumerate(txt):
+            if (t, color) in self.effect_dict:
+                continue
+            arr = [[0] * 22 for _ in range(6)]
+            effect_json = {
+                "effect": "CHROMA_CUSTOM",
+                "param": arr
+            }
+            x, y = char_dict[t]
+            arr[x][y] = color
+            all_effects['effects'].append(effect_json)
+        async with aiohttp.ClientSession() as session:
+            try:
+                async with session.post(self.uri + '/keyboard', params=self.remote_local_port, json=all_effects) as resp:
+                    resp_data = await resp.json()
+                    results = resp_data['results']
+                    for idx, result in enumerate(results):
+                        character = txt[idx]
+                        self.effect_dict[(character, color)] = result['id']
+                    print(str(zip(txt, results)))
+            except Exception as e:
+                print("error generating keyboard effect for text")
+                print('%s: %s' % (t, all_effects))
+                traceback.print_exc()
+        if letter is not None:
+            await self.show_letter(letter, color)
+
+    async def show_letter(self, letter, color=33554431):
+        async with aiohttp.ClientSession() as session:
+            await self.send_effect(self.effect_dict[(letter, color)], session)
+
 
     async def show_text(self, txt, speed=20, color=33554431):
         self.show_effect = True
@@ -200,7 +240,7 @@ class ChromaImpl:
             if 'result' not in data or data['result'] != 0:
                 print('error sending effect: %s' % data)
 
-    async def flash(self, color, speed=5.0):
+    async def flash(self, color=None, speed=5.0):
         async with aiohttp.ClientSession() as session:
             static_effect = {
                 "effect": "CHROMA_STATIC",
@@ -364,9 +404,13 @@ def horizontal_slices(image, slice_size=22):
 
 
 async def heartbeat_loop(keyboard: ChromaImpl):
+    await asyncio.sleep(1.0)
     while True:
+        print('heartbeat')
         await asyncio.sleep(1.0)
         await keyboard.heartbeat()
+        if not keyboard.uri:
+            return
 
 
 async def move_around(keyboard: ChromaImpl):
@@ -397,7 +441,8 @@ async def main(keyboard: ChromaImpl):
     # await keyboard.show_text(" ccc", 2, color=(255, 255, 0))
     #Image.open('../mng.png').show()
     await keyboard.show_text(":)", 0.2, color=(255, 255, 0))
-    await keyboard.show_image(Image.open('../gradient2.png').convert('RGB'), speed=10, repeat=4)
+    #await keyboard.show_image(Image.open('../mng2.png').convert('RGB'), speed=10, repeat=4)
+    await keyboard.show_image(Image.open('../mng2.png').convert('RGB'), speed=0.2, repeat=1)
 
     await move_around(keyboard)
     # await show_text("qwertz",2)
@@ -415,11 +460,143 @@ async def m(keyboard: ChromaImpl):
                          , heartbeat_loop(keyboard)
                          )
 
+curchar = '?'
+score = 0
+hits = 0
+misses = 0
+
+async def letterloop(keyboard):
+    #await keyboard.connect()
+    #await keyboard.init_letters()
+
+    from datetime import datetime
+    from datetime import timedelta
+    import random
+    global curchar
+    nextchar = '?'
+    curchar = '?'
+    global score
+    score = 0
+    now = datetime.now()
+    finish = now + timedelta(seconds=60)
+    while now < finish:
+        now = datetime.now()
+        sl = max((30+(score+3)*8)/((score+3)**2+40), 0.3)
+        print(sl)
+        await asyncio.sleep(sl)
+        while nextchar == curchar:
+            nextchar = random.choice(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']).lower()
+        curchar = nextchar
+        #print(curchar)
+        await keyboard.show_letter(curchar)
+    await keyboard.flash()
+    await keyboard.show_letter('/')
+    curchar = '?'
+
+
+class AsyncLoopThread(Thread):
+    def __init__(self):
+        super().__init__(daemon=False)
+        self.loop = asyncio.new_event_loop()
+
+    def run(self):
+        asyncio.set_event_loop(self.loop)
+        self.loop.run_forever()
+
+def whackamole():
+    from PySide6.QtWidgets import QLineEdit
+    from PySide6 import QtCore
+    from PySide6 import QtWidgets
+    import time
+    class Example(QtWidgets.QWidget):
+        def closeEvent(self, event):
+            asyncio.run_coroutine_threadsafe(self.keyboard.disconnect(), self.yourthread)
+            event.accept()
+        def eventFilter(self, sourceObj, event):
+            global curchar
+            global score
+            global hits
+            global misses
+            if event.type() == QtCore.QEvent.KeyPress:
+                c = event.text()[:1].lower()
+                if c == curchar:
+                    score += 1
+                    hits += 1
+                    #print(score)
+                    curchar = '_'
+                elif c == '*':
+                    asyncio.run_coroutine_threadsafe(self.keyboard.disconnect(), self.yourthread)
+                    self.close()
+                elif c == '/':
+                    if curchar == '?':
+                        score = 0
+                        asyncio.run_coroutine_threadsafe(letterloop(self.keyboard), self.yourthread)
+                    else:
+                        print('already started')
+                else:
+                    misses += 1
+                    score -= 1
+                    #print('missed'+ str(curchar) + ' ' + event.text()[:1])
+                self.label1.setText("<font color=red>score: %d</font>" % score)
+                self.label2.setText("<font color=black>hits: %d misses: %d</font>" % (hits, misses))
+
+            return QtWidgets.QWidget.eventFilter(self, sourceObj, event)
+    print('qt')
+    loop_handler = AsyncLoopThread()
+    loop_handler.start()
+    keyboard = ChromaImpl()
+    asyncio.get_event_loop().run_until_complete(keyboard.connect())
+    asyncio.get_event_loop().run_until_complete(keyboard.init_letters())
+    asyncio.get_event_loop().run_until_complete(asyncio.sleep(1.0))
+    asyncio.get_event_loop().run_until_complete(keyboard.show_letter('/'))
+    asyncio.run_coroutine_threadsafe(heartbeat_loop(keyboard), loop_handler.loop)
+
+    app = QtWidgets.QApplication([])
+    widget = Example()
+    widget.setWindowTitle('WhackAMole')
+    widget.yourthread = loop_handler.loop
+    widget.keyboard = keyboard
+
+    widget.label0 = QLabel(widget)
+    widget.label0.setAlignment(QtCore.Qt.AlignCenter)
+    widget.label0.setText("<font color=black>start with /</font>")
+
+    widget.label1 = QLabel(widget)
+    widget.label1.setAlignment(QtCore.Qt.AlignCenter)
+    widget.label1.setText("<font color=red>score: 0</font>")
+
+    widget.label2 = QLabel(widget)
+    widget.label2.setAlignment(QtCore.Qt.AlignCenter)
+    widget.label2.setText("<font color=black>hits: 0 misses: 0</font>")
+
+    widget.textbox = QLineEdit(widget)
+    widget.textbox.resize(700, 30)
+    widget.textbox.installEventFilter(widget)
+
+    vbox = QVBoxLayout()
+
+    vbox.addWidget(widget.label0)
+    vbox.addWidget(widget.label1)
+    vbox.addWidget(widget.label2)
+    vbox.addWidget(widget.textbox)
+    widget.setLayout(vbox)
+    widget.resize(800, 100)
+    widget.show()
+    sys.exit(app.exec())
+
 if __name__ == "__main__":
+    keyboard = ChromaImpl()
+
+    whackamole()
+    #asyncio.run(whackamole(keyboard))
+
+    #asyncio.run_coroutine_threadsafe(letterloop(keyboard), loop_handler.loop)
+
+
     #  loop = asyncio.get_event_loop()
     #   loop.run_until_complete(main())
     #    loop.run_until_complete(heartbeat()
-    keyboard = ChromaImpl()
+
     try:
         asyncio.run(m(keyboard))
     except KeyboardInterrupt:
