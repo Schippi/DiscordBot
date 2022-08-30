@@ -218,6 +218,12 @@ def update(db, open_db_connection):
         `user_name` TEXT
     );''');
 
+    for row in open_db_connection.execute('''select * from `bs_replay` limit 1'''):
+        if('timeset' in row.keys()):
+            pass;
+        else:
+            open_db_connection.execute('''alter table `bs_replay` add timeset integer''');
+
 
 
 

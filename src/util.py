@@ -170,8 +170,8 @@ def updateOrInsert(table,pkdict,valdict, alwaysUsePK):
 		DBcursor.execute(q2,l2);
 	else:
 		DBcursor.execute(q2,l2);	
-	print(q);
-	print(l1);
+	#print(q);
+	#print(l1);
 	#print(l2);	
 	if pkval:
 		return pkval;
@@ -179,8 +179,8 @@ def updateOrInsert(table,pkdict,valdict, alwaysUsePK):
 		q = 'Select max('+pklist[0]+') as id from '+table;
 		DBcursor.execute(q);
 		row = DBcursor.fetchone();
-		print(q);
-		print(row);
+		#print(q);
+		#print(row);
 		return row['id'];
 
 def delete(table,pk, pkval):

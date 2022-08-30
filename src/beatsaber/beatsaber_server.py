@@ -94,7 +94,8 @@ def data_to_db(data,cur):
             'fullCombo':int(data['fullCombo']),
             'score':int(data['baseScore']),
             'modifiers':data['modifiers'],
-            'replay':data['replay']
+            'replay':data['replay'],
+            'timeset':int(data['timeset']),
         }
         util.updateOrInsert('bs_replay',{'id':data['id']},dic,True)
         util.DB.commit()
@@ -134,6 +135,8 @@ async def download_all(users, stopOnPgOne):
                                         f = await aiofiles.open(local_file_name, mode='wb')
                                         await f.write(await resp.read())
                                         await f.close()
+                                else:
+                                    data_to_db(x, cur)
                             else:
                                 print('REPLAY MISSING !?!? ' + str(x['id']))
                         if dld == 0 and stopOnPgOne:
@@ -203,8 +206,8 @@ async def replay_handler(request):
     buf = io.StringIO()
     fig.update_layout(template='plotly_dark')
     fig.write_html(buf)
-
-    return web.Response(text=buf.getvalue(), content_type='text/html')
+    val = buf.getvalue().replace('<head>', '<head><link rel="stylesheet" href="/bscss/dark-theme.css"/>')
+    return web.Response(text=val, content_type='text/html')
 
 if __name__ == '__main__':
     config = {
