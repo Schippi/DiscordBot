@@ -164,41 +164,43 @@ async def urlredirector(request):
 
 @bsroutes.get('/bs/replay/{score_id}')
 async def replay_handler(request):
-    score_id = request.match_info['score_id']
-    if not score_id:
+    vgl_score = request.rel_url.query['vgl'] if 'vgl' in request.rel_url.query else None
+    o_score = request.match_info['score_id']
+    if not o_score:
         return web.Response(status=400, reason='no score id')
     try:
-        score_id = int(score_id)
+        o_score = int(o_score)
+        if vgl_score:
+            vgl_score = int(vgl_score)
     except:
         return web.Response(status=400, reason='score id invalid')
-
-
-
-
-
-    async with aiohttp.ClientSession() as session:
-        async with session.get('https://api.beatleader.xyz/score/%d' % score_id) as resp:
-            if resp.status != 200:
-                return web.Response(text=await resp.text(), status=resp.status, reason=resp.reason)
-            data = await resp.json()
-            replay_url = data['replay']
-            replay_file_name = replay_url[replay_url.rindex('/')+1:]
-            os.makedirs('beatsaber/replays/%s' % data['playerId'], exist_ok=True)
-        local_file_name = 'beatsaber/replays/%s/%s' % (data['playerId'], replay_file_name)
-        if not os.path.exists(local_file_name):
-            async with session.get(replay_url) as resp:
+    fig=None
+    for score_id in [o_score, vgl_score]:
+        if not score_id:
+            continue
+        async with aiohttp.ClientSession() as session:
+            async with session.get('https://api.beatleader.xyz/score/%d' % score_id) as resp:
                 if resp.status != 200:
                     return web.Response(text=await resp.text(), status=resp.status, reason=resp.reason)
-                f = await aiofiles.open(local_file_name, mode='wb')
-                await f.write(await resp.read())
-                await f.close()
-    fig = read_map(local_file_name)
+                data = await resp.json()
+                replay_url = data['replay']
+                replay_file_name = replay_url[replay_url.rindex('/')+1:]
+                os.makedirs('beatsaber/replays/%s' % data['playerId'], exist_ok=True)
+            local_file_name = 'beatsaber/replays/%s/%s' % (data['playerId'], replay_file_name)
+            if not os.path.exists(local_file_name):
+                async with session.get(replay_url) as resp:
+                    if resp.status != 200:
+                        return web.Response(text=await resp.text(), status=resp.status, reason=resp.reason)
+                    f = await aiofiles.open(local_file_name, mode='wb')
+                    await f.write(await resp.read())
+                    await f.close()
+        fig = read_map(local_file_name, fig=fig)
 
     with util.OpenCursor(util.DB) as cur:
         for row in cur.execute('select * from bs_replay br '
                                'left join bs_song_diff bsf on br.id_diff = bsf.id '
                                'left join bs_song bs on bsf.id_song = bs.id '
-                               'where br.id = ?',(score_id,)):
+                               'where br.id = ?',(o_score,)):
             replay_url = row['replay']
             fig.update_layout(
                 title=row['name']
