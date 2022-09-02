@@ -54,7 +54,7 @@ class Info:
     speed: float
 
 def make_info(f):
-    info_start = int.from_bytes(f.read(1), 'little')
+    info_start = decode_byte(f)
 
     if info_start != 0:
         raise Exception('info doesnt start with 0: %d' % info_start)
@@ -286,7 +286,7 @@ class Wall:
 def make_walls(f):
     wall_magic = decode_byte(f)
     if wall_magic != 3:
-        raise Exception('walls not 3')
+        raise Exception('walls_magic not 3')
     return make_things(f, make_wall)
 
 def make_wall(f) -> Wall:
