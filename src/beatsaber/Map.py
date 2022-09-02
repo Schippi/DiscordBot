@@ -16,6 +16,8 @@ NOTE_SCORE_TYPE_SLIDERTAIL = 5
 NOTE_SCORE_TYPE_BURSTSLIDERHEAD = 6
 NOTE_SCORE_TYPE_BURSTSLIDERELEMENT = 7
 
+MAGIC_HEX = '0x442d3d69'
+
 
 
 def make_things(f,m):
@@ -54,7 +56,7 @@ class Info:
     speed: float
 
 def make_info(f):
-    info_start = int.from_bytes(f.read(1), 'little')
+    info_start = decode_byte(f)
 
     if info_start != 0:
         raise Exception('info doesnt start with 0: %d' % info_start)
@@ -286,7 +288,7 @@ class Wall:
 def make_walls(f):
     wall_magic = decode_byte(f)
     if wall_magic != 3:
-        raise Exception('walls not 3')
+        raise Exception('walls_magic not 3')
     return make_things(f, make_wall)
 
 def make_wall(f) -> Wall:
@@ -343,7 +345,11 @@ def make_map(f):
     f.cnt = 0
     m = Map()
     m.magic_numer = decode_int(f)
+    if hex(m.magic_numer) != MAGIC_HEX:
+        raise Exception('File Magic number doesnt match (is %s, should be %s)' % (hex(m.magic_numer), MAGIC_HEX))
     m.file_version = decode_byte(f)
+    if m.file_version != 1:
+        raise Exception('version %d not supported' % m.file_version)
     m.info = make_info(f)
     m.frames = make_frames(f)
     m.notes = make_notes(f)
