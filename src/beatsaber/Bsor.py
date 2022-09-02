@@ -18,12 +18,12 @@ NOTE_SCORE_TYPE_BURSTSLIDERELEMENT = 7
 
 MAGIC_HEX = '0x442d3d69'
 
-
-
-def make_things(f,m):
+def make_things(f, m) -> List:
     cnt = decode_int(f)
     return [m(f) for _ in range(cnt)]
 
+class BSException(BaseException):
+    pass
 
 class Info:
     version: str
@@ -55,11 +55,11 @@ class Info:
     failTime: float
     speed: float
 
-def make_info(f):
+def make_info(f) -> Info:
     info_start = decode_byte(f)
 
     if info_start != 0:
-        raise Exception('info doesnt start with 0: %d' % info_start)
+        raise BSException('info doesnt start with 0: %d' % info_start)
     info = Info()
     info.version = decode_string(f)
     info.gameVersion = decode_string(f)
@@ -91,8 +91,6 @@ def make_info(f):
     info.failTime = decode_float(f)
     info.speed = decode_float(f)
 
-#struct.pack('f',25.45)
-#struct.unpack('f',b'\x41\xcb\x92\x48')
     return info
 
 class VRObject:
@@ -104,7 +102,7 @@ class VRObject:
     z_rot: float
     w_rot: float
 
-def make_vr_object(f):
+def make_vr_object(f) -> VRObject:
     v = VRObject()
     v.x = decode_float(f)
     v.y = decode_float(f)
@@ -122,14 +120,14 @@ class Frame:
     left_hand: VRObject
     right_hand: VRObject
 
-def make_frames(f):
+def make_frames(f) -> List[Frame]:
     frames_start = decode_byte(f)
     if frames_start != 1:
         raise Exception('frames dont start with 1')
-    result = make_things(f,make_frame)
+    result = make_things(f, make_frame)
     return result
 
-def make_frame(f):
+def make_frame(f) -> Frame:
     fr = Frame()
     fr.time = decode_float(f)
     fr.fps = decode_int(f)
@@ -181,15 +179,15 @@ class Note:
     acc_score: int
     score: int
 
-def make_notes(f):
+def make_notes(f) -> List[Note]:
     notes_starter = decode_byte(f)
     if notes_starter != 2:
-        raise Exception('notes dont start with 2')
+        raise BSException('notes_magic dont start with 2')
 
-    result = make_things(f,make_note)
+    result = make_things(f, make_note)
     return result
 
-def make_note(f):
+def make_note(f) -> Note:
     n = Note()
     n.note_id = decode_int(f)
     x = n.note_id
@@ -222,7 +220,7 @@ def make_note(f):
 def clamp(n, smallest, largest):
     return sorted([smallest, n, largest])[1]
 
-def round_half_up(f: float):
+def round_half_up(f: float) -> int:
     a = f % 1
     if a < 0.5:
         return int(f)
@@ -285,10 +283,10 @@ class Wall:
     time: float
     spawnTime: float
 
-def make_walls(f):
+def make_walls(f) -> List[Wall]:
     wall_magic = decode_byte(f)
     if wall_magic != 3:
-        raise Exception('walls_magic not 3')
+        raise BSException('walls_magic not 3')
     return make_things(f, make_wall)
 
 def make_wall(f) -> Wall:
@@ -303,10 +301,10 @@ class Height:
     height: float
     time: float
 
-def make_heights(f):
+def make_heights(f) -> List[Height]:
     magic = decode_byte(f)
     if magic != 4:
-        raise Exception('height_magic not 4')
+        raise BSException('height_magic not 4')
     return make_things(f, make_height)
 
 def make_height(f) -> Height:
@@ -319,10 +317,10 @@ class Pause:
     duration: int
     time: float
 
-def make_pauses(f):
+def make_pauses(f) -> List[Pause]:
     magic = decode_byte(f)
     if magic != 5:
-        raise Exception('pause_magic not 5')
+        raise BSException('pause_magic not 5')
     return make_things(f, make_pause)
 
 def make_pause(f) -> Pause:
@@ -331,7 +329,7 @@ def make_pause(f) -> Pause:
     p.time = decode_float(f)
     return p
 
-class Map:
+class Bsor:
     magic_numer: int
     file_version: int
     info: Info
@@ -341,19 +339,21 @@ class Map:
     heights: List[Height]
     pauses: List[Pause]
 
-def make_map(f):
+def make_bsor(f) -> Bsor:
     f.cnt = 0
-    m = Map()
+    m = Bsor()
+
     m.magic_numer = decode_int(f)
     if hex(m.magic_numer) != MAGIC_HEX:
-        raise Exception('File Magic number doesnt match (is %s, should be %s)' % (hex(m.magic_numer), MAGIC_HEX))
+        raise BSException('File Magic number doesnt match (is %s, should be %s)' % (hex(m.magic_numer), MAGIC_HEX))
     m.file_version = decode_byte(f)
     if m.file_version != 1:
-        raise Exception('version %d not supported' % m.file_version)
+        raise BSException('version %d not supported' % m.file_version)
     m.info = make_info(f)
     m.frames = make_frames(f)
     m.notes = make_notes(f)
     m.walls = make_walls(f)
     m.heights = make_heights(f)
     m.pauses = make_pauses(f)
+
     return m

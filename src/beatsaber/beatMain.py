@@ -1,7 +1,7 @@
 
 import typing
 import os
-from Map import *
+from Bsor import *
 import plotly.express as px
 import plotly.graph_objects as go
 import aiohttp
@@ -27,7 +27,7 @@ def read_map(filename, fig=None):
 
     print('File name :    ', os.path.basename(filename))
     with open(filename, "rb") as f:
-        m = make_map(f)
+        m = make_bsor(f)
 
     print('finished ')
     suffix=''
