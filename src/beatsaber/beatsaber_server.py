@@ -183,6 +183,10 @@ async def replay_handler(request):
                 if resp.status != 200:
                     return web.Response(text=await resp.text(), status=resp.status, reason=resp.reason)
                 data = await resp.json()
+                if data['id'] != score_id:
+                    with util.OpenCursor(util.DB) as cur:
+                        for row in cur.execute('select * from bs_replay where id = ?',(score_id,)):
+                            data['replay'] = row['replay']
                 replay_url = data['replay']
                 replay_file_name = replay_url[replay_url.rindex('/')+1:]
                 os.makedirs('beatsaber/replays/%s' % data['playerId'], exist_ok=True)
