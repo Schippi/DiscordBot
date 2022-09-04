@@ -124,8 +124,14 @@ async def download_all(users, stopOnPgOne):
                             replay_url = x['replay']
                             if replay_url:
                                 replay_file_name = replay_url[replay_url.rindex('/')+1:]
-                                local_file_name = 'beatsaber/replays/%s/%s' % (p, replay_file_name)
+                                local_file_name = 'beatsaber/replays/%s/%s%s' % (p, x['id'], replay_file_name)
                                 if not os.path.exists(local_file_name):
+                                    id_less = 'beatsaber/replays/%s/%s' % (p, replay_file_name)
+                                    if os.path.exists(id_less):
+                                        os.rename(id_less, local_file_name)
+                                        print('renamed')
+                                        dld = dld + 1
+                                        continue
                                     data_to_db(x, cur)
                                     dld = dld + 1
                                     async with session.get(replay_url) as resp:
@@ -187,10 +193,11 @@ async def replay_handler(request):
                     with util.OpenCursor(util.DB) as cur:
                         for row in cur.execute('select * from bs_replay where id = ?',(score_id,)):
                             data['replay'] = row['replay']
+                            data['id'] = score_id
                 replay_url = data['replay']
                 replay_file_name = replay_url[replay_url.rindex('/')+1:]
                 os.makedirs('beatsaber/replays/%s' % data['playerId'], exist_ok=True)
-            local_file_name = 'beatsaber/replays/%s/%s' % (data['playerId'], replay_file_name)
+            local_file_name = 'beatsaber/replays/%s/%s%s' % (data['playerId'], data['id'], replay_file_name)
             if not os.path.exists(local_file_name):
                 async with session.get(replay_url) as resp:
                     if resp.status != 200:
