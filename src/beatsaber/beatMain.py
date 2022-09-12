@@ -64,11 +64,13 @@ def read_map(filename, fig=None):
         fig.update_yaxes(nticks=50)
         color_l = 'red'
         color_r = 'blue'
+        color_c = 'palevioletred'
     else:
         idx =filename.rindex('/')+1
         suffix='- ' + filename[idx:idx+4]
         color_l = 'green'
-        color_r = 'orange'
+        color_r = 'yellow'
+        color_c = 'lightgrey'
     x = []
     y = []
     c = []
@@ -108,7 +110,7 @@ def read_map(filename, fig=None):
     if Angle:
         x = [n.event_time for n in m.notes if hasattr(n,'cut') and n.cut.directionOk]
         y = [abs(abs(n.cut.cutAngle)- 90) for n in m.notes if hasattr(n,'cut') and n.cut.directionOk]
-        add_trace(fig, x, y, 'green', 'Angle' + suffix)
+        add_trace(fig, x, y, color_c, 'Angle' + suffix)
 
     bad,miss,bomb = [0,0],[0,0],[0,0]
 
@@ -221,25 +223,25 @@ def read_map(filename, fig=None):
     import plotly.graph_objects as go
 
     fig.add_trace(go.Scatter(x=sco_x, y=max_scores, name='Max Score'),1,2)
-    fig.add_trace(go.Scatter(x=sco_x, y=[n*percent for n in max_scores], name='Your Avg Score'),1,2)
-    fig.add_trace(go.Scatter(x=sco_x, y=scores, name='Score'),1,2)
+    fig.add_trace(go.Scatter(x=sco_x, y=[n*percent for n in max_scores], name='Your Avg Score'+suffix, marker={'color':color_l}),1,2)
+    fig.add_trace(go.Scatter(x=sco_x, y=scores, name='Score'+suffix, marker={'color':color_r}),1,2)
 
     #percent_scores = []
     #for i,j in zip(scores,max_scores):
     #    percent_scores.append(i / j)
     #fig.add_trace(go.Scatter(x=sco_x, y=percent_scores, name='percent'),2,1)
-    fig.add_trace(go.Scatter(x=sco_x, y=avg, name='avg', marker=dict(
-        color='brown',
+    fig.add_trace(go.Scatter(x=sco_x, y=avg, name='avg'+suffix, marker=dict(
+        color=color_c,
     )),2,1)
-    fig.add_trace(go.Scatter(x=sco_x, y=avg, name='avg', marker=dict(
-        color='brown',
+    fig.add_trace(go.Scatter(x=sco_x, y=avg, name='avg'+suffix, marker=dict(
+        color=color_c,
     )),secondary_y=True,row=1,col=1)
     #fig.add_trace(go.Scatter(x=sco_x, y=avg_2, name='avg_2'),2,1)
-    fig.add_trace(go.Scatter(x=sco_x, y=avg_left, name='avg_left', marker=dict(
-        color='red',
+    fig.add_trace(go.Scatter(x=sco_x, y=avg_left, name='avg_left'+suffix, marker=dict(
+        color=color_l,
     )),2,1)
-    fig.add_trace(go.Scatter(x=sco_x, y=avg_right, name='avg_right', marker=dict(
-        color='blue',
+    fig.add_trace(go.Scatter(x=sco_x, y=avg_right, name='avg_right'+suffix, marker=dict(
+        color=color_r,
     )),2,1)
 
 
@@ -253,9 +255,12 @@ if __name__ == '__main__':
     #https://api.beatleader.xyz/player/4476/scores?page=2
     #https://github.com/BeatLeader/BS-Open-Replay
     #filename = 'testData/4476-ExpertPlus-Standard-D04138A245357F230A3BFC568DE9AF89D4FAC687.bsor'
-    filename = 'D:/_TMP/Lady.bsor'
+    #filename = 'D:/_TMP/Lady.bsor'
     #False True
     score_id = 890820
-    fig = read_map(filename)
+    #1138594?vgl=1138910
+    #fig = read_map(filename)
+    fig = read_map('D:/_TMP/1138594.bsor')
+    fig = read_map('D:/_TMP/1138910.bsor',fig)
     fig.show()
 

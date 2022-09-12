@@ -56,10 +56,15 @@ async def download_all_loop(users):
             #print(i)
             await asyncio.sleep(60)
 
-def data_to_db(data,cur):
+async def data_to_db(data,cur):
     doSong = True
     doDiff = True
     debug = 0
+    if not data['leaderboard'] and data['leaderboardId']:
+        async with aiohttp.ClientSession() as session:
+            async with session.get('https://api.beatleader.xyz/leaderboard/%s' % (data['leaderboardId'],)) as resp:
+                if resp.status == 200:
+                    data['leaderboard'] = await resp.json()
     song = data['leaderboard']['song']
     try:
         for row in cur.execute('SELECT id from bs_song where id = ?', (song['id'],)):
@@ -132,7 +137,7 @@ async def download_all(users, stopOnPgOne):
                                         print('renamed')
                                         dld = dld + 1
                                         continue
-                                    data_to_db(x, cur)
+                                    await data_to_db(x, cur)
                                     dld = dld + 1
                                     async with session.get(replay_url) as resp:
                                         if resp.status != 200:
@@ -142,7 +147,7 @@ async def download_all(users, stopOnPgOne):
                                         await f.write(await resp.read())
                                         await f.close()
                                 else:
-                                    data_to_db(x, cur)
+                                    await data_to_db(x, cur)
                             else:
                                 print('REPLAY MISSING !?!? ' + str(x['id']))
                         if dld == 0 and stopOnPgOne:
@@ -194,6 +199,8 @@ async def replay_handler(request):
                         for row in cur.execute('select * from bs_replay where id = ?',(score_id,)):
                             data['replay'] = row['replay']
                             data['id'] = score_id
+                with util.OpenCursor(util.DB) as cur:
+                    await data_to_db(data, cur)
                 replay_url = data['replay']
                 replay_file_name = replay_url[replay_url.rindex('/')+1:]
                 os.makedirs('beatsaber/replays/%s' % data['playerId'], exist_ok=True)
