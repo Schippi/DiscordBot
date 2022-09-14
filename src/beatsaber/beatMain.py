@@ -44,7 +44,7 @@ def add_trace(fig,x,y,c,n):
 def read_map(filename, fig=None):
     showLeft = True #and False
     showRight = True #and False
-    showPause = True and False
+    showPause = True #and False
     Angle = True# and False
 
     print('File name :    ', os.path.basename(filename))
@@ -122,7 +122,7 @@ def read_map(filename, fig=None):
             miss[n.colorType] = bad[n.colorType] + 1
             pass
         elif n.event_type == NOTE_EVENT_BOMB:
-            bomb[n.colorType - 2] = bomb[n.colorType - 2] + 1
+            bomb[n.colorType - 3] = bomb[n.colorType - 3] + 1
             pass
         if n.score > 0:
             index = n.lineIndex + 4*n.noteLineLayer
@@ -173,7 +173,7 @@ def read_map(filename, fig=None):
     score_no_mul_right = 0
     angle_score = False
     for idx,e in enumerate(sorted_events):
-        note_score = e[1].score
+        note_score = e[1].score if isinstance(e[1],Note) else 0
         if angle_score and hasattr(e[1],'cut'):
             note_score = note_score + 35 * (1-(abs(abs(n.cut.cutAngle)- 90) / 90))
 
@@ -214,7 +214,7 @@ def read_map(filename, fig=None):
         avg.append(score_no_mul / max_score_no_mul)
         s = sum(avg) / len(avg)
         #avg_2.append(s)
-        sco_x.append(e[1].event_time)
+        sco_x.append(e[1].event_time if isinstance(e[1],Note) else e[1].time)
         scores.append(score)
         max_scores.append(max_score)
     percent = score / max_score

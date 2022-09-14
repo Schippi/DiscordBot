@@ -1,5 +1,8 @@
 <div class="tooltip"><a href="/bs/song/{song_id}">
-        <img class="banner" src="{cover}" alt="{mytxt}" title="{mytxt}" />
+        <img class="banner" src="{cover}" alt="{mytxt}" title="{mytxt}"
+
+             style="object-fit:contain;
+            width:50px;"/>
     <span class="mytxt">{mytxt}</span>
 </a>
 </div>

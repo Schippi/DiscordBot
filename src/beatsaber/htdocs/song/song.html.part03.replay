@@ -1,0 +1,5 @@
+<div class="tooltip"><a href="/bs/song/{song_id}">
+    <span class="mytxt">{mytxt}</span>
+</a>
+</div>
+<div>

@@ -17,7 +17,7 @@ import aiofiles
 import os
 from beatMain import read_map
 import io
-
+import typing
 
 bsroutes = web.RouteTableDef()
 call_cnt = 0
@@ -161,8 +161,8 @@ async def replay_handler(request):
             result = result + f.read();
         with open('beatsaber/htdocs/list.html.part02', 'r') as f:
             loopstr = f.read();
-        for row in cur.execute('SELECT * from bs_song '):
-            a = loopstr.replace('{song_id}', row['id']).replace('{cover}', row['cover_image']).replace('{mytxt}',row['name'] + ' ' + row['subname'])
+        for row in cur.execute('SELECT * from bs_song order by name'):
+            a = loopstr.replace('{song_id}', row['id']).replace('{cover}', row['cover_image']).replace('{mytxt}',row['name'] + ' ' + row['sub_name'])
             result = result + a
         with open('beatsaber/htdocs/list.html.part03', 'r') as f:
             result = result + f.read();
@@ -172,6 +172,44 @@ async def replay_handler(request):
 @bsroutes.get('/bs/song/{song_id}')
 async def urlredirector(request):
     song_id = request.match_info['song_id']
+    result = ''
+    with util.OpenCursor(util.DB) as cur:
+        song = [s for s in cur.execute('SELECT * from bs_song where id = ?',(song_id,))][0]
+        with open('beatsaber/htdocs/song/song.html.part01.header', 'r') as f:
+            result = result + f.read()
+        with open('beatsaber/htdocs/song/song.html.part02.diff', 'r') as f:
+            difftxt = f.read()
+        with open('beatsaber/htdocs/song/song.html.part03.replay', 'r') as f:
+            repltxt = f.read()
+        with open('beatsaber/htdocs/song/song.html.part04.diffend', 'r') as f:
+            diffendtxt = f.read()
+        for dif in cur.execute('SELECT * from bs_song_diff sd where sd.id_song = ?',(song_id,)):
+            result = result + difftxt.replace('{mytxt}',dif['difficultyname'])
+            replays = [rep for rep in cur.execute('SELECT * from bs_replay r where r.id_diff = ?',(dif['id'],))]
+            result = result + html_table(replays)
+            result = result + diffendtxt
+        with open('beatsaber/htdocs/song/song.html.part05.end', 'r') as f:
+            result = result + f.read()
+    return web.Response(content_type='text/html', text=result)
+
+def html_table(stuff:typing.List[dict]):
+    result = '<table>'
+    if len(stuff) == 0:
+        return ''
+    result = result + '<tr>'
+    for k in stuff[0].keys():
+        result = result + '<th>' + k + '</th>'
+    result = result + '</tr>'
+    for d in stuff:
+        result = result + '<tr>'
+        for k,v in d.items():
+            if k == 'replay':
+                result = result + '<td><a href="/bs/replay/' + str(d['id']) + '">click</a></td>'
+            else:
+                result = result + '<td>' + str(v) + '</td>'
+        result = result + '</tr>'
+    result = result + '</table>'
+    return result
 
 @bsroutes.get('/bs/replay/{score_id}')
 async def replay_handler(request):
@@ -194,13 +232,13 @@ async def replay_handler(request):
                 if resp.status != 200:
                     return web.Response(text=await resp.text(), status=resp.status, reason=resp.reason)
                 data = await resp.json()
-                if data['id'] != score_id:
-                    with util.OpenCursor(util.DB) as cur:
+                with util.OpenCursor(util.DB) as cur:
+                    if data['id'] != score_id:
                         for row in cur.execute('select * from bs_replay where id = ?',(score_id,)):
                             data['replay'] = row['replay']
                             data['id'] = score_id
-                with util.OpenCursor(util.DB) as cur:
-                    await data_to_db(data, cur)
+                    for row in cur.execute('select * from dual where not exists (select * from bs_replay where id = ?)',(score_id,)):
+                        await data_to_db(data, cur)
                 replay_url = data['replay']
                 replay_file_name = replay_url[replay_url.rindex('/')+1:]
                 os.makedirs('beatsaber/replays/%s' % data['playerId'], exist_ok=True)
