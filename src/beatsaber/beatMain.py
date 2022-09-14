@@ -251,10 +251,10 @@ def read_map(filename, fig=None):
         yl.append(len([n for n in m.notes if n.acc_score == i and n.colorType == 0]))
         yr.append(len([n for n in m.notes if n.acc_score == i and n.colorType == 1]))
 
-    fig.add_bar(x=x,y=yl,row=2,col=2,name='acc left',marker=dict(
+    fig.add_bar(x=x,y=yl,row=2,col=2,name='<acc left',marker=dict(
         color=color_l,
     ))
-    fig.add_bar(x=x,y=yr,row=2,col=2,name='acc right',marker=dict(
+    fig.add_bar(x=x,y=yr,row=2,col=2,name='<acc right',marker=dict(
         color=color_r,
     ))
 
@@ -265,10 +265,10 @@ def read_map(filename, fig=None):
         yl.append(len([n for n in m.notes if n.score == i and n.colorType == 0]))
         yr.append(len([n for n in m.notes if n.score == i and n.colorType == 1]))
 
-    fig.add_bar(x=x,y=yl,row=2,col=2,name='cut left',marker=dict(
+    fig.add_bar(x=x,y=yl,row=2,col=2,name='cut left>',marker=dict(
         color=color_l,
     ),secondary_y=True)
-    fig.add_bar(x=x,y=yr,row=2,col=2,name='cut right',marker=dict(
+    fig.add_bar(x=x,y=yr,row=2,col=2,name='cut right>',marker=dict(
         color=color_r,
     ),secondary_y=True)
 
