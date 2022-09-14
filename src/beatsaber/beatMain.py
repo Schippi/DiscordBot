@@ -55,7 +55,7 @@ def read_map(filename, fig=None):
     suffix=''
     if not fig:
         from plotly.subplots import make_subplots
-        fig = make_subplots(rows=2, cols=2,horizontal_spacing = 0.1,vertical_spacing = 0.05,  shared_xaxes=True, specs=[
+        fig = make_subplots(rows=2, cols=2,horizontal_spacing = 0.1,vertical_spacing = 0.05, specs=[
                                                                       [{"secondary_y": True},{}], #'rowspan':2
                                                                       [{},{"secondary_y": True}]
                                                                       ])
