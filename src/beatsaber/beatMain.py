@@ -56,8 +56,8 @@ def read_map(filename, fig=None):
     if not fig:
         from plotly.subplots import make_subplots
         fig = make_subplots(rows=2, cols=2,horizontal_spacing = 0.1,vertical_spacing = 0.05,  shared_xaxes=True, specs=[
-                                                                      [{"secondary_y": True},{'rowspan':2}],
-                                                                      [{},None]
+                                                                      [{"secondary_y": True},{}], #'rowspan':2
+                                                                      [{},{"secondary_y": True}]
                                                                       ])
 
         #fig = go.Figure(layout_yaxis_range=[-1,136])
@@ -243,6 +243,36 @@ def read_map(filename, fig=None):
     fig.add_trace(go.Scatter(x=sco_x, y=avg_right, name='avg_right'+suffix, marker=dict(
         color=color_r,
     )),2,1)
+
+    x = [i for i in range(-5,15)]
+    yl = []
+    yr = []
+    for i in x:
+        yl.append(len([n for n in m.notes if n.acc_score == i and n.colorType == 0]))
+        yr.append(len([n for n in m.notes if n.acc_score == i and n.colorType == 1]))
+
+    fig.add_bar(x=x,y=yl,row=2,col=2,name='acc left',marker=dict(
+        color=color_l,
+    ))
+    fig.add_bar(x=x,y=yr,row=2,col=2,name='acc right',marker=dict(
+        color=color_r,
+    ))
+
+    x = [i for i in range(116)]
+    yl = []
+    yr = []
+    for i in x:
+        yl.append(len([n for n in m.notes if n.score == i and n.colorType == 0]))
+        yr.append(len([n for n in m.notes if n.score == i and n.colorType == 1]))
+
+    fig.add_bar(x=x,y=yl,row=2,col=2,name='cut left',marker=dict(
+        color=color_l,
+    ),secondary_y=True)
+    fig.add_bar(x=x,y=yr,row=2,col=2,name='cut right',marker=dict(
+        color=color_r,
+    ),secondary_y=True)
+
+
 
 
     # https://stackoverflow.com/questions/65941253/plotly-how-to-toggle-traces-with-a-button-similar-to-clicking-them-in-legend
