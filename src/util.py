@@ -137,7 +137,7 @@ def singleQuote(stri):
 def quote(msg):
 	return '` '+msg+' `';
 
-def updateOrInsert(table,pkdict,valdict, alwaysUsePK):
+def updateOrInsert(table,pkdict,valdict, alwaysUsePK, tryupdate = True):
 	#print(type(pkdict));	
 	pklist = list(pkdict.keys());
 	vallist = list(valdict.keys());
@@ -164,7 +164,8 @@ def updateOrInsert(table,pkdict,valdict, alwaysUsePK):
 	l1.append(pkval);
 	l2 = list(valdict.values());
 	
-	DBcursor.execute(q,l1);
+	if tryupdate:
+		DBcursor.execute(q,l1);
 	if(alwaysUsePK):
 		l2.insert(0,pkval);	
 		DBcursor.execute(q2,l2);
