@@ -158,14 +158,16 @@ async def replay_handler(request):
     with util.OpenCursor(util.DB) as cur:
         result = ''
         with open('beatsaber/htdocs/list.html.part01', 'r') as f:
-            result = result + f.read();
+            result = result + f.read()
         with open('beatsaber/htdocs/list.html.part02', 'r') as f:
-            loopstr = f.read();
+            loopstr = f.read()
         for row in cur.execute('SELECT * from bs_song order by name'):
             a = loopstr.replace('{song_id}', row['id']).replace('{cover}', row['cover_image']).replace('{mytxt}',row['name'] + ' ' + row['sub_name'])
             result = result + a
         with open('beatsaber/htdocs/list.html.part03', 'r') as f:
-            result = result + f.read();
+            result = result + f.read()
+
+        result = insert_bs_header(result)
 
         return web.Response(content_type='text/html', text=result)
 
@@ -190,7 +192,16 @@ async def urlredirector(request):
             result = result + diffendtxt
         with open('beatsaber/htdocs/song/song.html.part05.end', 'r') as f:
             result = result + f.read()
+        result = insert_bs_header(result)
+
     return web.Response(content_type='text/html', text=result)
+
+
+def insert_bs_header(result):
+    with open('beatsaber/htdocs/headonly.html.head', 'r') as f:
+        result = result.replace('<bshead/>', f.read())
+    return result
+
 
 def html_table(stuff:typing.List[dict]):
     result = '<table>'

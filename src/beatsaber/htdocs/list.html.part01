@@ -1,19 +1,6 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>Beatsaber</title>
-        <link rel="stylesheet" href="/bscss/dark-theme.css"/>
-        <link rel="icon" type="image/png" href="/bscss/favicon.png"/>
-        <meta property="og:image" content="/bscss/favicon.png"/>
-        <meta property="og:title" content="Beatsaber"/>
-        <meta property="og:type" content="website"/>
-        <meta property="og:description" content="BS Stuff"/>
-        <meta name="Description" content="BS Stuff"/>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-        <meta name="viewport" content="width=device-width,initial-scale=1"/>
-        <meta name="theme-color" content="#171a21"/>
-        <meta property="og:site" content="Beatsaber"/>
-    </head>
+    <bshead/>
 <body>
 <input type="text" id="myInput" onkeyup="filterGames()" placeholder="Search for names.." title="Type in a name"><br/>
     <script>
