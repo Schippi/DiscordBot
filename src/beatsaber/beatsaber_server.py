@@ -264,7 +264,9 @@ async def replay_handler(request):
     buf = io.StringIO()
     fig.update_layout(template='plotly_dark')
     fig.write_html(buf)
-    val = buf.getvalue().replace('<head>', '<head><link rel="stylesheet" href="/bscss/dark-theme.css"/>')
+    with open('beatsaber/htdocs/headonly.html.head', 'r') as f:
+        head_result = f.read()
+    val = buf.getvalue().replace('<head>', head_result)
     return web.Response(text=val, content_type='text/html')
 
 if __name__ == '__main__':

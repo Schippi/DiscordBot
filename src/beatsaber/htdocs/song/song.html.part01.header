@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Jackbox Launcher</title>
-        <link rel="icon" type="image/png" href="/css/favicon.png"/>
-        <meta property="og:image" content="/css/favicon.png"/>
+        <title>Beatsaber</title>
+        <link rel="stylesheet" href="/bscss/dark-theme.css"/>
+        <link rel="icon" type="image/png" href="/bscss/favicon.png"/>
+        <meta property="og:image" content="/bscss/favicon.png"/>
         <meta property="og:title" content="Beatsaber"/>
         <meta property="og:type" content="website"/>
         <meta property="og:description" content="BS Stuff"/>
@@ -11,7 +12,7 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
         <meta name="viewport" content="width=device-width,initial-scale=1"/>
         <meta name="theme-color" content="#171a21"/>
-        <meta property="og:site" content="Jackbox Launcher"/>
+        <meta property="og:site" content="Beatsaber"/>
         <meta property="call" content="{call_cnt}"/>
 
     </head>
