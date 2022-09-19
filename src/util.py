@@ -141,6 +141,12 @@ def updateOrInsert(table,pkdict,valdict, alwaysUsePK, tryupdate = True):
 	#print(type(pkdict));	
 	pklist = list(pkdict.keys());
 	vallist = list(valdict.keys());
+	pkval = pkdict[pklist[0]];
+
+	l1 = list(valdict.values());
+	l1.append(pkval);
+	l2 = list(valdict.values());
+
 	q = 'UPDATE '+table+" set ";	
 	q= q+ '= ? , '.join(vallist)+' = ?';
 	q= q+' where '+pklist[0]+' = ?';
@@ -152,20 +158,20 @@ def updateOrInsert(table,pkdict,valdict, alwaysUsePK, tryupdate = True):
 		q2 = q2 + pklist[0]+', ';
 		q2 = q2+', '.join(vallist)+') ';
 		q2 = q2+' select ?, '+ ', '.join(['?' for s in vallist])
+		q2 = q2 + " where 1 = 1 "
+		if not tryupdate:
+			q2 = q2 + " and not exists( select " +pklist[0]+" from "+table+" where "+pklist[0]+"= ? ) "
+			l2.append(pkval);
+
 	else : 
 		q2 = 'INSERT INTO '+table+' ('
 		q2 = q2+', '.join(vallist)+') ';
 		q2 = q2+' select '+ ', '.join(['?' for s in vallist])
-	q2 = q2+" WHERE (Select Changes() = 0);";
-	
-	pkval = pkdict[pklist[0]];
-	
-	l1 = list(valdict.values());
-	l1.append(pkval);
-	l2 = list(valdict.values());
+		q2 = q2 + " where 1 = 1 "
+	q2 = q2+" and (Select Changes() = 0);";
 	
 	if tryupdate:
-		DBcursor.execute(q,l1);
+		DBcursor.execute(q,l1)
 	if(alwaysUsePK):
 		l2.insert(0,pkval);	
 		DBcursor.execute(q2,l2);
