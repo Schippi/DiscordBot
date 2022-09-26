@@ -333,9 +333,9 @@ def main(client,testing):
 	async def event_raw_data(data):
 		try:
 			st = time.strftime('%Y-%m-%d %H:%M:%S: ');
-			#fil = open('traffic.log','a', encoding="utf-8")
-			#fil.write((st+data.strip()+'\n'))
-			#fil.close();
+			fil = open('traffic.log','a', encoding="utf-8")
+			fil.write((st+data.strip()+'\n'))
+			fil.close();
 		except Exception:
 			traceback.print_exc();
 		msg = data.strip().lower();
