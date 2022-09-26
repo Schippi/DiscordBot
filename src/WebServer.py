@@ -67,6 +67,7 @@ def setup(my_client, testing):
 	app.router.add_static('/images', root_folder+'/jackboxLauncher/images')
 
 	app.router.add_static('/css', root_folder+'/jackboxLauncher/htdocs/css')
+	app.router.add_static('/bscss', root_folder+'/beatsaber/htdocs/css')
 
 	asyncio.get_event_loop().run_until_complete(runner.setup())
 	if not testing:
