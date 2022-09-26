@@ -1,3 +1,4 @@
+import aiofiles
 from twitchio.ext import commands;
 import sqlite3;
 import traceback;
@@ -332,10 +333,11 @@ def main(client,testing):
 	@ircBot.event	
 	async def event_raw_data(data):
 		try:
-			st = time.strftime('%Y-%m-%d %H:%M:%S: ');
-			fil = open('traffic.log','a', encoding="utf-8")
-			fil.write((st+data.strip()+'\n'))
-			fil.close();
+			st = time.strftime('%Y-%m-%d')
+			filename = 'traffic%s.log' % st
+			st = time.strftime('%Y-%m-%d %H:%M:%S: ')
+			async with aiofiles.open(filename, mode='a') as f:
+				await f.write((st+data.strip()+'\n'))
 		except Exception:
 			traceback.print_exc();
 		msg = data.strip().lower();
