@@ -176,7 +176,10 @@ async def urlredirector(request):
     song_id = request.match_info['song_id']
     result = ''
     with util.OpenCursor(util.DB) as cur:
-        song = [s for s in cur.execute('SELECT * from bs_song where id = ?',(song_id,))][0]
+        songs = [s for s in cur.execute('SELECT * from bs_song where id = ?',(song_id,))]
+        if len(songs) == 0:
+            raise web.HTTPNotFound()
+        song = songs[0]
         with open('beatsaber/htdocs/song/song.html.part01.header', 'r') as f:
             result = result + f.read()
         with open('beatsaber/htdocs/song/song.html.part02.diff', 'r') as f:
@@ -185,7 +188,8 @@ async def urlredirector(request):
             repltxt = f.read()
         with open('beatsaber/htdocs/song/song.html.part04.diffend', 'r') as f:
             diffendtxt = f.read()
-        for dif in cur.execute('SELECT * from bs_song_diff sd where sd.id_song = ?',(song_id,)):
+        difs = [d for d in cur.execute('SELECT * from bs_song_diff where id_song = ? order by difficultyName', (song_id,))]
+        for dif in difs:
             result = result + difftxt.replace('{mytxt}',dif['difficultyname'])
             replays = [rep for rep in cur.execute('SELECT * from bs_replay r where r.id_diff = ?',(dif['id'],))]
             result = result + html_table(replays)

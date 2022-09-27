@@ -336,7 +336,7 @@ def main(client,testing):
 			st = time.strftime('%Y-%m-%d')
 			filename = 'traffic%s.log' % st
 			st = time.strftime('%Y-%m-%d %H:%M:%S: ')
-			async with aiofiles.open(filename, mode='a') as f:
+			async with aiofiles.open(filename, mode='a', encoding='UTF-8') as f:
 				await f.write((st+data.strip()+'\n'))
 		except Exception:
 			traceback.print_exc();
