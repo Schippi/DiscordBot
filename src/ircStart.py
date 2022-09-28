@@ -40,6 +40,10 @@ class MyIRCBot(commands.Bot):
 		else:
 			traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
+
+
+
+
 def main(client,testing):
 	DBLOG = util.cfgPath+'/irc.db';
 	DBLOGJournal = util.cfgPath+'/irc.db-journal';
@@ -329,9 +333,8 @@ def main(client,testing):
 				print('parted cakes '+user.name);
 				if(ircBot.enableLimmy and not testing):
 					user.channel.send('Bye '+user.name)
-		
-	@ircBot.event	
-	async def event_raw_data(data):
+
+	async def log_data_in_file(data):
 		try:
 			st = time.strftime('%Y-%m-%d')
 			filename = 'traffic%s.log' % st
@@ -339,7 +342,11 @@ def main(client,testing):
 			async with aiofiles.open(filename, mode='a', encoding='UTF-8') as f:
 				await f.write((st+data.strip()+'\n'))
 		except Exception:
-			traceback.print_exc();
+			traceback.print_exc()
+
+	@ircBot.event	
+	async def event_raw_data(data):
+		#await log_data_in_file(data);
 		msg = data.strip().lower();
 		#@msg-id=host_on :tmi.twitch.tv NOTICE #theschippi :Now hosting Nilesy.
 		if '@msg-id=host_on' in msg and '#theschippi' in msg and 'hosting nilesy' in msg:
