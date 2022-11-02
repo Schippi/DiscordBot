@@ -224,7 +224,14 @@ def update(db, open_db_connection):
         else:
             open_db_connection.execute('''alter table `bs_replay` add timeset integer''');
 
-
+    open_db_connection.execute('''CREATE TABLE IF NOT EXISTS  `bs_user_stats` (
+        `id`    INTEGER NOT NULL PRIMARY KEY,
+        `id_user`    TEXT,
+        `timestamp` INTEGER,
+        `pp` REAL,
+        `country_rank` INTEGER,
+        `rank` INTEGER
+    );''')
 
 
     db.commit()

@@ -34,14 +34,10 @@ async def start_site(app: web.Application, theConfig: dict):
     runner = web.AppRunner(app)
     root_folder = os.path.dirname(sys.argv[0])
 
-    app.router.add_route('*', '/', launcher_handler)
 
     await runner.setup()
     site = web.TCPSite(runner, host, port)
     await site.start()
-
-async def launcher_handler(request):
-    return await gallery_handler(request);
 
 def strToBoolOrNone(draw: str):
     if draw and draw.lower() in ('true', 'false'):
@@ -108,10 +104,31 @@ async def data_to_db(data,cur):
         print(e)
 
 
+def stats_to_db(d):
+    dic = {'id': d['id'],
+           'timestamp': d['timestamp'],
+           'id_user': d['playerId'],
+           'rank': d['rank'],
+           'country_rank': d['countryRank'],
+           'pp': d['pp']
+           }
+    util.updateOrInsert('bs_user_stats', {'id': d['id']}, dic, True, True)
+    util.DB.commit()
+
+
+async def sync_stats(p, session):
+    async with session.get('https://api.beatleader.xyz/player/%s/history?count=60' % (p,)) as resp:
+        if resp.status == 200:
+            data = await resp.json()
+            for d in data:
+                stats_to_db(d)
+
+
 async def download_all(users, stopOnPgOne):
     with util.OpenCursor(util.DB) as cur:
         async with aiohttp.ClientSession() as session:
             for p in users:
+                await sync_stats(p, session)
                 os.makedirs('beatsaber/replays/%d' % p, exist_ok=True)
                 i = 1
                 while i > 0:
@@ -152,6 +169,7 @@ async def download_all(users, stopOnPgOne):
                                 print('REPLAY MISSING !?!? ' + str(x['id']))
                         if dld == 0 and stopOnPgOne:
                             break
+
 
 @bsroutes.get('/bs/songs')
 async def replay_handler(request):
