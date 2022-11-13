@@ -27,7 +27,7 @@ initialized = False;
 
 
 class MyIRCBot(commands.Bot):
-	
+
 	#def __init__(self,testing,irc_token,api_token,nick,prefix):
 	#	super().__init(self,irc_token=irc_token,api_token=api_token,nick=nick,prefix=prefix);
 	#	self.testing = testing;		
@@ -44,7 +44,7 @@ class MyIRCBot(commands.Bot):
 
 
 
-def main(client,testing):
+def main(client,testing, loop = None):
 	DBLOG = util.cfgPath+'/irc.db';
 	DBLOGJournal = util.cfgPath+'/irc.db-journal';
 	try:
@@ -55,7 +55,7 @@ def main(client,testing):
 	global ircBot;
 	
 	ircBot = MyIRCBot(
-		irc_token=TwitchIRCAUTH,
+		TwitchIRCAUTH,
 		api_token=TwitchAPI,
 		nick=TwitchIRCNICK,
 		prefix=myprefix
@@ -97,19 +97,19 @@ def main(client,testing):
 				#await ircBot.join_channels((row['channel'],));
 				#await asyncio.sleep(1)
 				#print('joined irc: '+row['channel']);
-				client.loop.create_task(joinLater(i,row['channel']));
+				loop.create_task(joinLater(i,row['channel']));
 		else:
 			await ircBot.join_channels(('theschippi',));
 			for row in util.DBcursor.execute('''select * from irc_channel where left is null and ghost = 1'''):
 				i = i+1;
-				client.loop.create_task(joinLater(i,row['channel']));
+				loop.create_task(joinLater(i,row['channel']));
 				#print('trying: '+row['channel']);
 				#await ircBot.join_channels((row['channel'],));
 				#await asyncio.sleep(1)
 				#print('joined irc: '+row['channel']);
 		print(ircBot.prefixes);
 		
-		client.loop.create_task(waitForInit(i,testing));
+		loop.create_task(waitForInit(i,testing));
 	
 	async def joinLater(time,chn):
 		print('irc: '+chn);

@@ -1,8 +1,7 @@
 import datetime
 import util;
 from util import updateOrInsert;
-import discord;
-from discord.embeds import EmptyEmbed
+import discord
 import time;
 
 defaultStreamText = '@here```diff\n+ %%name%% just went live playing %%game%%!\n%%title%%```%%url%%';
@@ -122,7 +121,7 @@ class TwitchEntry:
 			if self.embedtitle and '' != self.embedtitle.strip():
 				tit = self.getYString(self.embedtitle.strip(),name,game,url,title, image);
 			else:
-				tit = EmptyEmbed;
+				tit = None;
 			mdict = {'type':'rich','title':tit,'description':ret,'url':url,'color':self.color,'image':{'url':image}};
 			embed = discord.Embed.from_dict(mdict);
 			#embed = discord.Embed(colour=discord.Colour(self.color), 

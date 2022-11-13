@@ -145,12 +145,15 @@ async def startChecking(client):
 	if not util.YTAPI:
 		EnableYT = False;
 		print('WARNING: Youtube TOKEN not set');	
-	
+	print('checker starting');
 	try:
+		while not client._ready:
+			await asyncio.sleep(3)
 		await client.wait_until_ready();
-		session = aiohttp.ClientSession(); 
+		print('checker client ready');
+		session = aiohttp.ClientSession();
 		cnt = 0;
-				
+
 		streamprinted = {};
 		streams = {};
 		
@@ -239,7 +242,7 @@ async def startChecking(client):
 				cnt = cnt + 1;
 				onlin = 0;
 				streamArray = None;
-				with (await stuff_lock):
+				async with stuff_lock:
 					try:
 						if EnableTwitch and (len(streams.keys()) > 0) and (cnt % frequencyTW == 0) :
 							html = await fetch(session,'https://api.twitch.tv/helix/streams?user_id='+'&user_id='.join(ids.values()),{'client-id':util.TwitchAPI,
@@ -524,6 +527,8 @@ async def startChecking(client):
 					await asyncio.sleep(1 * 5)
 	except BaseException as ex:
 		err = str(ex);
+		import traceback
+		print(traceback.format_exc())
 		logEx(ex);
 		if testing:
 			print(err);

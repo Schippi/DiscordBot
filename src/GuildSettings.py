@@ -174,15 +174,17 @@ class GuildSetting:
 		#sleep(timout.until);
 		
 	def isAllowed(self,userID, command):
-		userID = int(userID);
 		membr = self.guild.get_member(userID);
+		if not membr:
+			return False
 		allow = (userID in adminIds) or (membr == self.guild.owner);
 		print(allow);
 		print(userID);
 		print(adminIds);
-		for role in membr.roles:
-			#mit und ohne !
-			allow = allow or self.hasPermission(role.id,command) or self.hasPermission(role.id,command[1:]);
+		if membr.roles:
+			for role in membr.roles:
+				#mit und ohne !
+				allow = allow or self.hasPermission(role.id,command) or self.hasPermission(role.id,command[1:]);
 		allow = allow and not membr.bot;
 		return allow;
 	
