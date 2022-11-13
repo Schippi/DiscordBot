@@ -125,10 +125,20 @@ def checkPrefix(bot, disMessage):
         return sett.prefix;
 
 
+class MyClient(commands.Bot, discord.Client):
+    async def setup_hook(self):
+        await self.add_cog(TwitchCommand(self));
+        await self.add_cog(YoutubeCommand(self));
+        await self.add_cog(GraphCommand(self));
+        await self.add_cog(AdminCommand(self));
+        await self.add_cog(TTSJack(self));
+        await self.add_cog(IRCCommand(self));
+
 try:
     intents = discord.Intents.default()
     intents.message_content = True
-    client = commands.Bot(command_prefix=checkPrefix, intents=intents)
+    intents.members = True
+    client = MyClient(command_prefix=checkPrefix, intents=intents)
 except Exception as e:
     print(e);
     print('INTENTS FAILED');
@@ -756,35 +766,41 @@ util.client = client;
 client.running_chroma = False;
 # client.remove_command('help');
 # startChecking(None);
-checkingTask = client.loop.create_task(startChecking(client));
 
-client.add_cog(TwitchCommand(client));
-client.add_cog(YoutubeCommand(client));
-client.add_cog(GraphCommand(client));
-# client.add_cog(TimerCommand(client));
-client.add_cog(AdminCommand(client));
-client.add_cog(TTSJack(client));
-client.add_cog(IRCCommand(client));
+
+
+loop = asyncio.new_event_loop()
+asyncio.set_event_loop(loop)
+loop.create_task(startChecking(client));
+
+
+
 import ircStart;
 
-ircTask = client.loop.create_task(ircStart.main(client, testing).start());
+#asyncio.run(ircStart.main(client, testing, loop).start())
+#asyncio.get_event_loop().run_until_complete(ircStart.main(client, testing, loop).start())
+asyncio.get_event_loop().create_task(ircStart.main(client, testing, loop).start())
+#ircTask = asyncio.new_event_loop().create_task(ircStart.main(client, testing, loop).start());
+
+#asyncio.run();
+
 
 from WebServer import setup, setuphttp;
 
-client.loop.run_until_complete(setup(client, testing).start())
-client.loop.run_until_complete(setuphttp().start())
+loop.run_until_complete(setup(client, testing).start())
+loop.run_until_complete(setuphttp().start())
 
 from beatsaber.beatsaber_server import download_all_loop
 
 BS_DB = util.DB
-client.loop.create_task(download_all_loop(util.beatsaber_people))
+loop.create_task(download_all_loop(util.beatsaber_people))
 if not testing:
 
     pass
 
 for sig in (signal.SIGINT, signal.SIGTERM):
     try:
-        client.loop.add_signal_handler(sig, ask_exit);
+        loop.add_signal_handler(sig, ask_exit);
     except NotImplementedError:
         print("no signals supported");
 
@@ -795,7 +811,10 @@ msg = "";
 try:
     if not testing:
         sendMail('Bot is restarting', 'bot probably back online');
-    client.run(TOKEN);
+    #asyncio.run(maino())
+    asyncio.get_event_loop().create_task(client.start(TOKEN));
+    #client.run(TOKEN);
+    loop.run_forever()
     print("client stopped for some reason");
     msg = msg + '\n' + time.strftime('%X %x %Z') + ' Crash: no Exception :-('
 except (KeyboardInterrupt, CancelledError):
@@ -808,7 +827,7 @@ except Exception as ex:
     err = str(ex);
     msg = msg + '\n' + time.strftime('%X %x %Z') + ': ' + 'Exception: ' + message + '\n' + err;
     if not testing:
-        sendMail('Guild Crash Report', msg);
+        sendMail('Server Crash Report', msg);
 try:
     checkingTask.cancel();
     ircTask.cancel();
