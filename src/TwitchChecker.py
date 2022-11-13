@@ -82,7 +82,7 @@ async def printEntry(client,entr,isRerun,sName,sGame,sURL,sTitle,sLogo, edit = F
 		channel = client.get_guild(guild_id).get_channel(channel_id);
 		
 		if not edit:
-			messages = await channel.history(limit=5).flatten();
+			messages = [m async for m in channel.history(limit=5)]
 			start = datetime.utcnow() - timedelta(hours = 3);
 			doit = True;
 			for mymsg in messages:
@@ -99,15 +99,6 @@ async def printEntry(client,entr,isRerun,sName,sGame,sURL,sTitle,sLogo, edit = F
 						alle = True;
 						if cnt > len(msgarr)*0.75:
 							alle = False;
-						#for tee in entr.text.split():
-						#	teststring = '';
-						#	for ka in tee:
-						#		if ka.isalnum():
-						#			teststring = teststring + ka;
-						#	if not (teststring in mymsg.content) and not (teststring in '%%game%% %%name%% %%url%% %%img%% %%title%% %%time%%'):
-						#		alle = True;
-						#		print(teststring)
-						#		break;
 						doit = doit and alle;
 						print("wanted but didnt: "+str(doit));
 		if doit or (not entr.last_msg_id):
