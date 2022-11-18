@@ -85,7 +85,7 @@ async def data_to_db(data,cur):
             cur.execute('insert into bs_song_diff(id,id_song,difficultyName,stars,notes,bombs,walls,rankedTime,nps) '
                         'select ?,?,?,?,?,?,?,?,? from dual', (d['id'],song['id'],d['difficultyName'],int(d['stars']*10),d['notes'],d['bombs'],d['walls'],d['rankedTime'],str(d['nps'])))
         debug = 3
-        with util.OpenCursor() as cur:
+        with util.OpenCursor(util.DB) as cur:
             if len(cur.execute('SELECT id from bs_user where id_user = ?', (data['playerId'],))) == 0:
                 async with aiohttp.ClientSession() as session:
                     async with session.get('https://api.beatleader.xyz/player/%s' % (data['playerId'],)) as resp:
