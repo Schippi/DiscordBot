@@ -46,10 +46,10 @@ def strToBoolOrNone(draw: str):
         return None
 
 async def download_all_loop(users):
-    #await asyncio.sleep(60)
+    await asyncio.sleep(60)
     while True:
         await download_all(users, True)
-        for i in range(30):
+        for i in range(3):
             #print(i)
             await asyncio.sleep(60)
 
@@ -136,13 +136,17 @@ async def sync_stats(p, session):
 
 async def download_all(users, stopOnPgOne):
     with util.OpenCursor(util.DB) as cur:
+        last_time = 0
+        for row in cur.execute('SELECT * from control where key = ?',('bs_last_fetch',)):
+            last_time = int(row['value'])
+        save_time = last_time
         async with aiohttp.ClientSession() as session:
             for p in users:
                 await sync_stats(p, session)
                 os.makedirs('beatsaber/replays/%d' % p, exist_ok=True)
                 i = 1
                 while i > 0:
-                    async with session.get('https://api.beatleader.xyz/player/%d/scores?page=%d' % (p, i)) as resp:
+                    async with session.get('https://api.beatleader.xyz/player/%d/scores?time_from=%dpage=%d' % (p, last_time, i)) as resp:
                         if resp.status != 200:
                             print('load page failed user: %d page: %d ' % (p, i))
                             break
@@ -153,6 +157,7 @@ async def download_all(users, stopOnPgOne):
                         if len(data['data']) == 0:
                             break
                         for x in data['data']:
+                            save_time = max(save_time,int(x['timeset']))
                             replay_url = x['replay']
                             if replay_url:
                                 replay_file_name = replay_url[replay_url.rindex('/')+1:]
@@ -179,6 +184,12 @@ async def download_all(users, stopOnPgOne):
                                 print('REPLAY MISSING !?!? ' + str(x['id']))
                         if dld == 0 and stopOnPgOne:
                             break
+        cur.execute('update control set value = ? where key = ?',(str(save_time), 'bs_last_fetch',))
+        cur.execute('insert into control(key,value) select ?,? from dual where not exists(select * from control where key = ?)',
+                    ('bs_last_fetch',str(save_time),'bs_last_fetch',))
+        print('dowloaded')
+
+
 
 
 @bsroutes.get('/bs/songs')
