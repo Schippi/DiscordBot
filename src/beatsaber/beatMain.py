@@ -41,7 +41,7 @@ def add_trace(fig,x,y,c,n):
     )
 
 
-def read_map(filename, fig=None):
+def read_map(filename, fig=None, suffix = ''):
     showLeft = True #and False
     showRight = True #and False
     showPause = True #and False
@@ -52,7 +52,7 @@ def read_map(filename, fig=None):
         m = make_bsor(f)
 
     print('finished ')
-    suffix=''
+
     if not fig:
         from plotly.subplots import make_subplots
         fig = make_subplots(rows=2, cols=2,horizontal_spacing = 0.1,vertical_spacing = 0.05, specs=[
@@ -67,7 +67,8 @@ def read_map(filename, fig=None):
         color_c = 'palevioletred'
     else:
         idx =filename.rindex('/')+1
-        suffix='- ' + filename[idx:idx+4]
+        if not suffix:
+            suffix='- ' + filename[idx:idx+4]
         color_l = 'green'
         color_r = 'yellow'
         color_c = 'lightgrey'
@@ -172,6 +173,7 @@ def read_map(filename, fig=None):
     score_no_mul_left = 0
     score_no_mul_right = 0
     angle_score = False
+    m.fc_acc = [0]*4
     for idx,e in enumerate(sorted_events):
         note_score = e[1].score if isinstance(e[1],Note) else 0
         if angle_score and hasattr(e[1],'cut'):
@@ -188,6 +190,9 @@ def read_map(filename, fig=None):
                 max_note = 115 if not angle_score else 150
                 max_score = max_score + max_mul * max_note
                 max_score_no_mul = max_score_no_mul + max_note
+            if note_score > 0:
+                m.fc_acc[e[1].colorType*2] = m.fc_acc[e[1].colorType*2]+note_score
+                m.fc_acc[e[1].colorType*2+1] = m.fc_acc[e[1].colorType*2+1]+max_note
 
             if e[1].colorType == 0:
                 max_no_mul_left = max_no_mul_left + max_note
@@ -195,6 +200,7 @@ def read_map(filename, fig=None):
                 note_cnt_left = note_cnt_left + 1
                 avg_left.append(score_no_mul_left / max_no_mul_left)
                 avg_right.append(1 if len(avg_right) == 0 else avg_right[-1])
+
             if e[1].colorType == 1:
                 max_no_mul_right = max_no_mul_right + max_note
                 score_no_mul_right = score_no_mul_right + note_score
@@ -251,10 +257,10 @@ def read_map(filename, fig=None):
         yl.append(len([n for n in m.notes if n.acc_score == i and n.colorType == 0]))
         yr.append(len([n for n in m.notes if n.acc_score == i and n.colorType == 1]))
 
-    fig.add_bar(x=x,y=yl,row=2,col=2,name='<acc left',marker=dict(
+    fig.add_bar(x=x,y=yl,row=2,col=2,name='<acc left'+suffix,marker=dict(
         color=color_l,
     ))
-    fig.add_bar(x=x,y=yr,row=2,col=2,name='<acc right',marker=dict(
+    fig.add_bar(x=x,y=yr,row=2,col=2,name='<acc right'+suffix,marker=dict(
         color=color_r,
     ))
 
@@ -265,10 +271,10 @@ def read_map(filename, fig=None):
         yl.append(len([n for n in m.notes if n.score == i and n.colorType == 0]))
         yr.append(len([n for n in m.notes if n.score == i and n.colorType == 1]))
 
-    fig.add_bar(x=x,y=yl,row=2,col=2,name='cut left>',marker=dict(
+    fig.add_bar(x=x,y=yl,row=2,col=2,name='cut left>' +suffix,marker=dict(
         color=color_l,
     ),secondary_y=True)
-    fig.add_bar(x=x,y=yr,row=2,col=2,name='cut right>',marker=dict(
+    fig.add_bar(x=x,y=yr,row=2,col=2,name='cut right>'+suffix,marker=dict(
         color=color_r,
     ),secondary_y=True)
 
@@ -278,7 +284,7 @@ def read_map(filename, fig=None):
     # https://stackoverflow.com/questions/65941253/plotly-how-to-toggle-traces-with-a-button-similar-to-clicking-them-in-legend
     #fig= px.scatter(x=x, y=y, color=c, title=filename)
     fig.update_layout(template='plotly_dark')
-    return fig
+    return fig,m
 
 
 if __name__ == '__main__':

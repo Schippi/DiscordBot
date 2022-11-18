@@ -46,6 +46,7 @@ def strToBoolOrNone(draw: str):
         return None
 
 async def download_all_loop(users):
+    #await asyncio.sleep(60)
     while True:
         await download_all(users, True)
         for i in range(30):
@@ -84,6 +85,14 @@ async def data_to_db(data,cur):
             cur.execute('insert into bs_song_diff(id,id_song,difficultyName,stars,notes,bombs,walls,rankedTime,nps) '
                         'select ?,?,?,?,?,?,?,?,? from dual', (d['id'],song['id'],d['difficultyName'],int(d['stars']*10),d['notes'],d['bombs'],d['walls'],d['rankedTime'],str(d['nps'])))
         debug = 3
+        with util.OpenCursor() as cur:
+            if len(cur.execute('SELECT id from bs_user where id_user = ?', (data['playerId'],))) == 0:
+                async with aiohttp.ClientSession() as session:
+                    async with session.get('https://api.beatleader.xyz/player/%s' % (data['playerId'],)) as resp:
+                        if resp.status == 200:
+                            player_data =  await resp.json()
+                            cur.execute('insert into bs_user(id_user, user_name) values(?,?)', (player_data['id'], player_data['name'],))
+                return
         dic = {
             'id_diff':data['leaderboard']['difficulty']['id'],
             'id_user':int(data['playerId']),
@@ -257,6 +266,7 @@ async def replay_handler(request):
     except:
         return web.Response(status=400, reason='score id invalid')
     fig=None
+    post_fig_stats = []
     for score_id in [o_score, vgl_score]:
         if not score_id:
             continue
@@ -283,23 +293,47 @@ async def replay_handler(request):
                     f = await aiofiles.open(local_file_name, mode='wb')
                     await f.write(await resp.read())
                     await f.close()
-        fig = read_map(local_file_name, fig=fig)
+        user_name = 'Unknown'
+        with util.OpenCursor(util.DB) as cur:
+            for row in cur.execute('select * from bs_replay br '
+                                   'left join bs_song_diff bsf on br.id_diff = bsf.id '
+                                   'left join bs_song bs on bsf.id_song = bs.id '
+                                   'left join bs_user bu on bu.id_user = br.id_user '
+                                   'where br.id = ?',(score_id,)):
+                replay_url = row['replay']
+                user_name = row['user_name']
+        fig,map = read_map(local_file_name, fig=fig, suffix='(%s)' % user_name)
+        fig.update_layout(
+            title=row['name'] if 'name' in row else 'Unknown',
+        )
+        max_in_a_row = 0
+        in_a_row = 0
+        stats = {}
+        for n in map.notes:
+            if n.score == 115:
+                in_a_row += 1
+            else:
+                max_in_a_row = max(max_in_a_row, in_a_row)
+                in_a_row = 0
+        max_in_a_row = max(max_in_a_row, in_a_row)
+        post_fig_stats.append({'stat':'115\'s in a row - %s' % user_name, 'value':max_in_a_row})
+        if map.fc_acc[1] > 0:
+            post_fig_stats.append({'stat':'fc acc left - %s' % user_name,'value':map.fc_acc[0]/map.fc_acc[1]})
+        if map.fc_acc[3] > 0:
+            post_fig_stats.append({'stat':'fc acc right - %s' % user_name,'value':map.fc_acc[2]/map.fc_acc[3]})
+        if map.fc_acc[1] > 0 and map.fc_acc[3] > 0:
+            post_fig_stats.append({'stat':'fc acc - %s' % user_name,'value':(map.fc_acc[0]+map.fc_acc[2])/(map.fc_acc[1]+map.fc_acc[3])})
+        #post_fig_stats.append(stats)
 
-    with util.OpenCursor(util.DB) as cur:
-        for row in cur.execute('select * from bs_replay br '
-                               'left join bs_song_diff bsf on br.id_diff = bsf.id '
-                               'left join bs_song bs on bsf.id_song = bs.id '
-                               'where br.id = ?',(o_score,)):
-            replay_url = row['replay']
-            fig.update_layout(
-                title=row['name']
-            )
+
     buf = io.StringIO()
     fig.update_layout(template='plotly_dark')
     fig.write_html(buf)
     with open('beatsaber/htdocs/headonly.html.head', 'r') as f:
         head_result = f.read()
     val = buf.getvalue().replace('<head>', head_result)
+    val = buf.getvalue().replace('</html>', html_table(post_fig_stats) + '</html>')
+
     return web.Response(text=val, content_type='text/html')
 
 if __name__ == '__main__':
