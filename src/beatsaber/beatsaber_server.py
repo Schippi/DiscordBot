@@ -86,7 +86,8 @@ async def data_to_db(data,cur):
                         'select ?,?,?,?,?,?,?,?,? from dual', (d['id'],song['id'],d['difficultyName'],int(d['stars']*10),d['notes'],d['bombs'],d['walls'],d['rankedTime'],str(d['nps'])))
         debug = 3
         with util.OpenCursor(util.DB) as cur:
-            if len(cur.execute('SELECT id from bs_user where id_user = ?', (data['playerId'],))) == 0:
+            rows = [row for row in cur.execute('SELECT id_user from bs_user where id_user = ?', (data['playerId'],))]
+            if len(rows) == 0:
                 async with aiohttp.ClientSession() as session:
                     async with session.get('https://api.beatleader.xyz/player/%s' % (data['playerId'],)) as resp:
                         if resp.status == 200:
