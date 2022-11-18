@@ -83,7 +83,7 @@ async def printEntry(client,entr,isRerun,sName,sGame,sURL,sTitle,sLogo, edit = F
 		
 		if not edit:
 			messages = [m async for m in channel.history(limit=5)]
-			start = datetime.utcnow() - timedelta(hours = 3);
+			start = datetime.utcnow().astimezone() - timedelta(hours = 3);
 			doit = True;
 			for mymsg in messages:
 				if mymsg.author == client.user:
