@@ -147,7 +147,7 @@ async def download_all(users, stopOnPgOne):
                 os.makedirs('beatsaber/replays/%d' % p, exist_ok=True)
                 i = 1
                 while i > 0:
-                    url = 'https://api.beatleader.xyz/player/%d/scores?time_from=%dpage=%d' % (p, last_time + 1, i)
+                    url = 'https://api.beatleader.xyz/player/%d/scores?time_from=%d&page=%d' % (p, last_time + 1, i)
                     async with session.get(url) as resp:
                         if resp.status != 200:
                             print('load page failed user: %d page: %d ' % (p, i))
