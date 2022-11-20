@@ -140,6 +140,7 @@ async def download_all(users, stopOnPgOne):
         for row in cur.execute('SELECT * from control where key = ?',('bs_last_fetch',)):
             last_time = int(row['value'])
         save_time = last_time
+        count = 0
         async with aiohttp.ClientSession() as session:
             for p in users:
                 await sync_stats(p, session)
@@ -150,12 +151,13 @@ async def download_all(users, stopOnPgOne):
                         if resp.status != 200:
                             print('load page failed user: %d page: %d ' % (p, i))
                             break
-                        print('loaded page user: %d page: %d ' % (p, i))
+                        #print('loaded page user: %d page: %d ' % (p, i))
                         i = i + 1
                         data = await resp.json()
                         dld = 0
                         if len(data['data']) == 0:
                             break
+                        count = count + len(data['data'])
                         for x in data['data']:
                             save_time = max(save_time,int(x['timeset']))
                             replay_url = x['replay']
@@ -187,7 +189,7 @@ async def download_all(users, stopOnPgOne):
         cur.execute('update control set value = ? where key = ?',(str(save_time), 'bs_last_fetch',))
         cur.execute('insert into control(key,value) select ?,? from dual where not exists(select * from control where key = ?)',
                     ('bs_last_fetch',str(save_time),'bs_last_fetch',))
-        print('dowloaded')
+        print('dowloaded %d replays' % (count,))
 
 
 
