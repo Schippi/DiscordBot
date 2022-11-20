@@ -147,7 +147,7 @@ async def download_all(users, stopOnPgOne):
                 os.makedirs('beatsaber/replays/%d' % p, exist_ok=True)
                 i = 1
                 while i > 0:
-                    async with session.get('https://api.beatleader.xyz/player/%d/scores?time_from=%dpage=%d' % (p, last_time, i)) as resp:
+                    async with session.get('https://api.beatleader.xyz/player/%d/scores?time_from=%dpage=%d' % (p, last_time + 1, i)) as resp:
                         if resp.status != 200:
                             print('load page failed user: %d page: %d ' % (p, i))
                             break
@@ -159,7 +159,7 @@ async def download_all(users, stopOnPgOne):
                             break
                         count = count + len(data['data'])
                         for x in data['data']:
-                            save_time = max(save_time,int(x['timeset']))
+                            save_time = max(save_time,int(x['timepost']))
                             replay_url = x['replay']
                             if replay_url:
                                 replay_file_name = replay_url[replay_url.rindex('/')+1:]
