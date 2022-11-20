@@ -147,7 +147,8 @@ async def download_all(users, stopOnPgOne):
                 os.makedirs('beatsaber/replays/%d' % p, exist_ok=True)
                 i = 1
                 while i > 0:
-                    async with session.get('https://api.beatleader.xyz/player/%d/scores?time_from=%dpage=%d' % (p, last_time + 1, i)) as resp:
+                    url = 'https://api.beatleader.xyz/player/%d/scores?time_from=%dpage=%d' % (p, last_time + 1, i)
+                    async with session.get(url) as resp:
                         if resp.status != 200:
                             print('load page failed user: %d page: %d ' % (p, i))
                             break
@@ -186,10 +187,10 @@ async def download_all(users, stopOnPgOne):
                                 print('REPLAY MISSING !?!? ' + str(x['id']))
                         if dld == 0 and stopOnPgOne:
                             break
-        cur.execute('update control set value = ? where key = ?',(str(save_time), 'bs_last_fetch',))
-        cur.execute('insert into control(key,value) select ?,? from dual where not exists(select * from control where key = ?)',
-                    ('bs_last_fetch',str(save_time),'bs_last_fetch',))
-        print('dowloaded %d replays' % (count,))
+        if save_time != last_time:
+            cur.execute('update control set value = ? where key = ?',(str(save_time), 'bs_last_fetch',))
+
+        print('dowloaded %d replays - %s' % (count,url))
 
 
 
