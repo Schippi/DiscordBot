@@ -233,7 +233,13 @@ async def urlredirector(request):
         difs = [d for d in cur.execute('SELECT * from bs_song_diff where id_song = ? order by difficultyName', (song_id,))]
         for dif in difs:
             result = result + difftxt.replace('{mytxt}',dif['difficultyname'])
-            replays = [rep for rep in cur.execute('SELECT * from bs_replay r where r.id_diff = ?',(dif['id'],))]
+            replays = [rep for rep in cur.execute('''SELECT 
+            id,ifnull(user_name,r.id_user) as user,badcuts,missednotes,bombcuts,wallshit,pauses,fullcombo,replay,modifiers,score, 
+            datetime(timeset, 'unixepoch', 'localtime') as timeset 
+            from bs_replay r  
+            left join bs_user u on u.id_user = r.id_user  
+            where r.id_diff = ?''',(dif['id'],))]
+            #'<a href="/bs/replay/' || id || '">replay</a>' as replaylink
             result = result + html_table(replays)
             result = result + diffendtxt
         with open('beatsaber/htdocs/song/song.html.part05.end', 'r') as f:
