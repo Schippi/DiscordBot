@@ -187,7 +187,7 @@ async def download_all(users, stopOnPgOne):
                                 print('REPLAY MISSING !?!? ' + str(x['id']))
                         if dld == 0 and stopOnPgOne:
                             break
-                        i = i + 1 if data['page'] < data['totalPages'] else -1
+                        i = i + 1 if data['metadata']['page'] < data['metadata']['total'] - i * data['metadata']['itemsPerPage'] else -1
 
         if save_time != last_time:
             cur.execute('update control set value = ? where key = ?',(str(save_time), 'bs_last_fetch',))
