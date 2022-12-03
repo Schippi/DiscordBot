@@ -2,6 +2,7 @@
 <html>
     <bshead/>
 <body>
+<a target="_self" href="/bs/songs">Back...</a><br/>
 <input type="text" id="myInput" onkeyup="filterGames()" placeholder="Search for names.." title="Type in a name"><br/>
     <script>
     function filterGames() {

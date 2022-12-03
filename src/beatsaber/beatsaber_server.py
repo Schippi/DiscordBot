@@ -48,7 +48,7 @@ def strToBoolOrNone(draw: str):
 async def download_all_loop(users):
     await asyncio.sleep(60)
     while True:
-        await download_all(users, True)
+        await download_all(users, False)
         for i in range(3):
             #print(i)
             await asyncio.sleep(60)
@@ -153,7 +153,7 @@ async def download_all(users, stopOnPgOne):
                             print('load page failed user: %d page: %d ' % (p, i))
                             break
                         #print('loaded page user: %d page: %d ' % (p, i))
-                        i = i + 1
+
                         data = await resp.json()
                         dld = 0
                         if len(data['data']) == 0:
@@ -187,6 +187,8 @@ async def download_all(users, stopOnPgOne):
                                 print('REPLAY MISSING !?!? ' + str(x['id']))
                         if dld == 0 and stopOnPgOne:
                             break
+                        i = i + 1 if data['page'] < data['totalPages'] else -1
+
         if save_time != last_time:
             cur.execute('update control set value = ? where key = ?',(str(save_time), 'bs_last_fetch',))
 
@@ -323,9 +325,10 @@ async def replay_handler(request):
                                    'where br.id = ?',(score_id,)):
                 replay_url = row['replay']
                 user_name = row['user_name']
+                id_song= row['id_song']
         fig,map = read_map(local_file_name, fig=fig, suffix='(%s)' % user_name)
         fig.update_layout(
-            title=row['name'] if 'name' in row else 'Unknown',
+            title= '<a target="_self" href="/bs/song/%s">%s</a>' % (id_song, row['name']) if 'name' in row else 'Unknown',
         )
         max_in_a_row = 0
         in_a_row = 0
