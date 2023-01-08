@@ -46,17 +46,17 @@ def strToBoolOrNone(draw: str):
         return None
 
 async def download_all_loop(users):
-    await asyncio.sleep(60)
+    await asyncio.sleep(20)
     while True:
         await download_all(users, False)
-        for i in range(3):
-            #print(i)
-            await asyncio.sleep(60)
+        #sleep 3 hours
+        await asyncio.sleep(60*60*3)
 
 async def data_to_db(data,cur):
     doSong = True
     doDiff = True
     debug = 0
+    print(data['id'] if 'id' in data else 'no id')
     if not data['leaderboard'] and data['leaderboardId']:
         async with aiohttp.ClientSession() as session:
             async with session.get('https://api.beatleader.xyz/leaderboard/%s' % (data['leaderboardId'],)) as resp:
@@ -191,6 +191,7 @@ async def download_all(users, stopOnPgOne):
 
         if save_time != last_time:
             cur.execute('update control set value = ? where key = ?',(str(save_time), 'bs_last_fetch',))
+            util.DB.commit()
 
         print('dowloaded %d replays - %s' % (count,url))
 

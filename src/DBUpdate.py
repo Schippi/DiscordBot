@@ -233,5 +233,7 @@ def update(db, open_db_connection):
         `rank` INTEGER
     );''')
 
+    open_db_connection.execute('insert into control(key,value) select ?,? from dual where not exists(select * from control where key = ?)',
+                ('bs_last_fetch',str(0),'bs_last_fetch',))
 
     db.commit()
