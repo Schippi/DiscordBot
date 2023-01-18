@@ -219,10 +219,10 @@ def update(db, open_db_connection):
     );''');
 
     for row in open_db_connection.execute('''select * from `bs_replay` limit 1'''):
-        if('timeset' in row.keys()):
-            pass;
-        else:
+        if 'timeset' not in row.keys():
             open_db_connection.execute('''alter table `bs_replay` add timeset integer''');
+        if 'pp' not in row.keys():
+            open_db_connection.execute('''alter table `bs_replay` add pp real''');
 
     open_db_connection.execute('''CREATE TABLE IF NOT EXISTS  `bs_user_stats` (
         `id`    INTEGER NOT NULL PRIMARY KEY,

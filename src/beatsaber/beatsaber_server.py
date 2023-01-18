@@ -107,8 +107,9 @@ async def data_to_db(data,cur):
             'modifiers':data['modifiers'],
             'replay':data['replay'],
             'timeset':int(data['timeset']),
+            'pp':float(data['timeset']),
         }
-        util.updateOrInsert('bs_replay',{'id':data['id']},dic,True,False)
+        util.updateOrInsert('bs_replay',{'id':data['id']},dic,True,True)
         util.DB.commit()
     except Exception as e:
         print(e)
