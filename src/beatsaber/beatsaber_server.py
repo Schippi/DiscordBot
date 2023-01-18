@@ -107,7 +107,7 @@ async def data_to_db(data,cur):
             'modifiers':data['modifiers'],
             'replay':data['replay'],
             'timeset':int(data['timeset']),
-            'pp':float(data['timeset']),
+            'pp':float(data['pp']),
         }
         util.updateOrInsert('bs_replay',{'id':data['id']},dic,True,True)
         util.DB.commit()
