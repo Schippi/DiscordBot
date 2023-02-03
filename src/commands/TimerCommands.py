@@ -131,7 +131,7 @@ class TimerCommand():
 						msg.content.startswith(prefix+'ttest') or 
 						msg.content.startswith(prefix+'thelp'));
 			try:
-				reply = await self.bot.wait_for(event= 'message', author = context.message.author, timeout= 120, check = check);
+				reply = await self.bot.wait_for('message', author = context.message.author, timeout= 120, check = check);
 			except:
 				reply = None;
 			if reply:

@@ -194,7 +194,7 @@ class TwitchCommand(commands.Cog):
 						msg.content.startswith(prefix+'ttest') or 
 						msg.content.startswith(prefix+'thelp'));
 			try:
-				reply = await self.bot.wait_for(event= 'message', timeout= 120, check = check);
+				reply = await self.bot.wait_for('message', timeout= 120, check = check);
 			except:
 				traceback.print_exc(file=sys.stdout);
 				reply = None;
