@@ -10,7 +10,7 @@ from util import quote;
 from util import askYesNoReaction;
 import entities.YTEntry;
 import util;
-from GuildSettings import isAllowed;
+from GuildSettings import isAllowed, isAdmin;
 from GuildSettings import getSetting;
 from util import fetch;
 import aiohttp;
@@ -53,7 +53,7 @@ class YoutubeCommand(commands.Cog):
 			return await sayWords(context,'There already exists an Alert for '+tname);
 		
 		urlsafename = urllib.parse.quote(tname, safe='');
-		if tname != urlsafename:
+		if tname != urlsafename and not isAdmin(context):
 			sendMail('Bot: somebody tried to fuck with the system', context.message.author.name +'\nid'+str(context.message.author.id)+'\n'+  tname +' entered as twitchname');
 			return;
 		try:
