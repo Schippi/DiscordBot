@@ -56,7 +56,7 @@ async def data_to_db(data,cur):
     doSong = True
     doDiff = True
     debug = 0
-    print(data['id'] if 'id' in data else 'no id')
+    #print(data['id'] if 'id' in data else 'no id')
     if not data['leaderboard'] and data['leaderboardId']:
         async with aiohttp.ClientSession() as session:
             async with session.get('https://api.beatleader.xyz/leaderboard/%s' % (data['leaderboardId'],)) as resp:
@@ -75,7 +75,7 @@ async def data_to_db(data,cur):
                 doDiff = False
             if doDiff:
                 cur.execute('insert into bs_song_diff(id,id_song,difficultyName,stars,notes,bombs,walls,rankedTime,nps) '
-                        'select ?,?,?,?,?,?,?,?,? from dual', (d['id'],song['id'],d['difficultyName'],int(d['stars']*10) if d['stars'] else 0,d['notes'],d['bombs'],d['walls'],d['rankedTime'],str(d['nps'])))
+                            'select ?,?,?,?,?,?,?,?,? from dual', (d['id'],song['id'],d['difficultyName'],int(d['stars']*10) if d['stars'] else 0,d['notes'],d['bombs'],d['walls'],d['rankedTime'],str(d['nps'])))
         debug = 2
         d = data['leaderboard']['difficulty']
         doDiff = True
@@ -148,6 +148,7 @@ async def download_all(users, stopOnPgOne):
                 os.makedirs('beatsaber/replays/%d' % p, exist_ok=True)
                 i = 1
                 while i > 0:
+                    print('fetching page %d for user %d' % (i, p))
                     url = 'https://api.beatleader.xyz/player/%d/scores?time_from=%d&page=%d' % (p, last_time + 1, i)
                     async with session.get(url) as resp:
                         if resp.status != 200:
@@ -166,6 +167,8 @@ async def download_all(users, stopOnPgOne):
                             if replay_url:
                                 replay_file_name = replay_url[replay_url.rindex('/')+1:]
                                 local_file_name = 'beatsaber/replays/%s/%s%s' % (p, x['id'], replay_file_name)
+                                await data_to_db(x, cur)
+                                continue
                                 if not os.path.exists(local_file_name):
                                     id_less = 'beatsaber/replays/%s/%s' % (p, replay_file_name)
                                     if os.path.exists(id_less):
@@ -196,7 +199,129 @@ async def download_all(users, stopOnPgOne):
 
         print('dowloaded %d replays - %s' % (count,url))
 
+@bsroutes.get('/bs/downloadexperimental')
+async def bs_dlexp(request):
+    last_time = 0
+    users = [76561198026425351, 76561198041198710, 8280]
+    async with aiohttp.ClientSession() as session:
+        for p in users:
+            i = 1
+            while i > 0:
+                print('user %d page %d' % (p, i))
+                url = 'https://stage.api.beatleader.net/player/%d/scores?time_from=%d&page=%d' % (p, last_time + 1, i)
+                async with session.get(url) as resp:
+                    if resp.status != 200:
+                        print('load page failed user: %d page: %d ' % (p, i))
+                        break
+                    data = await resp.json()
+                    for d in data['data']:
+                        dic = {'id': d['id'],
+                               'pp_new': d['pp']
+                               }
+                        util.updateOrInsert('bs_replay', {'id': d['id']}, dic, True, True)
+                    util.DB.commit()
+                i = i + 1 if data['metadata']['page'] < data['metadata']['total'] - i * data['metadata']['itemsPerPage'] else -1
+            i = 1
+            while i > 0:
+                print('user %d page %d' % (p, i))
+                url = 'https://api.beatleader.xyz/player/%d/scores?time_from=%d&page=%d' % (p, last_time + 1, i)
+                async with session.get(url) as resp:
+                    if resp.status != 200:
+                        print('load page failed user: %d page: %d ' % (p, i))
+                        break
+                    data = await resp.json()
+                    for d in data['data']:
+                        dic = {'id': d['id'],
+                               'pp': d['pp']
+                               }
+                        util.updateOrInsert('bs_replay', {'id': d['id']}, dic, True, True)
+                    util.DB.commit()
+                i = i + 1 if data['metadata']['page'] < data['metadata']['total'] - i * data['metadata']['itemsPerPage'] else -1
+    return web.Response(text='ok')
 
+
+@bsroutes.get('/bs/ppchange/{userid}')
+async def bs_ppchangegraph(request):
+    import plotly.graph_objects as go
+    with util.OpenCursor(util.DB) as cur:
+        userid = request.match_info['userid']
+        cur.execute('select r.id,r.pp, r.pp_new,cast(d.stars as REAL) as stars, s.name as song from bs_replay r '
+                    'inner join bs_song_diff d on r.id_diff = d.id '
+                    'inner join bs_song s on d.id_song = s.id '
+                    'where d.stars > 0 '
+                    'and pp > 0 '
+                    'and r.id_user = ? '
+                    'order by cast(d.stars as INTEGER)', (userid,))
+        rows = cur.fetchall()
+        x = []
+        popo = []
+        color = []
+        song = []
+        other = []
+        for row in rows:
+            x.append(row['stars'])
+            x.append(row['stars'])
+            song.append(row['song'])
+            song.append(row['song'])
+            color.append('blue')
+            color.append('red')
+            popo.append(row['pp'])
+            popo.append(row['pp_new'])
+            other.append(row['pp_new'])
+            other.append(row['pp'])
+            #color it red
+        print('amout of data: %d' % len(x))
+
+        # serve plot as html
+        buf = io.StringIO()
+        from pandas import DataFrame
+        from plotly.subplots import make_subplots
+        di = {'x':x, 'pp':popo, 'color':color, 'song':song, 'other':other}
+        df = DataFrame(di)
+        import plotly.express as px
+        fig = px.scatter(df, x='x', y='pp', color='color', hover_name='song', hover_data=['song','other'])
+        #fig.show()
+
+        fig.update_layout(template='plotly_dark')
+        fig.write_html(buf)
+
+        return web.Response(content_type='text/html', text=buf.getvalue())
+
+@bsroutes.get('/bs/leaderboards')
+async def bs_leaderboards(request):
+    all_songs = []
+    import pickle
+    fil = 'leaderboards.pickle'
+    if os.path.exists(fil):
+        with open(fil, 'rb') as f:
+            all_songs = [s for s in pickle.load(f) if s['positiveVotes'] and s['voteStars'] < 13]
+    else:
+        async with aiohttp.ClientSession() as session:
+            i = 1
+            while i > 0:
+                async with session.get('https://api.beatleader.xyz/leaderboards?page=%d&sortBy=timestamp&order=desc&allTypes=0&count=1000' % (i,)) as resp:
+                    if resp.status == 200:
+                        data = await resp.json()
+                        for x in data['data']:
+                            if x['id'] =='2c67351':
+                                print(i)
+                                import json
+                                json.dump(x,open(x['id']+'.json','w'))
+                        print('loaded %d / %d' % (i*data['metadata']['itemsPerPage'],data['metadata']['total']))
+                        all_songs.extend(data['data'])
+                        i = i + 1 if data['metadata']['page'] < data['metadata']['total'] - i * data['metadata']['itemsPerPage'] else -1
+                    else:
+                        break
+        with open(fil, 'wb') as f:
+            pickle.dump(all_songs, f)
+    so = sorted(all_songs, key=lambda x: (x['voteStars'], x['positiveVotes'] - x['negativeVotes']), reverse=True)[:1000]
+    for s in so:
+        s['song'] = s['song']['name']
+        s['difficulty'] = s['difficulty']['difficultyName']
+        if 'qualification' in s and s['qualification'] and 'approved' in s['qualification']:
+            s['qualification'] = s['qualification']['approved']
+    result = '<html><head/><body>' + html_table(so) + '</body></html>'
+    return web.Response(content_type='text/html', text=result)
 
 
 @bsroutes.get('/bs/songs')
@@ -267,7 +392,7 @@ def html_table(stuff:typing.List[dict]):
     for k in stuff[0].keys():
         result = result + '<th>' + k + '</th>'
     result = result + '</tr>'
-    for d in stuff:
+    for i,d in enumerate(stuff):
         result = result + '<tr>'
         for k,v in d.items():
             if k == 'replay':
@@ -367,7 +492,11 @@ if __name__ == '__main__':
         'host': '::',
         'port': 8080
     }
-
+    DBFile = util.cfgPath + '/bot.db';
+    import sqlite3
+    util.DB = sqlite3.connect(DBFile);
+    util.DB.row_factory = util.dict_factory;
+    util.DBcursor = util.DB.cursor();
     loop = asyncio.get_event_loop()
     loop.create_task(start_site(web.Application(), config))
     loop.create_task(download_all_loop([4476, 4478]))
