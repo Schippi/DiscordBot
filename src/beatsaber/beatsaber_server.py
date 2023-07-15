@@ -257,7 +257,7 @@ async def bs_user(request):
             pp.append(r['pp'])
         import plotly.express as px
         buf = io.StringIO()
-        fig = px.Scatter(x=time, y=pp)
+        fig = px.scatter(x=time, y=pp)
         fig.update_layout(template='plotly_dark')
         fig.write_html(buf)
         return web.Response(content_type='text/html', text=buf.getvalue())
