@@ -239,6 +239,30 @@ async def bs_dlexp(request):
                 i = i + 1 if data['metadata']['page'] < data['metadata']['total'] - i * data['metadata']['itemsPerPage'] else -1
     return web.Response(text='ok')
 
+@bsroutes.get('/bs/userstats/{userid}')
+async def bs_user(request):
+    with util.OpenCursor(util.DB) as cur:
+        userid = request.match_info['userid']
+        cur.execute('select * from bs_user_stats where id_user = ?', (userid,))
+        rows = cur.fetchall()
+        if len(rows) == 0:
+            return web.Response(text='no data')
+        time = []
+        pp = []
+        for r in rows:
+            #convert unix time to readable
+            from datetime import datetime
+            readable = datetime.fromtimestamp(r['timestamp']).isoformat()
+            time.append(readable)
+            pp.append(r['pp'])
+        import plotly.express as px
+        buf = io.StringIO()
+        fig = px.Scatter(x=time, y=pp)
+        fig.update_layout(template='plotly_dark')
+        fig.write_html(buf)
+        return web.Response(content_type='text/html', text=buf.getvalue())
+
+
 
 @bsroutes.get('/bs/ppchange/{userid}')
 async def bs_ppchangegraph(request):
