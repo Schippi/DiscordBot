@@ -28,7 +28,8 @@
 
 .tooltip .tooltipimg {
   visibility: hidden;
-
+  width: 240px;
+  height: 120px;
   /* Position the tooltip */
   position: absolute;
   left: 0px;
