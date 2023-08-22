@@ -12,6 +12,9 @@ class PartyPack:
     name: str
     app_id: int
 
+    def __hash__(self):
+        return int(self.app_id);
+
 
 @dataclass
 class GameItem:
@@ -37,6 +40,7 @@ PP8 = PartyPack(name='PartyPack08', app_id=1552350)
 PPStarter = PartyPack(name='StarterPack', app_id=1755580)
 #AtParty = PartyPack(name='AtTheParty', app_id=1506530)
 PP9 = PartyPack(name='PartyPack09', app_id=1850960)
+PP10 = PartyPack(name='PartyPack10', app_id=2216830)
 
 games = [
     GameItem(name='You Don\'t Know Jack 2015', players_min=1, players_max=4, local_recommended=True, game=PP1, image='Jack_2015.webp'),
@@ -117,7 +121,11 @@ games = [
     GameItem(name='Nonsensory', players_min=3, players_max=8, local_recommended=False, drawing=True, game=PP9),
     GameItem(name='Roomerang', players_min=4, players_max=9, local_recommended=False, drawing=False, game=PP9),
 
-
+    GameItem(name='Tee K.O. 2', players_min=3, players_max=8, local_recommended=False, drawing=True, game=PP10),
+    GameItem(name='Dodo Re Mi', players_min=1, players_max=10, local_recommended=True, drawing=False, game=PP10),
+    GameItem(name='FixyText', players_min=3, players_max=8, local_recommended=False, drawing=False, game=PP10),
+    GameItem(name='Hypnotorious', players_min=3, players_max=8, local_recommended=False, drawing=True, game=PP10),
+    GameItem(name='Timejinx', players_min=1, players_max=8, local_recommended=False, drawing=False, game=PP10),
 
 
 ]

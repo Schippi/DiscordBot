@@ -5,9 +5,9 @@
 }
 
 .banner {
-  width: 300px;
-  height: 150px;
-  padding: 5px;
+  width: 240px;
+  height: 120px;
+  padding: 4px;
 }
 
 .tooltip .tooltiptext {
@@ -21,7 +21,7 @@
  //border-shadow: 10px 2px 2px #fff;
   /* Position the tooltip */
   position: absolute;
-  left: 220px;
+  left: 200px;
   top: 50px;
   z-index: 1;
 }
@@ -84,6 +84,54 @@ body {
     //padding-left: 50px;
     //padding-right: 50px;
 }
+
+.toggle {
+    position: relative;
+    width: 40px;
+    height: 20px;
+    border: 2px solid #aaaaaa;
+    border-radius: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: .3s;
+}
+.circle {
+    position: absolute;
+    left: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 20px;
+    background-color: #aaaaaa;
+    transition: .3s;
+}
+.boop {
+    font-size: 23px;
+    color: #494949;
+}
+.active {
+    border-color: rgb(85, 227, 180);
+}
+.active + .boop {
+    color: rgb(85, 227, 180);
+}
+.active .circle {
+    left: 100%;
+    transform: translateX(-100%);
+    transition: .3s;
+    background-color: rgb(85, 227, 180);
+}
+
+.container {
+    float: left;
+    padding: 5px;
+}
+
+.row {
+    height: 120px;
+}
+
 
 #myInput {
     background-image: url('/css/searchicon.png');

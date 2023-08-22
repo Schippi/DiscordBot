@@ -33,7 +33,33 @@
             } else {
                 collection[i].style.display = "none";
             }
+            let toggle = document.querySelectorAll('.toggle')
+            let boop = document.querySelectorAll('.boop')
+            for (j = 0; j < toggle.length; j++) {
+                if (!toggle[j].classList.contains('active')) {
+                    if (imgtxt.toUpperCase().indexOf(boop[j].innerHTML.toUpperCase()) > -1) {
+                        collection[i].style.display = "none";
+                        console.log(imgtxt.toUpperCase())
+                        console.log(boop[j].innerHTML.toUpperCase())
+                    }
+                }
+            }
         }
 
     }
+
+
+
+    function toggle(divNum) {
+        let toggle = document.querySelectorAll('.toggle')[divNum-1]
+        let boop = document.querySelectorAll('.boop')[divNum-1]
+        if (!toggle.classList.contains('active')) {
+            toggle.classList.add('active')
+        } else {
+            toggle.classList.remove('active')
+        }
+        filterGames()
+    }
     </script>
+
+

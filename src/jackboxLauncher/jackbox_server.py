@@ -207,7 +207,18 @@ async def gallery_handler(request, onlydraw: bool = None, playerCount: int = 0, 
         launch_cnt = 0
         call_cnt += 1
         result = result.replace('{call_cnt}',str(call_cnt)).replace('{call_cnt}', str(launch_cnt))
+
     with open('jackboxLauncher/htdocs/list.html.part02', 'r') as f:
+        loopy = f.read()
+    packs = [g.game for g in games if g.game.app_id in filter_games]
+    pack_cnt = 1
+    result = result + "<div class='row'>"
+    for pack in sorted(list(set(packs)), key=lambda x: x.name):
+        result = result + loopy.replace('{pack_name}', pack.name).replace('{num}', str(pack_cnt))
+        pack_cnt += 1
+    result = result + "</div><br/>"
+
+    with open('jackboxLauncher/htdocs/list.html.part03', 'r') as f:
         loopy = f.read()
     insensitive_dict = {k.lower(): v for k, v in request.rel_url.query.items()}
     if not onlydraw and 'onlydraw' in insensitive_dict:
@@ -219,7 +230,11 @@ async def gallery_handler(request, onlydraw: bool = None, playerCount: int = 0, 
             pass
 
     item = None
-    for game in (g for g in games if g.game.app_id in filter_games and (g.dlc is None or g.dlc in filter_games) and (playerCount == 0 or g.players_min <= playerCount <= g.players_max) and (g.drawing == onlydraw or onlydraw is None) and (g.local_recommended == localOnly or localOnly is None)):
+    for game in sorted([g for g in games if g.game.app_id in filter_games
+                                     and (g.dlc is None or g.dlc in filter_games)
+                                     and (playerCount == 0 or g.players_min <= playerCount <= g.players_max)
+                                     and (g.drawing == onlydraw or onlydraw is None)
+                                     and (g.local_recommended == localOnly or localOnly is None)], key=lambda x: x.name):
         item = loopy.replace('{app_id}', str(game.game.app_id))
         item = item.replace('{game_name}', game.name)
         try:
@@ -230,7 +245,7 @@ async def gallery_handler(request, onlydraw: bool = None, playerCount: int = 0, 
         result = result + item
     if item is None:
         return web.FileResponse('jackboxLauncher/htdocs/nogames.html')
-    with open('jackboxLauncher/htdocs/list.html.part03', 'r') as f:
+    with open('jackboxLauncher/htdocs/list.html.part04', 'r') as f:
         result = result + f.read()
 
     return web.Response(content_type='text/html', text=result)
