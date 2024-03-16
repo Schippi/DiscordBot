@@ -55,6 +55,7 @@ async def bday_loop(client):
             if checked:
                 # Calculate the age of the person
                 age = checked.year - birthday.birth_year
+                print(f"{birthday.name} will be {age} on {checked}")
 
                 # Print the birthday message
                 formatted_birthday = f"{birthday.day:02d}-{birthday.month:02d}-{birthday.birth_year}"
@@ -67,4 +68,4 @@ async def bday_loop(client):
 
 
         # Wait for 1 hour before checking again
-        asyncio.sleep(60 * 60)  # Sleep for 1 hour
+        await asyncio.sleep(60 * 60)  # Sleep for 1 hour
