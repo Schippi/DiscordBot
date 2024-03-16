@@ -2,6 +2,7 @@
 import typing
 import os
 from bsor.Bsor import *
+from bsor.Scoring import *
 import plotly.express as px
 import plotly.graph_objects as go
 import aiohttp
@@ -46,10 +47,13 @@ def read_map(filename, fig=None, suffix = ''):
     showRight = True #and False
     showPause = True #and False
     Angle = True# and False
+    angle_score = False
 
     print('File name :    ', os.path.basename(filename))
     with open(filename, "rb") as f:
         m = make_bsor(f)
+
+    stats = calc_stats(m)
 
     print('finished ')
 
@@ -172,22 +176,33 @@ def read_map(filename, fig=None, suffix = ''):
     max_no_mul_right = 0
     score_no_mul_left = 0
     score_no_mul_right = 0
-    angle_score = False
+
+    def get_angle_score(n):
+        if hasattr(n,'cut'):
+            angle_sub = abs(abs(n.cut.cutAngle)- 90)
+            angle_sub = max(0, 15 - (angle_sub // 3))
+            return angle_sub
+        return 0
+
     m.fc_acc = [0]*4
     for idx,e in enumerate(sorted_events):
         note_score = e[1].score if isinstance(e[1],Note) else 0
-        if angle_score and hasattr(e[1],'cut'):
-            note_score = note_score + 35 * (1-(abs(abs(n.cut.cutAngle)- 90) / 90))
+        if angle_score:
+            note_score = note_score + get_angle_score(n)
 
         if isinstance(e[1],Note):
             note_cnt = note_cnt + 1
-            max_mul = 8 if note_cnt > 8+4+1 else 4 if note_cnt > 4+1 else 2 if note_cnt > 1 else 1
+            max_mul = 8 if note_cnt > 8+4+2 else 4 if note_cnt > 4+2 else 2 if note_cnt > 2 else 1
             if e[1].scoringType == NOTE_SCORE_TYPE_BURSTSLIDERELEMENT:
                 max_score = max_score + max_mul * 20
                 max_score_no_mul = max_score_no_mul + 20
                 max_note = 20
+            elif e[1].scoringType == NOTE_SCORE_TYPE_BURSTSLIDERHEAD:
+                max_score = max_score + max_mul * 85
+                max_score_no_mul = max_score_no_mul + 85
+                max_note = 85
             else:
-                max_note = 115 if not angle_score else 150
+                max_note = 115 if not angle_score else 130
                 max_score = max_score + max_mul * max_note
                 max_score_no_mul = max_score_no_mul + max_note
             if note_score > 0:
@@ -228,6 +243,10 @@ def read_map(filename, fig=None, suffix = ''):
     print('%.2f' %(percent*100))
     import plotly.graph_objects as go
 
+    fig.add_trace(go.Scatter(x=sco_x, y=avg, name='avg'+suffix, marker=dict(
+        color=color_c,
+    )),secondary_y=True,row=1,col=1)
+
     fig.add_trace(go.Scatter(x=sco_x, y=max_scores, name='Max Score'),1,2)
     fig.add_trace(go.Scatter(x=sco_x, y=[n*percent for n in max_scores], name='Your Avg Score'+suffix, marker={'color':color_l}),1,2)
     fig.add_trace(go.Scatter(x=sco_x, y=scores, name='Score'+suffix, marker={'color':color_r}),1,2)
@@ -236,12 +255,9 @@ def read_map(filename, fig=None, suffix = ''):
     #for i,j in zip(scores,max_scores):
     #    percent_scores.append(i / j)
     #fig.add_trace(go.Scatter(x=sco_x, y=percent_scores, name='percent'),2,1)
-    fig.add_trace(go.Scatter(x=sco_x, y=avg, name='avg'+suffix, marker=dict(
-        color=color_c,
-    )),2,1)
-    fig.add_trace(go.Scatter(x=sco_x, y=avg, name='avg'+suffix, marker=dict(
-        color=color_c,
-    )),secondary_y=True,row=1,col=1)
+
+
+    right_notes = [n for n in m.notes if n.colorType == 1]
     #fig.add_trace(go.Scatter(x=sco_x, y=avg_2, name='avg_2'),2,1)
     fig.add_trace(go.Scatter(x=sco_x, y=avg_left, name='avg_left'+suffix, marker=dict(
         color=color_l,
@@ -249,34 +265,72 @@ def read_map(filename, fig=None, suffix = ''):
     fig.add_trace(go.Scatter(x=sco_x, y=avg_right, name='avg_right'+suffix, marker=dict(
         color=color_r,
     )),2,1)
+    fig.add_trace(go.Scatter(x=sco_x, y=avg, name='avg_no_mul'+suffix, marker=dict(
+        color='green',
+    )),2,1)
 
-    x = [i for i in range(-5,15)]
+
+    stuff = zip(stats.score_at_time,stats.max_score_at_time)
+    fig.add_trace(go.Scatter(x=sco_x, y=[j/l for (i,j),(k,l) in stuff], name='avg'+suffix, marker=dict(
+        color='yellow',
+    )),2,1)
+
+    x = [i for i in range(-1,16)]
     yl = []
     yr = []
+    an_l, an_r = [], []
     for i in x:
         yl.append(len([n for n in m.notes if n.acc_score == i and n.colorType == 0]))
         yr.append(len([n for n in m.notes if n.acc_score == i and n.colorType == 1]))
+        an_l.append(len([n for n in m.notes if n.colorType == 0 and get_angle_score(n) == i]))
+        an_r.append(len([n for n in m.notes if n.colorType == 1 and get_angle_score(n) == i]))
+
 
     fig.add_bar(x=x,y=yl,row=2,col=2,name='<acc left'+suffix,marker=dict(
         color=color_l,
     ))
-    fig.add_bar(x=x,y=yr,row=2,col=2,name='<acc right'+suffix,marker=dict(
+    fig.add_bar(x=x,y=yr,row=2,col=2,name='acc right>'+suffix,marker=dict(
         color=color_r,
     ))
 
-    x = [i for i in range(116)]
+    if angle_score:
+        fig.add_bar(x=x,y=an_l,row=2,col=2,name='<ang left'+suffix,marker=dict(
+            color=color_l,
+        ))
+        fig.add_bar(x=x,y=an_r,row=2,col=2,name='ang right>'+suffix,marker=dict(
+            color=color_r,
+        ))
+
+    x = [i for i in range(70)]
     yl = []
     yr = []
     for i in x:
-        yl.append(len([n for n in m.notes if n.score == i and n.colorType == 0]))
-        yr.append(len([n for n in m.notes if n.score == i and n.colorType == 1]))
+        yl.append(len([n for n in m.notes if n.pre_score == i and n.colorType == 0 and n.score > 0]))
+        yr.append(len([n for n in m.notes if n.pre_score == i and n.colorType == 1 and n.score > 0]))
 
-    fig.add_bar(x=x,y=yl,row=2,col=2,name='cut left>' +suffix,marker=dict(
+    fig.add_bar(x=x,y=yl,row=2,col=2,name='<pre left'+suffix,marker=dict(
         color=color_l,
-    ),secondary_y=True)
-    fig.add_bar(x=x,y=yr,row=2,col=2,name='cut right>'+suffix,marker=dict(
+    ))
+    fig.add_bar(x=x,y=yr,row=2,col=2,name='pre right>'+suffix,marker=dict(
         color=color_r,
-    ),secondary_y=True)
+    ))
+
+    x = [i for i in range(30)]
+    yll = []
+    yrl = []
+    for i in x:
+        yll.append(len([n for n in m.notes if n.post_score == i and n.colorType == 0 and n.score > 0]))
+        yrl.append(len([n for n in m.notes if n.post_score == i and n.colorType == 1 and n.score > 0]))
+
+    fig.add_bar(x=x,y=yll,row=2,col=2,name='<post left'+suffix,marker=dict(
+        color=color_l,
+    ))
+    fig.add_bar(x=x,y=yrl,row=2,col=2,name='post right>'+suffix,marker=dict(
+        color=color_r,
+    ))
+
+
+
 
 
 

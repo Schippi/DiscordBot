@@ -38,6 +38,8 @@ from util import quote;
 from util import askYesNoReaction;
 from util import sendMail;
 
+from BirthdayAnnounce import bday_loop
+
 CSARversion = '1.3.0'
 logging.basicConfig(level=logging.INFO);
 NOT_ALLOWED = 'You are not allowed to call this command!';
@@ -253,7 +255,8 @@ async def on_message(message):
                 ok = False;
             for att in message.attachments:
                 if att.filename and '.bsor' in att.filename.lower()[-5:]:
-                    return await sayWords(sett=sett, chan=message.channel, message="https://replay.beatleader.xyz/?link=" + att.url);
+                    res = att.url.rsplit('.bsor', 1)[0]+'.bsor'
+                    return await sayWords(sett=sett, chan=message.channel, message="https://replay.beatleader.xyz/?link=" + res)
                 await att.save(util.cfgPath + "/qr/botcheck");
                 from pyzbar.pyzbar import decode;
                 from PIL import Image;
@@ -773,7 +776,9 @@ client.running_chroma = False;
 
 loop = asyncio.new_event_loop()
 asyncio.set_event_loop(loop)
-loop.create_task(startChecking(client));
+loop.create_task(startChecking(client))
+
+loop.create_task(bday_loop(client))
 
 
 
@@ -792,10 +797,14 @@ from WebServer import setup, setuphttp;
 loop.run_until_complete(setup(client, testing).start())
 loop.run_until_complete(setuphttp().start())
 
+
+#from OneDrive import authyourself
+#authyourself()
+
 from beatsaber.beatsaber_server import download_all_loop
 
 BS_DB = util.DB
-loop.create_task(download_all_loop(util.beatsaber_people))
+#loop.create_task(download_all_loop(util.beatsaber_people))
 if not testing:
 
     pass
