@@ -26,8 +26,8 @@ birthdays_to_check = [
     Birthday(name="Ari", month=2, day=9, birth_year=1989),
 ]
 
-#hardcoded_guild_id = 756476087701340160
-hardcoded_guild_id = 196211645289201665
+hardcoded_guild_id = 756476087701340160
+#hardcoded_guild_id = 196211645289201665
 
 # Function to check for upcoming birthdays
 async def bday_loop(client):
@@ -67,4 +67,4 @@ async def bday_loop(client):
 
 
         # Wait for 1 hour before checking again
-        time.sleep(60 * 60)  # Sleep for 1 hour
+        asyncio.sleep(60 * 60)  # Sleep for 1 hour
