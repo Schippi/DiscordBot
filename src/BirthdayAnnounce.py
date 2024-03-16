@@ -47,9 +47,9 @@ async def bday_loop(client):
         for birthday in birthdays_to_check:
             # Check if today is the birthday and if it's 3 PM
             checked = None
-            if soon.month == birthday.month and soon.day == birthday.day and soon.hour == 15:
+            if soon.month == birthday.month and soon.day == birthday.day and soon.hour == 14:
                 checked = soon
-            elif soon_2.month == birthday.month and soon_2.day == birthday.day and soon_2.hour == 15:
+            elif soon_2.month == birthday.month and soon_2.day == birthday.day and soon_2.hour == 14:
                 checked = soon_2
 
             if checked:
@@ -68,4 +68,4 @@ async def bday_loop(client):
 
 
         # Wait for 1 hour before checking again
-        await asyncio.sleep(60 * 60)  # Sleep for 1 hour
+        await asyncio.sleep(60 * 60 - 5)  # Sleep for 1 hour
