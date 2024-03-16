@@ -58,7 +58,7 @@ async def bday_loop(client):
                 print(f"{birthday.name} will be {age} on {checked}")
 
                 # Print the birthday message
-                formatted_birthday = f"{birthday.day:02d}-{birthday.month:02d}-{birthday.birth_year}"
+                formatted_birthday = f"{birthday.day:02d}-{birthday.month:02d}-{checked.year}"
                 printmsg = (f" {birthday.name}'s birthday is coming up in a months time! they will turn {age} on {formatted_birthday}!")
                 guild = client.get_guild(hardcoded_guild_id)
                 for c in guild.channels:
