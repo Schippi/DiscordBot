@@ -40,6 +40,7 @@ async def bday_loop(client):
 
     while True:
         # Get today's date
+        heute = datetime.now()
         soon = datetime.now() + timedelta(days=31)
         soon_2 = datetime.now() + timedelta(days=15)
 
@@ -51,18 +52,24 @@ async def bday_loop(client):
                 checked = soon
             elif soon_2.month == birthday.month and soon_2.day == birthday.day and soon_2.hour == 14:
                 checked = soon_2
-
+            elif heute.month == birthday.month and heute.day == birthday.day and heute.hour == 14:
+                age = heute.year - birthday.birth_year
+                printmsg = (f"Its {birthday.name}'s birthday today! they are now the proud age of {age}!")
+                guild = client.get_guild(hardcoded_guild_id)
+                for c in guild.channels:
+                    if "gift" in c.name.lower() and ("-" + birthday.name.lower()) in c.name.lower():
+                        await c.send(printmsg)
+                        break
             if checked:
                 # Calculate the age of the person
                 age = checked.year - birthday.birth_year
                 print(f"{birthday.name} will be {age} on {checked}")
-
                 # Print the birthday message
                 formatted_birthday = f"{birthday.day:02d}-{birthday.month:02d}-{checked.year}"
                 printmsg = (f" {birthday.name}'s birthday is coming up soon! they will turn {age} on {formatted_birthday}!")
                 guild = client.get_guild(hardcoded_guild_id)
                 for c in guild.channels:
-                    if "gift" in c.name.lower() and birthday.name.lower() in c.name.lower():
+                    if "gift" in c.name.lower() and ("-" + birthday.name.lower()) in c.name.lower():
                         await c.send(printmsg)
                         break
 
