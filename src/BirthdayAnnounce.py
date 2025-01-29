@@ -21,7 +21,7 @@ birthdays_to_check = [
     Birthday(name="Schippi", month=2, day=15, birth_year=1989),
     Birthday(name="Davaria", month=3, day=16, birth_year=1993),
     Birthday(name="Nemo", month=1, day=29, birth_year=1992),
-    Birthday(name="Niu", month=7, day=20, birth_year=1994),
+    Birthday(name="Niu", month=7, day=25, birth_year=1994),
     Birthday(name="Peach", month=11, day=17, birth_year=1992),
     Birthday(name="Ari", month=2, day=9, birth_year=1989),
 ]
