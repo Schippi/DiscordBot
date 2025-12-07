@@ -256,7 +256,7 @@ async def on_message(message):
             for att in message.attachments:
                 if att.filename and '.bsor' in att.filename.lower()[-5:]:
                     res = att.url
-                    return await sayWords(sett=sett, chan=message.channel, message="https://replay.beatleader.xyz/?link=" + res)
+                    return await sayWords(sett=sett, chan=message.channel, message="https://replay.beatleader.com/?link=" + res)
                 await att.save(util.cfgPath + "/qr/botcheck");
                 from pyzbar.pyzbar import decode;
                 from PIL import Image;

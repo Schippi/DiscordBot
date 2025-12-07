@@ -342,7 +342,7 @@ def read_map(filename, fig=None, suffix = ''):
 
 
 if __name__ == '__main__':
-    #https://api.beatleader.xyz/player/4476/scores?page=2
+    #https://api.beatleader.com/player/4476/scores?page=2
     #https://github.com/BeatLeader/BS-Open-Replay
     #filename = 'testData/4476-ExpertPlus-Standard-D04138A245357F230A3BFC568DE9AF89D4FAC687.bsor'
     #filename = 'D:/_TMP/Lady.bsor'

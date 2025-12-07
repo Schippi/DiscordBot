@@ -59,7 +59,7 @@ async def data_to_db(data,cur):
     #print(data['id'] if 'id' in data else 'no id')
     if not data['leaderboard'] and data['leaderboardId']:
         async with aiohttp.ClientSession() as session:
-            async with session.get('https://api.beatleader.xyz/leaderboard/%s' % (data['leaderboardId'],)) as resp:
+            async with session.get('https://api.beatleader.com/leaderboard/%s' % (data['leaderboardId'],)) as resp:
                 if resp.status == 200:
                     data['leaderboard'] = await resp.json()
     song = data['leaderboard']['song']
@@ -89,7 +89,7 @@ async def data_to_db(data,cur):
             rows = [row for row in cur.execute('SELECT id_user from bs_user where id_user = ?', (data['playerId'],))]
             if len(rows) == 0:
                 async with aiohttp.ClientSession() as session:
-                    async with session.get('https://api.beatleader.xyz/player/%s' % (data['playerId'],)) as resp:
+                    async with session.get('https://api.beatleader.com/player/%s' % (data['playerId'],)) as resp:
                         if resp.status == 200:
                             player_data =  await resp.json()
                             cur.execute('insert into bs_user(id_user, user_name) values(?,?)', (player_data['id'], player_data['name'],))
@@ -127,13 +127,20 @@ def stats_to_db(d):
     util.DB.commit()
 
 
-async def sync_stats(p, session):
-    async with session.get('https://api.beatleader.xyz/player/%s/history?count=60' % (p,)) as resp:
+async def sync_stats(p, session, count=60):
+    async with session.get('https://api.beatleader.com/player/%s/history?count=%s' % (p,count)) as resp:
         if resp.status == 200:
             data = await resp.json()
             for d in data:
                 stats_to_db(d)
 
+@bsroutes.get('/bs/updatestats/{userid}/{count}')
+async def bs_updatestats(request):
+    userid = request.match_info['userid']
+    count = request.match_info['count']
+    async with aiohttp.ClientSession() as session:
+        await sync_stats(userid, session, count)
+    return web.Response(text='ok')
 
 async def download_all(users, stopOnPgOne):
     with util.OpenCursor(util.DB) as cur:
@@ -149,7 +156,7 @@ async def download_all(users, stopOnPgOne):
                 i = 1
                 while i > 0:
                     print('fetching page %d for user %d' % (i, p))
-                    url = 'https://api.beatleader.xyz/player/%d/scores?time_from=%d&page=%d' % (p, last_time + 1, i)
+                    url = 'https://api.beatleader.com/player/%d/scores?time_from=%d&page=%d' % (p, last_time + 1, i)
                     async with session.get(url) as resp:
                         if resp.status != 200:
                             print('load page failed user: %d page: %d ' % (p, i))
@@ -224,7 +231,7 @@ async def bs_dlexp(request):
             i = 1
             while i > 0:
                 print('user %d page %d' % (p, i))
-                url = 'https://api.beatleader.xyz/player/%d/scores?time_from=%d&page=%d' % (p, last_time + 1, i)
+                url = 'https://api.beatleader.com/player/%d/scores?time_from=%d&page=%d' % (p, last_time + 1, i)
                 async with session.get(url) as resp:
                     if resp.status != 200:
                         print('load page failed user: %d page: %d ' % (p, i))
@@ -323,7 +330,7 @@ async def bs_leaderboards(request):
         async with aiohttp.ClientSession() as session:
             i = 1
             while i > 0:
-                async with session.get('https://api.beatleader.xyz/leaderboards?page=%d&sortBy=timestamp&order=desc&allTypes=0&count=1000' % (i,)) as resp:
+                async with session.get('https://api.beatleader.com/leaderboards?page=%d&sortBy=timestamp&order=desc&allTypes=0&count=1000' % (i,)) as resp:
                     if resp.status == 200:
                         data = await resp.json()
                         for x in data['data']:
@@ -445,7 +452,7 @@ async def replay_handler(request):
         if not score_id:
             continue
         async with aiohttp.ClientSession() as session:
-            async with session.get('https://api.beatleader.xyz/score/%d' % score_id) as resp:
+            async with session.get('https://api.beatleader.com/score/%d' % score_id) as resp:
                 if resp.status != 200:
                     return web.Response(text=await resp.text(), status=resp.status, reason=resp.reason)
                 data = await resp.json()
