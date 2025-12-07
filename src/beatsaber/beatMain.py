@@ -7,6 +7,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import aiohttp
 import asyncio
+from typing import BinaryIO
 
 import pprint
 
