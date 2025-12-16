@@ -134,6 +134,21 @@ async def sync_stats(p, session, count=60):
             for d in data:
                 stats_to_db(d)
 
+@bsroutes.get('/cal/get')
+async def bs_updatestats(request):
+    current_unix_time = int(time.time())
+
+    data = {
+        "updated": current_unix_time,
+        "events": [
+            {
+                "daysUntil": 5,
+                "imagePath": "images/server"
+            }
+        ]
+    }
+    return web.json_response(data)
+
 @bsroutes.get('/bs/updatestats/{userid}/{count}')
 async def bs_updatestats(request):
     userid = request.match_info['userid']
