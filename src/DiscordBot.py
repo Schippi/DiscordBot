@@ -78,6 +78,8 @@ util.serverFull = util.serverHost;
 if util.serverPort != 80 and util.serverPort != 443:
     util.serverFull = util.serverFull + ':' + str(util.serverPort);
 
+print(util.serverFull)
+
 DBFile = util.cfgPath + '/bot.db';
 DBJournal = util.cfgPath + '/bot.db-journal';
 DBLOG = util.cfgPath + '/botlog.db';
@@ -805,6 +807,10 @@ from beatsaber.beatsaber_server import download_all_loop
 
 BS_DB = util.DB
 #loop.create_task(download_all_loop(util.beatsaber_people))
+
+from calendar_server import keep_auth
+loop.create_task(keep_auth())
+
 if not testing:
 
     pass

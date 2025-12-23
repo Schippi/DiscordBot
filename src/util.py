@@ -17,7 +17,7 @@ DBcursor = None;
 DB = None;
 DBLOG = None;
 cfgPath = None;
-serverPort = 8081;
+serverPort = 443;
 serverHost = 'localhost'
 serverFull = 'localhost:8081';
 
@@ -32,6 +32,8 @@ TwitchSECRET = '';
 TwitchIRCNICK = '';
 TwitchIRCAUTH = '';
 YTAPI = '';
+SEARCH_API_KEY = ''
+SEARCH_CX_ENGINE = ''
 pleaseLog=True;
 log = logging.getLogger(__name__);
 
@@ -40,12 +42,13 @@ beatsaber_people = [76561198026425351, 76561198041198710, 8280]
 class AuthFailed(Exception):
 	pass;
 
+
 if len(sys.argv) >= 3:
 	cfgPath = sys.argv[2];
 print(sys.argv)
 file = open(cfgPath+"/../tokens/twitch.token","r");
 try:
-	contents =file.read().splitlines(); 
+	contents =file.read().splitlines();
 	TwitchAPI = contents[0];
 	TwitchSECRET = contents[1];
 except:
@@ -55,29 +58,32 @@ except:
 file.close();
 
 with open(cfgPath+"/../tokens/irc.token","r") as file:
-	contents =file.read().splitlines(); 
+	contents =file.read().splitlines();
 	TwitchIRCNICK = contents[0];
 	TwitchIRCAUTH = contents[1];
 
 file = open(cfgPath+"/../tokens/youtube.token","r");
 try:
-	contents =file.read().splitlines(); 
+	contents =file.read().splitlines();
 	YTAPI = contents[0];
 except:
 	pass;
 file.close();
 
-if len(sys.argv) >= 3:
-	cfgPath = sys.argv[2];
+with open(cfgPath+"/../tokens/search.token", "r") as file:
+	contents =file.read().splitlines()
+	SEARCH_API_KEY = contents[0]
+	SEARCH_CX_ENGINE = contents[1]
+
 
 def toDateTime(strr):
 	if(strr == None or len(strr.strip()) == 0):
-		return 1; 
+		return 1;
 	try:
 		return datetime.strptime(strr, timeStr);
 	except ValueError as ex:
 		return datetime.strptime(strr, backupStr);
-	
+
 def dateToStr(dd):
 	return dd.strftime(timeStr);
 
@@ -108,29 +114,29 @@ def getMarkupStr(args):
 			myargs.append(text);
 		text = '```'+myargs[0]+'\n'
 		for i in range(1,len(myargs)):
-			text = text+myargs[i]+' '		
+			text = text+myargs[i]+' '
 		text = text+'\n```'
 		return text
 	else:
 		return ''
-		
+
 def repl(inputt,toreplace,replacewith):
 	if(replacewith):
 		return inputt.replace(toreplace,replacewith);
 	else:
 		return inputt;
-		
+
 def is_dst(zonename):
 	tz = pytz.timezone(zonename)
 	now = pytz.utc.localize(datetime.utcnow())
-	return now.astimezone(tz).dst() != timedelta(0)		
+	return now.astimezone(tz).dst() != timedelta(0)
 
 def dict_factory(cursor, row):
 	d = {}
 	for idx, col in enumerate(cursor.description):
 		d[col[0].lower()] = row[idx];
 	return d;
-	
+
 def singleQuote(stri):
 	return "'"+str(stri)+"'";
 
@@ -138,7 +144,7 @@ def quote(msg):
 	return '` '+msg+' `';
 
 def updateOrInsert(table,pkdict,valdict, alwaysUsePK, tryupdate = True):
-	#print(type(pkdict));	
+	#print(type(pkdict));
 	pklist = list(pkdict.keys());
 	vallist = list(valdict.keys());
 	pkval = pkdict[pklist[0]];
@@ -147,11 +153,11 @@ def updateOrInsert(table,pkdict,valdict, alwaysUsePK, tryupdate = True):
 	l1.append(pkval);
 	l2 = list(valdict.values());
 
-	q = 'UPDATE '+table+" set ";	
+	q = 'UPDATE '+table+" set ";
 	q= q+ '= ? , '.join(vallist)+' = ?';
 	q= q+' where '+pklist[0]+' = ?';
-	
-	
+
+
 	q2 = 'INSERT INTO '+table+' ('
 	if(alwaysUsePK):
 		q2 = 'INSERT INTO '+table+' ('
@@ -163,23 +169,23 @@ def updateOrInsert(table,pkdict,valdict, alwaysUsePK, tryupdate = True):
 			q2 = q2 + " and not exists( select " +pklist[0]+" from "+table+" where "+pklist[0]+"= ? ) "
 			l2.append(pkval);
 
-	else : 
+	else :
 		q2 = 'INSERT INTO '+table+' ('
 		q2 = q2+', '.join(vallist)+') ';
 		q2 = q2+' select '+ ', '.join(['?' for s in vallist])
 		q2 = q2 + " where 1 = 1 "
 	q2 = q2+" and (Select Changes() = 0);";
-	
+
 	if tryupdate:
 		DBcursor.execute(q,l1)
 	if(alwaysUsePK):
-		l2.insert(0,pkval);	
+		l2.insert(0,pkval);
 		DBcursor.execute(q2,l2);
 	else:
-		DBcursor.execute(q2,l2);	
+		DBcursor.execute(q2,l2);
 	#print(q);
 	#print(l1);
-	#print(l2);	
+	#print(l2);
 	if pkval:
 		return pkval;
 	else:
@@ -213,9 +219,9 @@ def logEx(ex):
 	except Exception:
 		traceback.print_exc(file=sys.stdout);
 		pass
-	
+
 client = '';
-from GuildSettings import getSetting;	
+from GuildSettings import getSetting;
 async def sayWords(context = None,message = None,sett = None, chan = None,file=None):
 	#message.encode('utf-8')
 	for m in message.split('\n'):
@@ -281,7 +287,7 @@ async def fetch(session, url, headers,secondTime=False):
 					return txt;
 			except asyncio.TimeoutError:
 				return '';
-			
+
 async def fetchUser(session, url, headers):
 	return await fetch(session,url,headers,True);
 
@@ -304,14 +310,14 @@ async def fetchUserXXX(session, url, headers,secondTime=False):
 					return await response.text()
 			except asyncio.TimeoutError:
 				return '';
-			
+
 async def refresh_User_Auth(session,user_id):
 	#TODO
 	#fetch user from db, use refresh token
 	#https://dev.twitch.tv/docs/authentication#refreshing-access-tokens
-	pass;			
+	pass;
 
-			
+
 async def posting(session, url, payload, headers = None):
 	with async_timeout.timeout(10):
 		async with session.post(url, data = payload,headers = headers) as response:
@@ -319,8 +325,8 @@ async def posting(session, url, payload, headers = None):
 				return await response.text()
 			except asyncio.TimeoutError:
 				return '';
-			
-			
+
+
 async def deletehttp(session, url, headers = None):
 	with async_timeout.timeout(10):
 		async with session.delete(url,headers = headers) as response:
@@ -330,7 +336,7 @@ async def deletehttp(session, url, headers = None):
 				return '';
 			except:
 				traceback.print_exc();
-			
+
 def getControlVal(mystring,dflt):
 	valset = False;
 	for row in DBcursor.execute('SELECT * FROM control where key = ?',(mystring,)):
@@ -344,16 +350,16 @@ def getControlVal(mystring,dflt):
 
 async def getGames(ids,session,oauthToken):
 	placeholders= ', '.join(['?']*len(ids));
-	retdict = {};	
+	retdict = {};
 	if(len(ids)== 0):
 		return {'':'Something'};
-	
+
 	for row in DBcursor.execute('SELECT * FROM game where id in ({})'.format(placeholders),tuple(ids)):
 		retdict[str(row['id'])] = row['name'];
-																	
+
 	if (len(retdict.keys()) < len(ids)):
 		lookURL = 'https://api.twitch.tv/helix/games?id='+('&id='.join(ids));
-		
+
 		myjson = await fetch(session,lookURL,{'client-id':TwitchAPI,
 								'Accept':'application/vnd.twitchtv.v5+json',
 								'Authorization':'Bearer '+oauthToken});
@@ -363,7 +369,7 @@ async def getGames(ids,session,oauthToken):
 				DBcursor.execute('insert into game(id,name,boxart) values(?,?,?)',(d['id'],d['name'],d['box_art_url']));
 			retdict[d['id']] = d['name'];
 		DB.commit();
-	retdict[''] = 'Something';	
+	retdict[''] = 'Something';
 	return retdict;
 
 def getGamesUrlbyName(name):
@@ -373,9 +379,9 @@ def getGamesUrlbyName(name):
 
 async def AuthMe(session):
 	authURL = 'https://id.twitch.tv/oauth2/token';
-	
+
 	myjson = await posting(session,authURL,{'client_id':TwitchAPI,'client_secret':TwitchSECRET, 'grant_type':'client_credentials'});
-	myjson = json.loads(myjson);		
+	myjson = json.loads(myjson);
 	return setControlVal('token_oauth',myjson['access_token']);
 
 def setControlVal(mystring,val):
@@ -387,11 +393,11 @@ def getSubs(name):
 	for row in DBcursor.execute('select subs from twitch_person where lower(display_name) = ?',(name,)):
 		return row['subs'];
 	return 'not tracking';
-			
+
 def sendMail(title,inhalt):
 	try:
 		file = open(cfgPath+"/../tokens/mail.token","r");
-		contents =file.read().splitlines(); 
+		contents =file.read().splitlines();
 		NAME = contents[0];
 		TOKEN = contents[1];
 	except:
@@ -403,23 +409,23 @@ def sendMail(title,inhalt):
 	yag = yagmail.SMTP(NAME,base64.b64decode(TOKEN).decode());
 	contents = [inhalt];
 	yag.send(NAME, title, contents);
-	
+
 async def getOAuth():
 	oauthToken = getControlVal('token_oauth','');
-					
+
 	if(oauthToken == ''):
 		print('Authorization for the first time');
 		oauthToken = await AuthMe(aiohttp.ClientSession());
 	return oauthToken;
-	
+
 async def fetch_new_people(session,newpeople):
 	lookURL = HELIX+'users?login='+'&login='.join(newpeople.keys())
 	oauthtoken = await getOAuth();
 	myjson = await fetch(session,lookURL,{'client-id':TwitchAPI,
 											'Accept':'application/vnd.twitchtv.v5+json',
 											'Authorization':'Bearer '+oauthtoken});
-	
-			
+
+
 	myjson = json.loads(myjson);
 	print(myjson);
 	myArray = myjson["data"];
@@ -427,18 +433,18 @@ async def fetch_new_people(session,newpeople):
 		for myEnt in myArray:
 			data_user = TwitchUser(myEnt);
 			newpeople[myEnt["display_name"].lower()] = myEnt["id"];
-			
+
 			DBcursor.execute('update twitch set userid = ? where lower(username) = ?',[data_user.id,data_user.display_name.lower()]);
 			DBcursor.execute('''insert into twitch_person(id,login,display_name,type,broadcaster_type,description,profile_image_url,offline_image_url,view_count)
 				 select ?,?,?,?,?,?,?,?,? from dual
 				 where not exists (select * from twitch_person where id = ?) 
-				 '''							 
+				 '''
 			 ,[data_user.id,data_user.login,data_user.display_name,data_user.type,data_user.broadcaster_type,data_user.description,data_user.profile_image_url,data_user.offline_image_url,data_user.view_count,data_user.id]);
 			print(data_user.id);
-		
+
 	DB.commit();
 	return newpeople;
-	
+
 def changeLog():
 	return '''0.3.0: introduction of changelog\n
 timer doesn't print all the time while creating a new one\n
