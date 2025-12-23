@@ -55,12 +55,12 @@ def setup(my_client, testing):
 	
 	
 	app.add_routes(routes);
-	sys.path.insert(0, 'jackboxLauncher')
-	from jackbox_server import jackroutes;
+	from jackboxLauncher.jackbox_server import jackroutes;
 	app.add_routes(jackroutes);
-	sys.path.insert(0, 'beatsaber')
-	from beatsaber_server import bsroutes
+	from beatsaber.beatsaber_server import bsroutes
 	app.add_routes(bsroutes)
+	from calendarservice.calendar_server import calendarroutes
+	app.add_routes(calendarroutes)
 
 	runner = web.AppRunner(app);
 	root_folder = os.path.dirname(__file__)
@@ -70,13 +70,17 @@ def setup(my_client, testing):
 	app.router.add_static('/bscss', root_folder+'/beatsaber/htdocs/css')
 
 	asyncio.get_event_loop().run_until_complete(runner.setup())
+	print(testing, util.cfgPath)
 	if not testing:
 		ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
 		ssl_context.load_cert_chain(util.cfgPath+'/fullchain.pem', util.cfgPath+'/privkey.pem');
 
 		website = web.TCPSite(runner, util.serverHost, util.serverPort, ssl_context = ssl_context)
 	else:
-		website = web.TCPSite(runner, util.serverHost, util.serverPort)
+		print(util.cfgPath)
+		ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+		ssl_context.load_cert_chain(util.cfgPath+'/cert.pem', util.cfgPath+'/key.pem');
+		website = web.TCPSite(runner, util.serverHost, util.serverPort, ssl_context = ssl_context)
 
 	return website;
 

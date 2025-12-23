@@ -3,8 +3,8 @@ from PIL import Image, ImageDraw, ImageFont, ImageOps
 import math
 import numpy as np
 import cv2
-from jackbox_config import games
-from jackbox_server import getGameImage
+from .jackbox_config import games
+from .jackbox_server import getGameImage
 import sys
 
 

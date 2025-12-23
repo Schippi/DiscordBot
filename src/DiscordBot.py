@@ -808,7 +808,7 @@ from beatsaber.beatsaber_server import download_all_loop
 BS_DB = util.DB
 #loop.create_task(download_all_loop(util.beatsaber_people))
 
-from calendar_server import keep_auth
+from calendarservice.calendar_server import keep_auth
 loop.create_task(keep_auth())
 
 if not testing:

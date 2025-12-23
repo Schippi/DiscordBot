@@ -13,9 +13,9 @@ import base64
 import ssl
 import time
 import os.path
-from jackbox_config import ALL_APP_IDS
-from jackbox_config import games
-from jackbox_config import GameItem
+from .jackbox_config import ALL_APP_IDS
+from .jackbox_config import games
+from .jackbox_config import GameItem
 
 jackroutes = web.RouteTableDef()
 
@@ -251,7 +251,7 @@ async def gallery_handler(request, onlydraw: bool = None, playerCount: int = 0, 
     return web.Response(content_type='text/html', text=result)
 
 if __name__ == '__main__':
-    from jackbox_config import config;
+    from .jackbox_config import config;
 
     loop = asyncio.get_event_loop()
     # web.run_app(setuphttp(config)[0])

@@ -15,7 +15,7 @@ import time
 import os.path
 import aiofiles
 import os
-from beatMain import read_map
+from .beatMain import read_map
 import io
 import typing
 
@@ -114,7 +114,6 @@ async def data_to_db(data,cur):
     except Exception as e:
         print(e)
 
-
 def stats_to_db(d):
     dic = {'id': d['id'],
            'timestamp': d['timestamp'],
@@ -134,20 +133,65 @@ async def sync_stats(p, session, count=60):
             for d in data:
                 stats_to_db(d)
 
-@bsroutes.get('/cal/get')
-async def bs_updatestats(request):
-    current_unix_time = int(time.time())
+def overlap(a_start, a_end, b_start, b_end):
+    return max(0, min(a_end, b_end) - max(a_start, b_start))
 
-    data = {
-        "updated": current_unix_time,
-        "events": [
-            {
-                "daysUntil": 5,
-                "imagePath": "images/server"
-            }
-        ]
-    }
-    return web.json_response(data)
+def generateImage():
+    from PIL import Image
+    SIZE = (200, 200)
+    img = Image.open("D:/_TMP/base64.png")
+    # Resize
+    img = img.resize(SIZE, Image.NEAREST)
+    # Convert to 1-bit (black & white)
+    img = img.convert("1")
+    width, height = img.size
+    pixels = img.load()
+    img.save("D:/_TMP/base64_bw.png")
+
+    covered = [[False]*width for _ in range(height)]
+    rectangles = []
+
+    for y in range(height):
+        for x in range(width):
+            if pixels[x, y] == 0 and not covered[y][x]:  # black & not yet covered
+                # Grow rectangle
+                rect_width = 1
+                rect_height = 1
+
+                # Determine max width
+                while x + rect_width < width and pixels[x + rect_width, y] == 0 and not covered[y][x + rect_width]:
+                    rect_width += 1
+
+                # Determine max height
+                max_height = 1
+                while y + max_height < height:
+                    row_valid = True
+                    for dx in range(rect_width):
+                        if pixels[x + dx, y + max_height] != 0 or covered[y + max_height][x + dx]:
+                            row_valid = False
+                            break
+                    if row_valid:
+                        max_height += 1
+                    else:
+                        break
+
+                # Mark pixels as covered
+                for dy in range(max_height):
+                    for dx in range(rect_width):
+                        covered[y + dy][x + dx] = True
+
+                rectangles.append({
+                    "x": x,
+                    "y": y,
+                    "w": rect_width,
+                    "h": max_height
+                })
+
+    return rectangles
+    pass
+
+
+
 
 @bsroutes.get('/bs/updatestats/{userid}/{count}')
 async def bs_updatestats(request):
