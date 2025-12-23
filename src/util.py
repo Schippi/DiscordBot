@@ -33,7 +33,7 @@ TwitchIRCNICK = '';
 TwitchIRCAUTH = '';
 YTAPI = '';
 SEARCH_API_KEY = ''
-SEARCH_CX_ENGINE = ''
+SEARCH_CX_ENGINE = (None, None)
 pleaseLog=True;
 log = logging.getLogger(__name__);
 
@@ -73,7 +73,7 @@ file.close();
 with open(cfgPath+"/../tokens/search.token", "r") as file:
 	contents =file.read().splitlines()
 	SEARCH_API_KEY = contents[0]
-	SEARCH_CX_ENGINE = contents[1]
+	SEARCH_CX_ENGINE = (contents[1], contents[2])
 
 
 def toDateTime(strr):

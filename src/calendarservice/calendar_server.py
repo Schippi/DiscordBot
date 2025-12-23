@@ -96,20 +96,23 @@ async def cal_test(request):
         #"https://cdn.futbin.com/content/fifa21/img/players/p134426146.png"
         "https://media.istockphoto.com/id/1086015802/vector/board-game-icons.jpg?s=612x612&w=0&k=20&c=KfgWqcgx879XbKj197R3oGmNh3nlbXqCAvXwfKJrWXg="
     ).content))
-    img = img.resize((390,220), Image.NEAREST)
-    img.save("D:/_TMP/fut_orig.png")
-    img = img.convert("RGBA")
-    img.save("D:/_TMP/fut_rgba.png")
-    img = img.convert("L")
-    img.save("D:/_TMP/fut_l.png")
+    img = img.resize((390,220), Image.NEAREST)\
+        .convert("RGBA")\
+        .convert("L")
+    #img.save("D:/_TMP/fut_l.png")
     fbw = img.convert("1")
-    fbw.save("D:/_TMP/fut_bw.png")
-    for j in range(120,10,-10):
-        atkinson_dithered = atkinson_dither(img.copy(), threshold=j, invert_if_dark=False)
-        atkinson_dithered.save(f"D:/_TMP/fut_atkinson_wb_{j}.png")
+    #fbw.save("D:/_TMP/fut_bw.png")
+    atkinson_dithered = atkinson_dither(img.copy(), threshold=40, invert_if_dark=False)
+    #atkinson_dithered.save(f"D:/_TMP/fut_atkinson_wb_{j}.png")
 
     rect_img = drawrectimage(generateImage(path=None, source=fbw))
-    rect_img.save("D:/_TMP/fut_rects.png")
+    #rect_img.save("D:/_TMP/fut_rects.png")
+    for txt in ["Herr der Ringe Couch Marathon", "Brettspiele", "Stromberg   Wieder alles wie immer", "Zusammen unterwegs   ", "Essen mit Marc"]:
+        rects = generateImage(path=None, source=replacementImage(txt))
+        print(f" {txt} amount of rects",len(rects))
+        rect_img = drawrectimage(generateImage(path=None, source=replacementImage(txt)))
+        rect_img.save(f"D:/_TMP/{txt}_replacement_x.png")
+
     return web.Response(text="ok")
 
 def drawrectimage(data):
@@ -208,7 +211,7 @@ def fetch_band_logos(band_name, num_images=5, display=True, engine=CX_ENGINE):
         "num": num_images * 2,  # ask for more, since some might fail
     }
 
-    #print(f"Searching for: {search_query}")
+    print(f"Searching for: {search_query} in engine {engine}")
     response = requests.get(url, params=params)
     data = response.json()
 
@@ -283,6 +286,7 @@ def fetch_band_logos(band_name, num_images=5, display=True, engine=CX_ENGINE):
 
 def cal_auth():
     token_file_name = util.cfgPath+"/../tokens/calendar_secret.json"
+    secret_file_name = util.cfgPath+"/../tokens/google_calendar_desktop.json"
     creds = None
     # The file token.json stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
@@ -296,21 +300,21 @@ def cal_auth():
                 creds.refresh(Request())
             except RefreshError:
                 # Refresh token is invalid — need to go through full auth flow again
-                flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
+                flow = InstalledAppFlow.from_client_secrets_file(secret_file_name, SCOPES)
                 if not isTestingCal():
                     util.sendMail('Bot Calendar Perms 01', 'refresh expired')
                 else:
                     print('Bot Calendar Perms 01 - need to reauthorize')
                 creds = flow.run_local_server(port=0)
         else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                token_file_name, SCOPES
-            )
             if not isTestingCal():
                 util.sendMail('Bot Calendar Perms 02', 'nop creds')
             else:
                 print('Bot Calendar Perms 02 - need to reauthorize')
-            creds = flow.run_local_server(port=0)
+                flow = InstalledAppFlow.from_client_secrets_file(
+                    secret_file_name, SCOPES
+                )
+                creds = flow.run_local_server(port=0)
         # Save the credentials for the next run
         with open(token_file_name, "w") as token:
             token.write(creds.to_json())
@@ -347,38 +351,51 @@ def fetch_events():
     )
     events = events_result.get("items", [])
 
-
     if not events:
         return {}
 
     result_events = [e for e in events if 'Elyas' not in e["summary"] and 'Wiesbaden' not in e["summary"]]
     return result_events
 
-cached_events = (None, None)
+def replacementImage(event_name):
+    #create image with text
+    from PIL import Image, ImageDraw, ImageFont
+    SIZE = (380, 220)
+    img = Image.new('RGB', SIZE, color = (255, 255, 255))
+    d = ImageDraw.Draw(img)
+    font = ImageFont.load_default()
+    #make text as large as possible
+    text = event_name.split(' ')[0]
+    text_size = 40
+    while True:
+        font = ImageFont.truetype("impact.ttf", text_size)
+        text_width, text_height = d.textsize(text, font=font)
+        if text_width > SIZE[0] or text_height > SIZE[1]:
+            break
+        text_size += 2
+    #print("text size", text_size)
+    d.text(((SIZE[0]-text_width)/2,(SIZE[1]-text_height)/2), text, fill=(0,0,0), font=font)
+    img.save(f'D:/_TMP/{text}.png')
+    return img
+
 
 def getcachedevents():
-    global cached_events
-    if not cached_events[0]:
-        with util.OpenCursor(util.DB) as cur:
-            cur.execute('select * from control where key = ?', ('calendar_cache',))
-            rows = cur.fetchall()
-            if len(rows) == 0:
-                cached_events = (None, None)
-            else:
-                cur.execute('select * from control where key = ?', ('calendar_reply_cache',))
-                rows_2 = cur.fetchall()
-                if len(rows_2) == 0:
-                    cached_events = (None, None)
-                else:
-                    cached_events = (json.loads(rows[0]['value']), json.loads(rows_2[0]['value']))
-    return cached_events
+
+    with util.OpenCursor(util.DB) as cur:
+        cur.execute('select * from control where key = ?', ('calendar_cache',))
+        rows = cur.fetchall()
+        if len(rows) > 0:
+            cur.execute('select * from control where key = ?', ('calendar_reply_cache',))
+            rows_2 = cur.fetchall()
+            if len(rows_2) > 0:
+                return (json.loads(rows[0]['value']), json.loads(rows_2[0]['value']))
+    return (None, None)
 
 def updatecachedevents(events, reply):
     global cached_events
     cached_events = (events, reply)
-    with util.OpenCursor(util.DB) as cur:
-        cur.execute('insert or replace into control (key, value) values (?, ?)', ('calendar_cache', json.dumps(events)))
-        cur.execute('insert or replace into control (key, value) values (?, ?)', ('calendar_reply_cache', json.dumps(reply)))
+    util.updateOrInsert('control', {'key': 'calendar_cache'}, {'value': json.dumps(events)}, True, True)
+    util.updateOrInsert('control', {'key': 'calendar_reply_cache'}, {'value': json.dumps(reply)}, True, True)
     util.DB.commit()
 @calendarroutes.get('/cal/get')
 async def get_next(request):
@@ -393,7 +410,7 @@ async def get_next(request):
             return web.json_response(data)
         pd_events = []
         for event in cal_events:
-            print(event)
+            # print(event)
             search_list = event["summary"].split(' ')
             search_term = event["summary"]
             img = None
@@ -401,10 +418,13 @@ async def get_next(request):
             while img is None and len(search_list)>0:
                 search_term = ' '.join(search_list)
                 print("Searching for Image: "+search_term)
-                (img, img_url) = fetch_band_logos(search_term, num_images=3, display=False, engine=CX_ENGINE[0])
+                (img, img_url) = fetch_band_logos(search_term, num_images=4, display=False, engine=CX_ENGINE[0])
                 if not img:
                     print("Searching for Image ALT: "+search_term)
-                    (img, img_url) = fetch_band_logos(search_term, num_images=3, display=False, engine=CX_ENGINE[1])
+                    (img, img_url) = fetch_band_logos(search_term, num_images=4, display=False, engine=CX_ENGINE[1])
+                if not img:
+                    img = replacementImage(event["summary"])
+                    img_url = None
                 #search_list = search_list[:-1]
                 search_list = []
             if img is None:
