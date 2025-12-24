@@ -445,7 +445,8 @@ async def get_next(request):
             img = None
             img_url = None
             rects = None
-            rects = old_event["rects"] if "rects" in old_event and \
+            rects = old_event["rects"] if old_event and \
+                                          "rects" in old_event and \
                                           "imageUrl" in old_event and \
                                           old_event["imageUrl"] in links else None
             if rects:
