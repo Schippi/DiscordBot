@@ -269,7 +269,7 @@ async def fetch_band_logos(band_name, num_images=5, display=True, engine=CX_ENGI
                 #print(resp.content[:500])
                 continue
 
-            img = Image.open(BytesIO(img_data))
+            img = Image.open(img_data)
 
             if not display:
                 #print('✅ Image downloaded successfully 001')
