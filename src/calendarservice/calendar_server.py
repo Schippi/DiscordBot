@@ -57,8 +57,11 @@ async def fetch_async(link, timeout=10, params=None):
     async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=timeout)) as session:
         async with session.get(link, headers=headers, params=params) as resp:
             if resp.status < 200 or resp.status >= 300:
-                txt = await resp.text()
-                raise Exception(f"HTTP error {resp.status} for {link}: {txt}")
+                try:
+                    txt = await resp.text()
+                    raise Exception(f"HTTP error {resp.status} for {link}: {txt}")
+                except Exception:
+                    raise Exception(f"HTTP error {resp.status} for {link}")
             resp.raise_for_status()
             ct = resp.headers.get("Content-Type", "").lower()
             if "json" in ct:
@@ -75,7 +78,8 @@ async def fetch_async(link, timeout=10, params=None):
                 #img.save("D:/_TMP/Tloftr-logo.png")
                 return BytesIO(png_bytes), ct
             else:
-                return await resp.read(), ct
+                data = await resp.read()
+                return BytesIO(data), ct
 
 
 
@@ -123,7 +127,7 @@ def atkinson_dither(gray: Image.Image, threshold: int = 128, invert_if_dark: boo
 async def cal_test(request):
     if not isTestingCal():
         return web.Response(text="nope")
-    data,_ = await fetch_async("https://media.istockphoto.com/id/1086015802/vector/board-game-icons.jpg?s=612x612&w=0&k=20&c=KfgWqcgx879XbKj197R3oGmNh3nlbXqCAvXwfKJrWXg=")
+    data,_ = await fetch_async("https://image.jimcdn.com/app/cms/image/transf/dimension=774x10000:format=png/path/s7bca863384a120f8/image/i1ad430d069febb44/version/1762202550/image.png")
     img = Image.open(data)
     img = img.resize((390,220), Image.NEAREST)\
         .convert("RGBA")\
@@ -459,12 +463,14 @@ async def get_next(request):
             else:
                 for li in links:
                     data, ct = await fetch_async(li)
-                    img = Image.open(data)
-                    if img:
-                        img_url = li
-                        print("Found image link in description: "+li)
-                        break
-
+                    try:
+                        img = Image.open(data)
+                        if img:
+                            img_url = li
+                            print("Found image link in description: "+li)
+                            break
+                    except Exception:
+                        img = None
 
 
             if rects is None and img is None and cache[1]:
