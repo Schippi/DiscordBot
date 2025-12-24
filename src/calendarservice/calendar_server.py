@@ -2,6 +2,7 @@ import json
 import random
 
 from aiohttp import web
+import aiohttp
 import asyncio
 import sys
 import time
@@ -10,6 +11,7 @@ import os
 import datetime
 import imagehash
 import re
+import platform
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -21,6 +23,7 @@ import requests
 from io import BytesIO
 from PIL import Image, UnidentifiedImageError, ImageOps
 import matplotlib.pyplot as plt
+import cairosvg
 
 
 calendarroutes = web.RouteTableDef()
@@ -46,6 +49,30 @@ def isTestingCal():
     except Exception:
         pass
     return testing
+
+async def fetch_async(link, timeout=10, params=None):
+    headers = {
+        "User-Agent": "MyBandLogoFetcher/1.0 (theschippi@gmail.com)"
+    }
+    async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=timeout)) as session:
+        async with session.get(link, headers=headers, params=params) as resp:
+            resp.raise_for_status()
+            ct = resp.headers.get("Content-Type", "").lower()
+            if "json" in ct:
+                return await resp.json(), ct
+            elif "text" in ct:
+                return await resp.text(), ct
+            elif 'image/svg+xml' in ct:
+                txt = await resp.text()
+                png_bytes = cairosvg.svg2png(bytestring=txt.encode("utf-8"))
+                #img = Image.open(BytesIO(png_bytes))
+                #img.load()
+                #img.save("D:/_TMP/Tloftr-logo.png")
+                return BytesIO(png_bytes), ct
+            else:
+                return await resp.read(), ct
+
+
 
 async def start_site(app: web.Application, theConfig: dict):
     host = theConfig['host']
@@ -91,11 +118,8 @@ def atkinson_dither(gray: Image.Image, threshold: int = 128, invert_if_dark: boo
 async def cal_test(request):
     if not isTestingCal():
         return web.Response(text="nope")
-
-    img = Image.open(BytesIO(requests.get(
-        #"https://cdn.futbin.com/content/fifa21/img/players/p134426146.png"
-        "https://media.istockphoto.com/id/1086015802/vector/board-game-icons.jpg?s=612x612&w=0&k=20&c=KfgWqcgx879XbKj197R3oGmNh3nlbXqCAvXwfKJrWXg="
-    ).content))
+    data,_ = await fetch_async("https://media.istockphoto.com/id/1086015802/vector/board-game-icons.jpg?s=612x612&w=0&k=20&c=KfgWqcgx879XbKj197R3oGmNh3nlbXqCAvXwfKJrWXg=")
+    img = Image.open(data)
     img = img.resize((390,220), Image.NEAREST)\
         .convert("RGBA")\
         .convert("L")
@@ -132,7 +156,7 @@ def drawrectimage(data):
 
 def generateImage(path='D:/_TMP/base64.png', source=None):
     from PIL import Image
-    SIZE = (380, 220)
+    SIZE = (390, 220)
     MIN_W = 1
     MIN_H = 1
     MIN_AREA = 2
@@ -194,7 +218,7 @@ def generateImage(path='D:/_TMP/base64.png', source=None):
     return rectangles
     pass
 
-def fetch_band_logos(band_name, num_images=5, display=True, engine=CX_ENGINE):
+async def fetch_band_logos(band_name, num_images=5, display=True, engine=CX_ENGINE):
     """
     Search for a band's logo using Google Custom Search API,
     download up to num_images results, display them, and save locally.
@@ -212,9 +236,7 @@ def fetch_band_logos(band_name, num_images=5, display=True, engine=CX_ENGINE):
     }
 
     print(f"Searching for: {search_query} in engine {engine}")
-    response = requests.get(url, params=params)
-    data = response.json()
-
+    data,_ = await fetch_async(url, params=params)
     if "items" not in data:
         print("❌ No images found.")
         return (None,None)
@@ -232,17 +254,13 @@ def fetch_band_logos(band_name, num_images=5, display=True, engine=CX_ENGINE):
         #print(f"⬇️  Downloading: {image_url}")
 
         try:
-            headers = {
-                "User-Agent": "MyBandLogoFetcher/1.0 (theschippi@gmail.com)"
-            }
-            resp = requests.get(image_url, headers=headers,   timeout=10, stream=True)
-            content_type = resp.headers.get("Content-Type", "")
+            img_data, content_type = await fetch_async(url, timeout=10)
             if not content_type.startswith("image/"):
-                print(f"⚠️  Skipped non-image URL ({content_type}), {response.status_code}")
+                print(f"⚠️  Skipped non-image URL ({content_type})")
                 #print(resp.content[:500])
                 continue
 
-            img = Image.open(BytesIO(resp.content))
+            img = Image.open(BytesIO(img_data))
 
             if not display:
                 #print('✅ Image downloaded successfully 001')
@@ -267,15 +285,8 @@ def fetch_band_logos(band_name, num_images=5, display=True, engine=CX_ENGINE):
     # Display the downloaded images
     if saved_images:
         imgs = [Image.open(f) for f in saved_images]
-        fig, axes = plt.subplots(1, len(imgs), figsize=(15, 5))
-        if len(imgs) == 1:
-            axes = [axes]
-        for ax, img, name in zip(axes, imgs, saved_images):
-            ax.imshow(img, cmap="OrRd")
-            ax.axis("off")
-            ax.set_title(band_name + ' ' + name)
-        plt.tight_layout()
-        plt.show()
+        showImages(imgs, saved_images, band_name)
+
 
     # print(f"\n✅ Done! Saved {len(saved_images)} valid images, returning first")
     if len(saved_images) == 0:
@@ -283,6 +294,19 @@ def fetch_band_logos(band_name, num_images=5, display=True, engine=CX_ENGINE):
         return (None, None)
     print('✅ Image downloaded successfully 003')
     return (Image.open(saved_images[0]), saved_images[0])
+
+def showImages(imgs, imgnames, band_name='Band Lo'):
+    if not imgnames:
+        imgnames = ["None" for _ in imgs]
+    fig, axes = plt.subplots(1, len(imgs), figsize=(15, 5))
+    if len(imgs) == 1:
+        axes = [axes]
+    for ax, img, name in zip(axes, imgs, imgnames):
+        ax.imshow(img, cmap="OrRd")
+        ax.axis("off")
+        ax.set_title(band_name + ' ' + name)
+    plt.tight_layout()
+    plt.show()
 
 def cal_auth():
     token_file_name = util.cfgPath+"/../tokens/calendar_secret.json"
@@ -360,7 +384,7 @@ def fetch_events():
 def replacementImage(event_name):
     #create image with text
     from PIL import Image, ImageDraw, ImageFont
-    SIZE = (380, 220)
+    SIZE = (390, 220)
     img = Image.new('RGB', SIZE, color = (255, 255, 255))
     d = ImageDraw.Draw(img)
     font = ImageFont.load_default()
@@ -380,7 +404,6 @@ def replacementImage(event_name):
 
 
 def getcachedevents():
-
     with util.OpenCursor(util.DB) as cur:
         cur.execute('select * from control where key = ?', ('calendar_cache',))
         rows = cur.fetchall()
@@ -388,12 +411,13 @@ def getcachedevents():
             cur.execute('select * from control where key = ?', ('calendar_reply_cache',))
             rows_2 = cur.fetchall()
             if len(rows_2) > 0:
-                return (json.loads(rows[0]['value']), json.loads(rows_2[0]['value']))
+                return json.loads(rows[0]['value']), json.loads(rows_2[0]['value'])
     return (None, None)
 
 def updatecachedevents(events, reply):
-    global cached_events
-    cached_events = (events, reply)
+    events = None
+    if not events or not reply:
+        return
     util.updateOrInsert('control', {'key': 'calendar_cache'}, {'value': json.dumps(events)}, True, True)
     util.updateOrInsert('control', {'key': 'calendar_reply_cache'}, {'value': json.dumps(reply)}, True, True)
     util.DB.commit()
@@ -408,31 +432,67 @@ async def get_next(request):
             print("Using cached events")
             data = cache[1]
             return web.json_response(data)
+        old_events = cache[1]["events"] if cache[1] else []
         pd_events = []
         for event in cal_events:
-            # print(event)
-            search_list = event["summary"].split(' ')
-            search_term = event["summary"]
+            #find a link in the description
+            links = [lx for lx in event['description'].split() if lx.startswith('http')] if 'description' in event else []
+            old_event = None
+            for oe in old_events:
+                if oe["sourceevent"]["id"] == event["id"]:
+                    old_event = oe
+                    break
             img = None
             img_url = None
-            while img is None and len(search_list)>0:
+            rects = None
+            rects = old_event["rects"] if "rects" in old_event and \
+                                          "imageUrl" in old_event and \
+                                          old_event["imageUrl"] in links else None
+            if rects:
+                img_url = old_event["imageUrl"]
+            else:
+                for li in links:
+                    data, ct = await fetch_async(li)
+                    img = Image.open(data)
+                    if img:
+                        img_url = li
+                        print("Found image link in description: "+li)
+                        break
+
+
+
+            if rects is None and img is None and cache[1]:
+                #try get the old one
+                for old_event in cache[1]["events"]:
+                    if old_event["sourceevent"]["id"] == event["id"]:
+                        print("Using old cached image for event: "+event["summary"])
+                        rects = old_event["rects"]
+                        img_url = old_event["imageUrl"]
+                        break
+
+            search_list = event["summary"].split(' ')
+            search_term = event["summary"]
+
+            while rects is None and img is None and len(search_list)>0:
                 search_term = ' '.join(search_list)
                 print("Searching for Image: "+search_term)
-                (img, img_url) = fetch_band_logos(search_term, num_images=4, display=False, engine=CX_ENGINE[0])
+                (img, img_url) = await fetch_band_logos(search_term, num_images=4, display=False, engine=CX_ENGINE[0])
                 if not img:
                     print("Searching for Image ALT: "+search_term)
-                    (img, img_url) = fetch_band_logos(search_term, num_images=4, display=False, engine=CX_ENGINE[1])
+                    (img, img_url) = await fetch_band_logos(search_term, num_images=4, display=False, engine=CX_ENGINE[1])
                 if not img:
                     img = replacementImage(event["summary"])
                     img_url = None
                 #search_list = search_list[:-1]
                 search_list = []
-            if img is None:
+
+            if img is None and rects is None:
                 print("No image found for event: "+event["summary"])
                 continue
 
+            if rects is None:
+                rects = generateImage(source=img)
 
-            rects = generateImage(source=img)
             sanitized_name = re.sub(r'[^a-zA-Z0-9_]', '_', event["summary"].strip())
             if "date" in event["start"]:
                 days_until = (datetime.datetime.fromisoformat(event["start"]["date"]).replace(tzinfo=datetime.timezone.utc) - datetime.datetime.now(datetime.timezone.utc)).days
