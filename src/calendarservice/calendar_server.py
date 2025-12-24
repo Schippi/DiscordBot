@@ -56,12 +56,17 @@ async def fetch_async(link, timeout=10, params=None):
     }
     async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=timeout)) as session:
         async with session.get(link, headers=headers, params=params) as resp:
+            if resp.status < 200 or resp.status >= 300:
+                txt = await resp.text()
+                raise Exception(f"HTTP error {resp.status} for {link}: {txt}")
             resp.raise_for_status()
             ct = resp.headers.get("Content-Type", "").lower()
             if "json" in ct:
-                return await resp.json(), ct
+                data = await resp.json()
+                return data, ct
             elif "text" in ct:
-                return await resp.text(), ct
+                data = await resp.text()
+                return data, ct
             elif 'image/svg+xml' in ct:
                 txt = await resp.text()
                 png_bytes = cairosvg.svg2png(bytestring=txt.encode("utf-8"))
@@ -254,7 +259,7 @@ async def fetch_band_logos(band_name, num_images=5, display=True, engine=CX_ENGI
         #print(f"⬇️  Downloading: {image_url}")
 
         try:
-            img_data, content_type = await fetch_async(url, timeout=10)
+            img_data, content_type = await fetch_async(image_url, timeout=10)
             if not content_type.startswith("image/"):
                 print(f"⚠️  Skipped non-image URL ({content_type})")
                 #print(resp.content[:500])
@@ -477,10 +482,10 @@ async def get_next(request):
             while rects is None and img is None and len(search_list)>0:
                 search_term = ' '.join(search_list)
                 print("Searching for Image: "+search_term)
-                (img, img_url) = await fetch_band_logos(search_term, num_images=4, display=False, engine=CX_ENGINE[0])
+                (img, img_url) = await fetch_band_logos(search_term, num_images=2, display=False, engine=CX_ENGINE[0])
                 if not img:
                     print("Searching for Image ALT: "+search_term)
-                    (img, img_url) = await fetch_band_logos(search_term, num_images=4, display=False, engine=CX_ENGINE[1])
+                    (img, img_url) = await fetch_band_logos(search_term, num_images=2, display=False, engine=CX_ENGINE[1])
                 if not img:
                     img = replacementImage(event["summary"])
                     img_url = None
