@@ -25,7 +25,6 @@ from PIL import Image, UnidentifiedImageError, ImageOps
 import matplotlib.pyplot as plt
 import cairosvg
 import traceback
-from typing import List
 
 calendarroutes = web.RouteTableDef()
 call_cnt = 0
@@ -438,7 +437,7 @@ def updatecachedevents(events, reply):
 
 HREF_RE = re.compile(r'href=["\'](https?://[^"\']+)["\']', re.IGNORECASE)
 URL_RE = re.compile(r'https?://[^\s"<>()]+')
-def extract_urls(text: str) -> list[str]:
+def extract_urls(text):
     urls = set()
     urls.update(HREF_RE.findall(text))
     urls.update(URL_RE.findall(text))
