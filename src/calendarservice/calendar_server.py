@@ -24,6 +24,7 @@ from io import BytesIO
 from PIL import Image, UnidentifiedImageError, ImageOps
 import matplotlib.pyplot as plt
 import cairosvg
+import traceback
 
 
 calendarroutes = web.RouteTableDef()
@@ -473,7 +474,9 @@ async def get_next(request):
                             img_url = li
                             print("Found image link in description: "+li)
                             break
-                    except Exception:
+                    except Exception as ex:
+                        print("exception on : "+li)
+                        traceback.print_exception(type(ex), ex, ex.__traceback__)
                         img = None
 
 
