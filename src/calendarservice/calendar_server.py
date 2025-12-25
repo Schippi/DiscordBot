@@ -168,7 +168,7 @@ def generateImage(path='D:/_TMP/base64.png', source=None):
     SIZE = (390, 220)
     MIN_W = 1
     MIN_H = 1
-    MIN_AREA = 2
+    MIN_AREA = 1 # +2 in loop below
     if source is not None:
         img = source
     else:
@@ -181,8 +181,8 @@ def generateImage(path='D:/_TMP/base64.png', source=None):
 
     pixels = img.load()
     covered = [[False]*width for _ in range(height)]
-    rectangles = []
 
+    rectangles = []
     for y in range(height):
         for x in range(width):
             if pixels[x, y] == 0 and not covered[y][x]:  # black & not yet covered
@@ -223,6 +223,11 @@ def generateImage(path='D:/_TMP/base64.png', source=None):
                         "w": rect_width,
                         "h": max_height
                     })
+    while len(rectangles) > 3000:
+        #remove smallest rectangle
+        smallest = min([r['w']*r['h'] for r in rectangles])
+        rectangles = [r for r in rectangles if r['w']*r['h'] != smallest]
+
 
     return rectangles
     pass
@@ -387,7 +392,7 @@ def fetch_events():
     if not events:
         return {}
 
-    result_events = [e for e in events if 'Elyas' not in e["summary"] and 'Wiesbaden' not in e["summary"]]
+    result_events = [e for e in events if 'Elyas' not in e["summary"] and 'Wiesbaden' not in e["summary"]] 
     return result_events
 
 def replacementImage(event_name):
@@ -396,7 +401,6 @@ def replacementImage(event_name):
     SIZE = (390, 220)
     img = Image.new('RGB', SIZE, color = (255, 255, 255))
     d = ImageDraw.Draw(img)
-    font = ImageFont.load_default()
     #make text as large as possible
     text = event_name.split(' ')[0]
     text_size = 40
@@ -408,7 +412,7 @@ def replacementImage(event_name):
         text_size += 2
     #print("text size", text_size)
     d.text(((SIZE[0]-text_width)/2,(SIZE[1]-text_height)/2), text, fill=(0,0,0), font=font)
-    img.save(f'D:/_TMP/{text}.png')
+    #img.save(f'D:/_TMP/{text}.png')
     return img
 
 
@@ -424,7 +428,6 @@ def getcachedevents():
     return (None, None)
 
 def updatecachedevents(events, reply):
-    events = None
     if not events or not reply:
         return
     util.updateOrInsert('control', {'key': 'calendar_cache'}, {'value': json.dumps(events)}, True, True)
@@ -460,6 +463,7 @@ async def get_next(request):
                                           old_event["imageUrl"] in links else None
             if rects:
                 img_url = old_event["imageUrl"]
+                print("Using old cached image for event: "+event["summary"]+": "+img_url)
             else:
                 for li in links:
                     data, ct = await fetch_async(li)
@@ -487,10 +491,10 @@ async def get_next(request):
 
             while rects is None and img is None and len(search_list)>0:
                 search_term = ' '.join(search_list)
-                print("Searching for Image: "+search_term)
+                #print("Searching for Image: "+search_term)
                 (img, img_url) = await fetch_band_logos(search_term, num_images=2, display=False, engine=CX_ENGINE[0])
                 if not img:
-                    print("Searching for Image ALT: "+search_term)
+                    #print("Searching for Image ALT: "+search_term)
                     (img, img_url) = await fetch_band_logos(search_term, num_images=2, display=False, engine=CX_ENGINE[1])
                 if not img:
                     img = replacementImage(event["summary"])
