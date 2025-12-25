@@ -25,7 +25,7 @@ from PIL import Image, UnidentifiedImageError, ImageOps
 import matplotlib.pyplot as plt
 import cairosvg
 import traceback
-
+from typing import List
 
 calendarroutes = web.RouteTableDef()
 call_cnt = 0
