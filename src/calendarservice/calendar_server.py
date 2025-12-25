@@ -434,6 +434,17 @@ def updatecachedevents(events, reply):
     util.updateOrInsert('control', {'key': 'calendar_cache'}, {'value': json.dumps(events)}, True, True)
     util.updateOrInsert('control', {'key': 'calendar_reply_cache'}, {'value': json.dumps(reply)}, True, True)
     util.DB.commit()
+
+
+HREF_RE = re.compile(r'href=["\'](https?://[^"\']+)["\']', re.IGNORECASE)
+URL_RE = re.compile(r'https?://[^\s"<>()]+')
+def extract_urls(text: str) -> list[str]:
+    urls = set()
+    urls.update(HREF_RE.findall(text))
+    urls.update(URL_RE.findall(text))
+
+    return list(urls)
+
 @calendarroutes.get('/cal/get')
 async def get_next(request):
     current_unix_time = int(time.time())
@@ -449,7 +460,8 @@ async def get_next(request):
         pd_events = []
         for event in cal_events:
             #find a link in the description
-            links = [lx for lx in event['description'].split() if lx.startswith('http')] if 'description' in event else []
+
+            links = extract_urls(event['description']) if 'description' in event else []
             old_event = None
             for oe in old_events:
                 if oe["sourceevent"]["id"] == event["id"]:
