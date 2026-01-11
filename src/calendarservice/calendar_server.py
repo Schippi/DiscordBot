@@ -378,23 +378,26 @@ def fetch_events():
     # Call the Calendar API
     now = datetime.datetime.now(tz=datetime.timezone.utc).isoformat()
     print("Getting the upcoming 10 events")
-    events_result = (
-        service.events()
-        .list(
-            calendarId="primary",
-            timeMin=now,
-            maxResults=10,
-            singleEvents=True,
-            orderBy="startTime",
+    nextpage_token = "x"
+    result_events = []
+    while nextpage_token and len(result_events) < 10:
+        nextpage_token = None
+        events_result = (
+            service.events()
+            .list(
+                calendarId="primary",
+                timeMin=now,
+                maxResults=10,
+                singleEvents=True,
+                orderBy="startTime",
+                pageToken=nextpage_token if nextpage_token else None
+            )
+            .execute()
         )
-        .execute()
-    )
-    events = events_result.get("items", [])
+        events = events_result.get("items", [])
+        nextpage_token = events_result.get("nextPageToken", None)
+        result_events.extend([ea for ea in events if 'Elyas' not in ea["summary"]])
 
-    if not events:
-        return {}
-
-    result_events = [e for e in events if 'Elyas' not in e["summary"] and 'Wiesbaden' not in e["summary"]] 
     return result_events
 
 def replacementImage(event_name):
