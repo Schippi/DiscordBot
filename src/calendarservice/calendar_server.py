@@ -56,6 +56,8 @@ async def fetch_async(link, timeout=10, params=None):
     }
     async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=timeout)) as session:
         async with session.get(link, headers=headers, params=params) as resp:
+            if resp.status in [403]:
+                return {}, None;
             if resp.status < 200 or resp.status >= 300:
                 try:
                     txt = await resp.text()
