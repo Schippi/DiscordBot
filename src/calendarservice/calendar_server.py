@@ -381,7 +381,6 @@ def fetch_events():
     nextpage_token = "x"
     result_events = []
     while nextpage_token and len(result_events) < 10:
-        nextpage_token = None
         events_result = (
             service.events()
             .list(
@@ -390,7 +389,7 @@ def fetch_events():
                 maxResults=10,
                 singleEvents=True,
                 orderBy="startTime",
-                pageToken=nextpage_token if nextpage_token else None
+                pageToken=nextpage_token if nextpage_token and nextpage_token != "x" else None
             )
             .execute()
         )
