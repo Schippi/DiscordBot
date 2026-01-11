@@ -56,33 +56,42 @@ async def fetch_async(link, timeout=10, params=None):
     }
     async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=timeout)) as session:
         async with session.get(link, headers=headers, params=params) as resp:
-            if resp.status in [403]:
-                return {}, None;
-            if resp.status < 200 or resp.status >= 300:
-                try:
+            try:
+                if resp.status in [403]:
+                    return {}, None;
+                if resp.status < 200 or resp.status >= 300:
+                    try:
+                        txt = await resp.text()
+                        print(f"HTTP error {resp.status} for {link}: {txt}")
+                        #raise Exception(f"HTTP error {resp.status} for {link}")
+                        return {}, None;
+                    except Exception as ex:
+                        print(f"HTTP error {resp.status} for {link}")
+                        traceback.print_exception(type(ex), ex, ex.__traceback__)
+                        #raise Exception(f"HTTP error {resp.status} for {link}")
+                        return {}, None;
+                resp.raise_for_status()
+                ct = resp.headers.get("Content-Type", "").lower()
+                if "json" in ct:
+                    data = await resp.json()
+                    return data, ct
+                elif "text" in ct:
+                    data = await resp.text()
+                    return data, ct
+                elif 'image/svg+xml' in ct:
                     txt = await resp.text()
-                    raise Exception(f"HTTP error {resp.status} for {link}: {txt}")
-                except Exception:
-                    raise Exception(f"HTTP error {resp.status} for {link}")
-            resp.raise_for_status()
-            ct = resp.headers.get("Content-Type", "").lower()
-            if "json" in ct:
-                data = await resp.json()
-                return data, ct
-            elif "text" in ct:
-                data = await resp.text()
-                return data, ct
-            elif 'image/svg+xml' in ct:
-                txt = await resp.text()
-                png_bytes = cairosvg.svg2png(bytestring=txt.encode("utf-8"))
-                #img = Image.open(BytesIO(png_bytes))
-                #img.load()
-                #img.save("D:/_TMP/Tloftr-logo.png")
-                return BytesIO(png_bytes), ct
-            else:
-                data = await resp.read()
-                return BytesIO(data), ct
-
+                    png_bytes = cairosvg.svg2png(bytestring=txt.encode("utf-8"))
+                    #img = Image.open(BytesIO(png_bytes))
+                    #img.load()
+                    #img.save("D:/_TMP/Tloftr-logo.png")
+                    return BytesIO(png_bytes), ct
+                else:
+                    data = await resp.read()
+                    return BytesIO(data), ct
+            except Exception as exxx:
+                print(f"Exception fetching {link}: {exxx}")
+                traceback.print_exception(type(exxx), exxx, exxx.__traceback__)
+                raise exxx
 
 
 async def start_site(app: web.Application, theConfig: dict):
