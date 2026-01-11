@@ -280,6 +280,9 @@ async def fetch_band_logos(band_name, num_images=5, display=True, engine=CX_ENGI
 
         try:
             img_data, content_type = await fetch_async(image_url, timeout=10)
+            if not content_type:
+                print("⚠️  Skipped URL with unknown content type")
+                continue
             if not content_type.startswith("image/"):
                 print(f"⚠️  Skipped non-image URL ({content_type})")
                 #print(resp.content[:500])
